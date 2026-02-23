@@ -1,0 +1,94 @@
+Fix the color image display on the Product Detail page. The current product 
+data has colorImages: null for all products. We need to fetch and map 
+color-specific preview images from the Printful API at the variant level.
+
+---
+
+🔧 THE PROBLEM
+The product data being stored/fetched only captures the default imageUrl 
+and lists color names, but does NOT fetch the per-variant preview images 
+from Printful. The colorImages field is null on every product.
+
+---
+
+🔧 FIX — FETCH VARIANT-LEVEL IMAGES FROM PRINTFUL
+
+When fetching a single product detail (GET /store/products/{id}), Printful 
+returns a sync_variants array. Each variant object contains:
+
+- variant_id
+- name (includes color and size like "Black / S")
+- color (the color name)
+- files[] array — inside this, find the file with type: "preview" which has 
+  a preview_url — this is the color-specific product mockup image
+
+Update the get-product Netlify Function to:
+
+1. Fetch GET https://api.printful.com/store/products/{printfulId}
+2. From the response, loop through result.sync_variants
+3. For each variant, extract:
+   - The color name from variant.name (split on " / " and take the first part)
+   - OR from variant.product.color if available
+   - The preview image from variant.files.find(f => f.type === "preview")?.preview_url
+4. Build a colorImages map object:
+   {
+     "Black": "https://files.cdn.printful.com/...",
+     "Red": "https://files.cdn.printful.com/...",
+     "True Royal": "https://files.cdn.printful.com/...",
+     ...
+   }
+   Only add a color to the map the FIRST time you see it (since multiple 
+   sizes share the same color, you only need one image per color)
+5. Return this colorImages map as part of the product detail response
+
+---
+
+🔧 UPDATE THE FRONTEND — PRODUCT DETAIL PAGE
+
+Once colorImages is populated:
+
+1. When the page loads, initialize the displayed image with the first 
+   color's image from colorImages (or fall back to imageUrl if map is empty)
+
+2. When a color button is clicked:
+   - Look up colorImages[selectedColor]
+   - If found: update main image src with a 150ms fade transition
+   - If not found: keep current image (silent fallback)
+
+3. Update the colorImages data in the database/cache layer too so it 
+   persists and doesn't require a fresh Printful API call every page load:
+   - After fetching and building colorImages for a product, save it back 
+     to the product record in the database
+   - On subsequent loads, use the cached colorImages if available
+   - Only re-fetch from Printful if colorImages is null or empty
+
+---
+
+🔧 ALSO FIX — COLOR SWATCH DOTS ON BUTTONS
+
+Since we now have actual image URLs per color, update the color selector buttons:
+
+- Each color button shows a small 16x16px circle swatch on the left side
+- Use the colorImages URL as a tiny background-image thumbnail for the swatch
+  (background-size: cover, border-radius: 50%)
+- This gives customers a real visual preview right on the button before 
+  they even click it
+- Selected color button: neon glow border (existing style) + swatch visible
+- Unselected: dimmer border + swatch visible
+
+---
+
+🔧 ALSO UPDATE — SHOP PAGE PRODUCT CARDS
+
+On the Shop/grid page, product cards should also benefit:
+- On card hover, if colorImages exists, show a subtle color dot row 
+  at the bottom of the card indicating available colors
+- Clicking a color dot on the card preview updates that card's thumbnail 
+  to that color's image inline (without navigating to the product page)
+- This is a nice-to-have — only implement if it doesn't break existing 
+  card layout
+
+---
+
+Maintain all retro game styling. Only change the data fetching layer, 
+colorImages population, and the image swap behavior on color selection.

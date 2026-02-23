@@ -1,0 +1,71 @@
+Fix the product display order on the Shop page so that the same product type 
+never dominates consecutive rows. Products should always feel mixed and varied 
+as you scroll.
+
+---
+
+🔧 THE PROBLEM
+Currently the shop displays all products grouped by type — you see row after 
+row of mugs, then row after row of hoodies, etc. This needs to be completely 
+reshuffled into an interleaved display.
+
+---
+
+🔧 FIX — INTERLEAVED / ROUND-ROBIN PRODUCT SORTING
+
+When rendering products on the Shop page, do NOT display them in the order 
+they come from the Printful API. Instead, apply this sorting logic BEFORE 
+rendering:
+
+1. First, group all fetched products into buckets by category type:
+   - shirts
+   - hoodies
+   - mugs / accessories
+   - onesies
+   - other
+
+2. Then interleave them using a round-robin algorithm:
+   - Take 1 from shirts, 1 from hoodies, 1 from mugs, 1 from onesies, repeat
+   - If a bucket runs out, skip it and continue with remaining buckets
+   - Keep cycling until all products are placed
+   - Result: no product type ever appears more than once in a row before 
+     another type gets a turn
+
+3. Example output order (5-column grid):
+   Row 1: shirt | hoodie | mug | onesie | shirt
+   Row 2: hoodie | mug | onesie | shirt | hoodie
+   Row 3: mug | onesie | shirt | hoodie | mug
+   ...and so on until a category runs out, then remaining categories fill
+
+4. Category detection logic:
+   - Check product.type or product.name for keywords:
+     - "shirt", "tee", "t-shirt" → shirts bucket
+     - "hoodie", "sweatshirt", "crewneck" → hoodies bucket
+     - "mug", "cup", "tumbler", "bottle" → mugs/accessories bucket
+     - "onesie", "baby", "toddler", "infant" → onesies bucket
+     - anything else → other bucket
+
+---
+
+🔧 APPLY TO ALL FILTER STATES
+
+This interleaving logic should apply to:
+- The default "ALL" view
+- Each filtered category view (when a user filters by Hoodies, show only 
+  hoodies — interleaving only matters when ALL or a broad category is selected)
+- If the user selects a specific single category (e.g. just Mugs), show those 
+  normally in grid order since there's nothing to interleave with
+
+---
+
+🔧 PAGINATION / LOAD MORE
+
+When loading more products (pagination or infinite scroll):
+- Continue the round-robin from where it left off — don't restart the cycle
+- The next batch should feel like a natural continuation of the mix
+
+---
+
+Keep all existing retro game styling, grid layout, card design, and filters 
+exactly as they are. Only change the order/sorting logic of how products 
+are rendered into the grid.

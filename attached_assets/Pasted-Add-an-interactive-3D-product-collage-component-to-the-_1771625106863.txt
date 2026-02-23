@@ -1,0 +1,104 @@
+Add an interactive 3D product collage component to the Home page, 
+positioned directly below the "ENTER THE STORE" button.
+
+---
+
+🎯 REFERENCE
+Inspired by groteskly.xyz — a 3D fan/deck of overlapping cards that:
+- Slowly auto-rotates when idle
+- Allows the user to click+drag to spin it at their own speed
+- Cards are slightly fanned/spread in a circular or arc arrangement
+- Has depth — cards behind others are slightly darker/smaller
+
+---
+
+🃏 THE COMPONENT — "CULTURE DECK"
+
+Build this as a standalone React component: <CultureDeck />
+
+WHAT THE CARDS SHOW:
+- Pull 12-16 random product images from the existing Printful product data
+- Each card displays a product mockup image (imageUrl from product data)
+- Cards are rectangular, portrait orientation (roughly 200px × 280px)
+- Slight rounded corners (4px), pixel-style thin border in neon color
+- Cards have a subtle dark overlay gradient at the bottom with the 
+  product name in small retro font
+
+LAYOUT / 3D ARRANGEMENT:
+- Cards are arranged in a circular fan — spread 360 degrees around a 
+  center point, each card rotated on the Y axis by (360 / totalCards) degrees
+- Cards radiate outward from center (translateZ: 280px to push them out)
+- The whole deck sits on a slight X-axis tilt (~15deg) so it looks like 
+  you're viewing it from slightly above — like looking down at a spinning 
+  record or lazy susan
+- Use CSS 3D transforms (transform-style: preserve-3d, perspective: 1000px) 
+  OR Three.js — whichever produces the cleanest result
+- Recommended: CSS 3D for simplicity, Three.js if you need better performance
+
+IDLE ANIMATION:
+- When no user interaction: the whole deck slowly auto-rotates on the Y axis
+- Speed: one full rotation every ~18 seconds (smooth, gentle)
+- Use requestAnimationFrame for smooth 60fps rotation
+- CSS: animation: spin 18s linear infinite on the deck container
+
+USER INTERACTION — DRAG TO SPIN:
+- On mousedown / touchstart: pause the idle auto-rotation, record start X position
+- On mousemove / touchmove: calculate delta X from start, apply that as 
+  rotateY offset to the deck in real time
+  - Fast drag = fast spin, slow drag = slow spin
+  - Use: currentRotation += (deltaX * 0.4) for sensitivity
+- On mouseup / touchend: 
+  - Apply momentum — continue spinning at the drag velocity, 
+    decelerating smoothly (multiply velocity by 0.95 each frame until < 0.1)
+  - After momentum ends, resume slow idle auto-rotation
+
+HOVER ON INDIVIDUAL CARD:
+- When hovering a card: slightly scale it up (1.05) and increase its 
+  z-index so it pops forward
+- Show a neon glow on the hovered card border
+- Optional: clicking a card navigates to that product's detail page
+
+---
+
+🎨 STYLING TO MATCH THE SITE
+
+- Container background: transparent (sits on the dark homepage background)
+- Deck container size: 500px × 400px centered on desktop, 
+  320px × 280px on mobile
+- Cards use the existing retro pixel border style
+- Card back face: dark (#111) with a small MyShirtsDope pixel logo centered
+- Slight drop shadow under the whole deck for depth
+- On mobile: touch events should work smoothly (use passive touch listeners)
+
+---
+
+📍 PLACEMENT ON HOME PAGE
+
+Insert <CultureDeck /> in the Hero section:
+- Below the "ENTER THE STORE" CTA button
+- Above the scrolling marquee ticker
+- Center-aligned, with 48px margin top and bottom
+- Add a small retro label above it in pixel font:
+  ▶ LATEST DROPS — styled like a game section header
+
+---
+
+⚙️ IMPLEMENTATION NOTES
+
+- If using CSS 3D: wrap all cards in a single .deck div with 
+  transform-style: preserve-3d, then position each card with 
+  rotateY(Ndeg) translateZ(280px)
+- Track rotation state in a useRef (not useState) to avoid re-renders 
+  during animation loop
+- Use useEffect to set up the animation loop and event listeners, 
+  clean up on unmount
+- Product images: import or receive as a prop array of { id, name, imageUrl }
+  — pull from the same product store/context already used by the Shop page
+- Lazy load card images (loading="lazy" on img tags)
+- If a product image fails to load, show a fallback dark card with 
+  the MyShirtsDope logo
+
+---
+
+Keep all existing homepage content, hero text, and retro styling intact. 
+Only add this new CultureDeck component in the specified position.

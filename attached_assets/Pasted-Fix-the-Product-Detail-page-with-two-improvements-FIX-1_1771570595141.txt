@@ -1,0 +1,65 @@
+Fix the Product Detail page with two improvements:
+
+---
+
+🔧 FIX 1 — IMAGE SIZE & LAYOUT
+
+The product image is too large and takes up too much vertical space. Fix this:
+
+DESKTOP (full screen):
+- Keep the side-by-side horizontal layout (image left, details right)
+- Shrink the image container to max-width: 320px and max-height: 320px
+- Image should be object-fit: contain inside its container
+- The image and product info should remain on the same horizontal row 
+  at all screen sizes above 768px
+- Add a gap of about 40px between image and the info panel
+- Info panel takes up remaining width (flex: 1)
+
+MOBILE (under 768px):
+- Stack vertically: image on top, info below
+- Image container max-height: 240px, full width
+- Image stays contained and centered, does NOT stretch or overflow
+- Product name, price, selectors all scroll below naturally
+- The layout should feel like a mobile product page — compact, clean, scrollable
+
+GENERAL:
+- Remove any fixed height or oversized padding around the image container
+- The image should never dominate more than 35% of the viewport width on desktop
+- Wrap the image+info in a flex row container:
+  display: flex; flex-direction: row; align-items: flex-start; gap: 40px;
+  and switch to flex-direction: column on mobile via media query
+
+---
+
+🔧 FIX 2 — COLOR SELECTOR SHOWS PRODUCT IMAGE FOR THAT COLOR
+
+When a user clicks a color option, the main product image should update to 
+show the product in that selected color.
+
+Implementation:
+- Each color variant from Printful has its own preview image URL in the 
+  variant data (variant.preview_url or product files)
+- When fetching product details from the Printful API, map each color name 
+  to its corresponding variant preview image URL
+- Store this as a colorImageMap object:
+  { "Red": "https://...", "True Royal": "https://...", "Kelly": "https://...", etc. }
+- When a color button is clicked:
+  1. Update the selected color state
+  2. Look up the image URL in colorImageMap for that color
+  3. Update the main product image src to that URL
+  4. Add a quick fade transition (opacity 0 → 1, 150ms) so the swap feels smooth
+  5. If no image exists for that color variant, keep the current image displayed
+
+COLOR BUTTON STYLING UPDATE:
+- Add a small color swatch dot/circle inside or next to each color button 
+  showing the actual color (use a simple color name to hex map for common 
+  colors: Red=#cc0000, Black=#111, White=#fff, Pink=#ffb6c1, Yellow=#ffd700, 
+  Kelly=#4caf50, True Royal=#1a47a0, Athletic Heather=#b0b0b0, etc.)
+- The selected color button should have a neon glow border to show it's active
+- Non-selected color buttons keep the standard pixel border style
+
+---
+
+Maintain all existing retro game styling, fonts, colors, FIT selector, 
+SIZE selector, and Add to Cart functionality. Only change the image 
+sizing/layout and the color selection behavior.

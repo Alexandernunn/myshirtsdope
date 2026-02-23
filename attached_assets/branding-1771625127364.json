@@ -1,0 +1,154 @@
+{
+  "colorScheme": "light",
+  "fonts": [
+    {
+      "family": "Groteskly Sans 80",
+      "role": "body"
+    },
+    {
+      "family": "Groteskly Sans 93",
+      "role": "heading"
+    },
+    {
+      "family": "Groteskly Sans 122",
+      "role": "display"
+    },
+    {
+      "family": "22_Oktah Neue_Var Variable",
+      "role": "unknown"
+    },
+    {
+      "family": "Gelatic Variable",
+      "role": "unknown"
+    }
+  ],
+  "colors": {
+    "primary": "#0000EE",
+    "accent": "#000000",
+    "background": "#FFFFFF",
+    "textPrimary": "#000000",
+    "link": "#0000EE"
+  },
+  "typography": {
+    "fontFamilies": {
+      "primary": "Groteskly Sans 80",
+      "heading": "Groteskly Sans 93"
+    },
+    "fontStacks": {
+      "heading": [
+        "Groteskly Sans 122",
+        "sans-serif"
+      ],
+      "body": [
+        "sans-serif"
+      ],
+      "paragraph": [
+        "Groteskly Sans 93",
+        "sans-serif"
+      ]
+    },
+    "fontSizes": {
+      "h1": "23px",
+      "h2": "23px",
+      "body": "16px"
+    }
+  },
+  "spacing": {
+    "baseUnit": 10,
+    "borderRadius": "0px"
+  },
+  "components": {
+    "input": {
+      "background": "transparent",
+      "textColor": "#000000",
+      "borderColor": null,
+      "borderRadius": "0px",
+      "borderRadiusCorners": {
+        "topLeft": "0px",
+        "topRight": "0px",
+        "bottomRight": "0px",
+        "bottomLeft": "0px"
+      },
+      "shadow": "none"
+    },
+    "buttonPrimary": {
+      "background": "#000000",
+      "textColor": "#000000",
+      "borderRadius": "0px",
+      "borderRadiusCorners": {
+        "topLeft": "0px",
+        "topRight": "0px",
+        "bottomRight": "0px",
+        "bottomLeft": "0px"
+      },
+      "shadow": "none"
+    },
+    "buttonSecondary": {
+      "background": "#EEEEEE",
+      "textColor": "#444444",
+      "borderRadius": "8px",
+      "borderRadiusCorners": {
+        "topLeft": "8px",
+        "topRight": "8px",
+        "bottomRight": "8px",
+        "bottomLeft": "8px"
+      },
+      "shadow": "none"
+    }
+  },
+  "images": {
+    "logo": "File saved at: attached_assets/logo.svg",
+    "favicon": "File saved at: attached_assets/favicon.png",
+    "ogImage": "File saved at: attached_assets/ogImage.png",
+    "logoHref": "File saved at: attached_assets/logoHref.html"
+  },
+  "__llm_logo_reasoning": {
+    "selectedIndex": 0,
+    "reasoning": "Selected #0 because it is visible, located in the header, and links to the homepage, matching the brand 'Groteskly Yours Studio'.",
+    "confidence": 0.95,
+    "source": "llm"
+  },
+  "__llm_button_reasoning": {
+    "primary": {
+      "index": 0,
+      "text": "Subscribe",
+      "reasoning": "The 'Subscribe' button is likely the primary CTA due to its action-oriented text and dark background, which stands out against the light page background."
+    },
+    "secondary": {
+      "index": 1,
+      "text": "Okay",
+      "reasoning": "The 'Okay' button is secondary due to its lighter background and less prominent action, typically used for consent or dismissing notifications."
+    },
+    "confidence": 0.9
+  },
+  "personality": {
+    "tone": "modern",
+    "energy": "medium",
+    "targetAudience": "designers and creative professionals"
+  },
+  "designSystem": {
+    "framework": "custom",
+    "componentLibrary": ""
+  },
+  "confidence": {
+    "buttons": 0.9,
+    "colors": 0.9,
+    "overall": 0.9
+  },
+  "__llm_metadata": {
+    "logoSelection": {
+      "llmCalled": true,
+      "llmSucceeded": true,
+      "finalSource": "llm",
+      "rawLogoSelection": {
+        "selectedLogoIndex": 0,
+        "selectedLogoReasoning": "Selected #0 because it is visible, located in the header, and links to the homepage, matching the brand 'Groteskly Yours Studio'.",
+        "confidence": 0.95
+      }
+    },
+    "buttonClassification": {
+      "llmCalled": true,
+      "llmSucceeded": true
+    }
+  }
+}

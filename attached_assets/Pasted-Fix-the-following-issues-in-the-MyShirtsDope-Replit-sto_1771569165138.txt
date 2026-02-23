@@ -1,0 +1,94 @@
+Fix the following issues in the MyShirtsDope Replit store app:
+
+---
+
+🔧 FIX 1 — MERGE DUPLICATE PRODUCTS INTO ONE LISTING
+
+The store currently shows duplicate product cards for the same design 
+(e.g., "Eric B. and Rakim 86 Hoodie" and "Eric B. and Rakim 86 Kids Hoodie" 
+show as two separate cards). Fix this by:
+
+- Grouping products with the same base design name into a single product card 
+  on the Shop page
+- The single card should show the adult/main version by default
+- On the Product Detail page, add an "AGE GROUP" or "FIT" selector at the top 
+  of the size/color options:
+
+  [ ADULT ] [ YOUTH / KIDS ]
+
+- When the user selects YOUTH/KIDS, the sizes, colors, price, and variant ID 
+  should dynamically switch to the youth version of that product (pulled from 
+  Printful variants)
+- This same pattern applies to ALL product types: shirts, hoodies, onesies, 
+  and accessories — if a youth/kids variant exists, it shows as a toggle 
+  option on the same product page, NOT as a separate listing
+- Grouping logic: match products by stripping "Kids", "Youth", "Toddler", 
+  "Baby" from the product name and comparing the base name. Products with 
+  matching base names get merged into one listing.
+- The merged product card on the shop page should show a small badge like:
+  🎮 [ ADULT + YOUTH ] to indicate multiple fits are available
+
+---
+
+🔧 FIX 2 — SIMILAR / RELATED ITEMS ON PRODUCT DETAIL PAGE
+
+On every Product Detail page, add a "YOU MIGHT ALSO LIKE" or 
+"MORE FROM THE COLLECTION" section at the bottom styled in the retro game UI:
+
+- Show 4 related product cards in a horizontal scroll row
+- Match related products by: same category (hoodie, shirt, etc.) OR similar 
+  name keywords
+- Cards in this row should be smaller/compact — just image, name, price
+- Clicking a related item navigates to that product's detail page
+- Style the section header like a game menu label:
+  ▶ MORE FROM THE COLLECTION
+
+---
+
+🔧 FIX 3 — ZOOM OUT / SCALE DOWN THE LAYOUT
+
+The product images and cards are too large and take up too much screen space. 
+Fix the scale across both the Shop page and Product Detail page:
+
+SHOP PAGE:
+- Switch from a 4-column grid to a 5-column grid on desktop 
+  (grid-template-columns: repeat(5, 1fr))
+- Reduce product card image height from current size to max 220px
+- Reduce card padding and font sizes slightly
+- Product name should be 0.75rem, price 0.8rem
+- Keep the pixel border styling but make cards feel tighter/more compact
+- On tablet: 3 columns. On mobile: 2 columns.
+
+PRODUCT DETAIL PAGE:
+- Reduce the product image container width from ~50% to 38% of the page
+- Cap image max-height at 420px
+- The right side info panel (name, price, size/color selectors) should take 
+  up 55% width with more breathing room
+- Overall page should feel like you're viewing the product at a comfortable 
+  zoom level, not like the image is filling the screen
+- Size and color selector buttons should be smaller — reduce padding and 
+  font size slightly
+
+GENERAL:
+- Add max-width: 1400px to the main content wrapper and center it
+- Increase overall page padding on left/right so content doesn't stretch 
+  edge to edge on large monitors
+
+---
+
+🔧 FIX 4 — PRODUCT DETAIL PAGE LAYOUT CLEANUP
+
+While fixing the zoom, also:
+- Make the AGE GROUP toggle (Adult / Youth) appear ABOVE the size selector, 
+  clearly labeled
+- When switching between Adult and Youth, animate the size/color options 
+  refreshing with a quick pixel-fade transition
+- If no youth version exists for a product, hide the AGE GROUP toggle 
+  entirely — don't show it at all
+- Add a small pixel-style divider line between the selectors and the 
+  Add to Cart button
+
+---
+
+Maintain all existing retro/arcade styling, fonts, colors, and animations. 
+Only adjust layout, spacing, scale, and the product grouping/merging logic.

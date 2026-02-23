@@ -1,0 +1,97 @@
+Build a full merch store web app called "MyShirtsDope" with a vintage arcade / retro video game UI theme.
+
+---
+
+🎮 BRAND IDENTITY
+- Brand: MyShirtsDope.com
+- Tagline: "Shirts, hoodies, onesies, and accessories for all ages inspired by music, culture and love."
+- Mission: Represent a time, feeling, event, place, song, or artist through wearable culture. Rep old school hip hop, R&B, soul, pop, and love. Products you won't find anywhere else.
+- Tone: Nostalgic, cool, community-driven, bold, culture-first
+
+---
+
+🕹️ DESIGN THEME — Vintage Arcade / Retro Video Game
+- Dark background (#0a0a0a or deep navy)
+- Neon accent colors: electric yellow, hot pink, lime green, arcade orange
+- Pixel / 8-bit style fonts (use Google Font: "Press Start 2P" for headings, clean sans-serif like Inter for body text)
+- CRT scanline overlay effect on hero section (CSS or canvas)
+- Pixel border/box styles on product cards (border with pixelated corners)
+- Blinking cursor effects and neon glow text-shadow on headings
+- Background: subtle animated pixel grid or starfield
+- Sound optional toggle (8-bit background music loop — muted by default)
+- Loading screen styled like a game boot screen ("PRESS START" or "LOADING CULTURE...")
+- Hover effects: pixel shake, neon glow pulse, or "SELECT" cursor arrow on products
+- Section dividers that look like old game UI bars
+
+---
+
+🏗️ APP STRUCTURE & PAGES
+
+1. **Home / Hero**
+   - Full-width hero with animated pixel art background
+   - Brand name in glowing pixel font
+   - Tagline displayed with typewriter animation
+   - CTA button styled like a game START button: "ENTER THE STORE"
+   - Scrolling ticker/marquee: "HIP HOP · R&B · SOUL · POP · CULTURE · LOVE · OLD SCHOOL · NEW VIBES"
+
+2. **Shop / Product Grid**
+   - Filter bar styled like game category select (All, Shirts, Hoodies, Onesies, Accessories)
+   - Product cards with pixel borders, product image, name, price
+   - Hover state shows "ADD TO CART" styled as a game action button
+   - Products pulled from Printful API (GET /store/products)
+
+3. **Product Detail Page**
+   - Large image viewer
+   - Size/color selector styled like game option menus
+   - "ADD TO CART" button with pixel press animation
+   - Short description area
+   - Related products carousel
+
+4. **Cart**
+   - Styled like a game inventory screen
+   - Item list with quantities, pixel icons
+   - Total with neon glow
+   - Checkout button
+
+5. **About / Story Page**
+   - Styled like a game "LORE" or "STORY MODE" screen
+   - Brand story text with retro pixel background
+   - Highlight the mission, culture focus, and community vibe
+
+6. **Contact / Support**
+   - Styled like an in-game dialogue box
+   - Simple contact form for questions, custom orders, bulk pricing
+
+---
+
+⚙️ TECH STACK
+- Frontend: React (Vite)
+- Styling: Tailwind CSS + custom CSS for pixel/retro effects
+- Fonts: Google Fonts — "Press Start 2P" + "Inter"
+- API: Printful API (use environment variable PRINTFUL_API_KEY)
+- Payments: Stripe (integrate for checkout flow)
+- State: React Context or Zustand for cart
+- Routing: React Router
+
+---
+
+🔌 PRINTFUL API INTEGRATION
+- Fetch products from Printful: GET https://api.printful.com/store/products
+- Fetch product variants/details: GET https://api.printful.com/store/products/{id}
+- Create orders on checkout: POST https://api.printful.com/orders
+- Store API key in .env as VITE_PRINTFUL_API_KEY
+- Backend proxy (Express or Netlify Functions) to protect API key — do NOT expose key on frontend
+
+---
+
+🌟 SPECIAL FEATURES
+- "PLAYER 1 SELECT" welcome animation on first visit
+- Product cards show a small pixel badge for categories (e.g., 🎵 Hip Hop, ❤️ Love, 🏆 Culture)
+- "NEW DROP" badge styled like a game NEW ITEM notification
+- Footer with blinking "© MyShirtsDope.com — CULTURE NEVER DIES"
+- Mobile responsive — game UI scales down cleanly
+- Pixel art favicon and tab title that says "MyShirtsDope 🕹️"
+
+---
+
+Start by scaffolding the full project structure, installing dependencies, setting up routing, building the Hero page and Shop page with mock product data first, then wire in the Printful API. Keep all retro game styling consistent across every component.
