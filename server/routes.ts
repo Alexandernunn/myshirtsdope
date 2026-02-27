@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { insertCartItemSchema, insertContactMessageSchema } from "@shared/schema";
 import { syncPrintfulProducts, fetchColorImagesForProduct, generateTags } from "./printful";
 import { syncShopifyTags } from "./shopify";
+import { fetchAllStorefrontProducts, mapStorefrontProduct, createShopifyCheckout } from "./shopify-storefront";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -143,6 +144,82 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Shopify tag sync error:", error);
       res.status(500).json({ error: "Failed to sync Shopify tags" });
+    }
+  });
+
+  app.post("/api/sync-shopify-products", async (_req, res) => {
+    try {
+      const shopifyProducts = await fetchAllStorefrontProducts();
+      let synced = 0;
+      for (const sp of shopifyProducts) {
+        const mapped = mapStorefrontProduct(sp);
+        await storage.upsertProductByShopifyId(sp.id, mapped);
+        synced++;
+      }
+      res.json({ synced, total: shopifyProducts.length });
+    } catch (error) {
+      console.error("Shopify product sync error:", error);
+      res.status(500).json({ error: "Failed to sync Shopify products" });
+    }
+  });
+
+  app.post("/api/checkout", async (req, res) => {
+    try {
+      const { sessionId } = req.body;
+      if (!sessionId) {
+        return res.status(400).json({ error: "Session ID is required" });
+      }
+
+      const cartItems = await storage.getCartItems(sessionId);
+      if (cartItems.length === 0) {
+        return res.status(400).json({ error: "Cart is empty" });
+      }
+
+      const lineItems: { variantId: string; quantity: number }[] = [];
+      const unmappedItems: string[] = [];
+
+      for (const item of cartItems) {
+        const product = item.product;
+        if (!product.shopifyVariants || product.shopifyVariants.length === 0) {
+          unmappedItems.push(product.name);
+          continue;
+        }
+
+        const variant = product.shopifyVariants.find(
+          (v) => v.size === item.size && v.color === item.color
+        );
+
+        if (!variant) {
+          const fallback = product.shopifyVariants.find((v) => v.size === item.size) ||
+            product.shopifyVariants[0];
+          if (fallback) {
+            lineItems.push({ variantId: fallback.variantId, quantity: item.quantity });
+          } else {
+            unmappedItems.push(`${product.name} (${item.size}/${item.color})`);
+          }
+        } else {
+          lineItems.push({ variantId: variant.variantId, quantity: item.quantity });
+        }
+      }
+
+      if (lineItems.length === 0) {
+        return res.status(400).json({
+          error: "No items in cart have Shopify variants. Please sync products from Shopify first.",
+          unmappedItems,
+        });
+      }
+
+      const { checkoutUrl, cartId } = await createShopifyCheckout(lineItems);
+
+      res.json({
+        checkoutUrl,
+        cartId,
+        itemCount: lineItems.length,
+        ...(unmappedItems.length > 0 ? { unmappedItems } : {}),
+      });
+    } catch (error) {
+      console.error("Checkout error:", error);
+      res.status(500).json({ error: "Failed to create checkout" });
     }
   });
 

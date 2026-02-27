@@ -16,6 +16,7 @@ export interface IStorage {
   getProduct(id: number): Promise<Product | undefined>;
   createProduct(product: InsertProduct): Promise<Product>;
   upsertProductByPrintfulId(printfulId: number, product: InsertProduct): Promise<Product>;
+  upsertProductByShopifyId(shopifyProductId: string, product: InsertProduct): Promise<Product>;
   deleteProductsNotInPrintfulIds(printfulIds: number[]): Promise<void>;
 
   getCartItems(sessionId: string): Promise<CartItemWithProduct[]>;
@@ -55,6 +56,19 @@ export class DatabaseStorage implements IStorage {
       return updated;
     }
     const [created] = await db.insert(products).values({ ...product, printfulId }).returning();
+    return created;
+  }
+
+  async upsertProductByShopifyId(shopifyProductId: string, product: InsertProduct): Promise<Product> {
+    const existing = await db.select().from(products).where(eq(products.shopifyProductId, shopifyProductId));
+    if (existing.length > 0) {
+      const [updated] = await db.update(products)
+        .set(product)
+        .where(eq(products.shopifyProductId, shopifyProductId))
+        .returning();
+      return updated;
+    }
+    const [created] = await db.insert(products).values({ ...product, shopifyProductId }).returning();
     return created;
   }
 

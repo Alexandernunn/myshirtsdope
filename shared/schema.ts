@@ -6,6 +6,7 @@ import { z } from "zod";
 export const products = pgTable("products", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   printfulId: integer("printful_id"),
+  shopifyProductId: text("shopify_product_id"),
   name: text("name").notNull(),
   description: text("description").notNull(),
   price: doublePrecision("price").notNull(),
@@ -17,7 +18,15 @@ export const products = pgTable("products", {
   colors: text("colors").array().notNull(),
   colorImages: jsonb("color_images").$type<Record<string, string>>(),
   tags: text("tags").array(),
+  shopifyVariants: jsonb("shopify_variants").$type<ShopifyVariantMapping[]>(),
 });
+
+export interface ShopifyVariantMapping {
+  variantId: string;
+  size: string;
+  color: string;
+  price: string;
+}
 
 export const cartItems = pgTable("cart_items", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),

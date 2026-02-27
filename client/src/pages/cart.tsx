@@ -1,13 +1,41 @@
+import { useState } from "react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Minus, Plus, Trash2, ArrowLeft, ShoppingCart } from "lucide-react";
+import { Minus, Plus, Trash2, ArrowLeft, ShoppingCart, Loader2 } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePageTitle } from "@/hooks/use-page-title";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function Cart() {
   usePageTitle("Cart");
   const { items, isLoading, totalItems, totalPrice, removeFromCart, updateQuantity, clearCart } = useCart();
+  const { toast } = useToast();
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
+
+  const handleCheckout = async () => {
+    setIsCheckingOut(true);
+    try {
+      const sessionId = localStorage.getItem("msd_session");
+      if (!sessionId) {
+        toast({ title: "Error", description: "No session found. Please try again.", variant: "destructive" });
+        return;
+      }
+      const res = await apiRequest("POST", "/api/checkout", { sessionId });
+      const data = await res.json();
+      if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl;
+      } else {
+        toast({ title: "Error", description: "Could not create checkout. Please try again.", variant: "destructive" });
+      }
+    } catch (error: any) {
+      const message = error?.message || "Checkout failed. Please try again.";
+      toast({ title: "Checkout Error", description: message, variant: "destructive" });
+    } finally {
+      setIsCheckingOut(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -131,8 +159,17 @@ export default function Cart() {
                 <Button
                   className="flex-1 font-pixel text-[10px] bg-neon-yellow border-neon-yellow text-black py-5 no-default-hover-elevate no-default-active-elevate hover:shadow-[0_0_20px_hsl(52_100%_50%/0.5)] transition-all active:scale-[0.97]"
                   data-testid="button-checkout"
+                  onClick={handleCheckout}
+                  disabled={isCheckingOut}
                 >
-                  CHECKOUT
+                  {isCheckingOut ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      PROCESSING...
+                    </>
+                  ) : (
+                    "CHECKOUT"
+                  )}
                 </Button>
                 <Button
                   variant="outline"
