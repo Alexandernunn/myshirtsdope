@@ -1,24 +1,80 @@
 import type { ShopifyVariantMapping } from "@shared/schema";
 
-function getStorefrontConfig() {
+function getAdminConfig() {
   const domain = process.env.SHOPIFY_STORE_DOMAIN;
-  const token = process.env.SHOPIFY_STOREFRONT_TOKEN;
+  const token = process.env.SHOPIFY_ACCESS_TOKEN;
   if (!domain || !token) {
-    throw new Error("Missing SHOPIFY_STORE_DOMAIN or SHOPIFY_STOREFRONT_TOKEN");
+    throw new Error("Missing SHOPIFY_STORE_DOMAIN or SHOPIFY_ACCESS_TOKEN");
   }
   const cleanDomain = domain.replace(/^https?:\/\//, "").replace(/\/$/, "");
   return { domain: cleanDomain, token };
 }
 
+async function adminRequest(path: string, options?: RequestInit): Promise<any> {
+  const { domain, token } = getAdminConfig();
+  const url = `https://${domain}/admin/api/2024-01${path}`;
+
+  const res = await fetch(url, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      "X-Shopify-Access-Token": token,
+      ...(options?.headers || {}),
+    },
+  });
+
+  if (res.status === 429) {
+    const retryAfter = parseInt(res.headers.get("retry-after") || "2");
+    console.log(`[Shopify Admin] Rate limited, waiting ${retryAfter}s...`);
+    await new Promise((r) => setTimeout(r, retryAfter * 1000));
+    return adminRequest(path, options);
+  }
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Shopify Admin API error (${res.status}): ${text}`);
+  }
+
+  return res.json();
+}
+
+let cachedStorefrontToken: string | null = null;
+
+async function getStorefrontToken(): Promise<string> {
+  if (cachedStorefrontToken) return cachedStorefrontToken;
+
+  const data = await adminRequest("/storefront_access_tokens.json");
+  const existing = data.storefront_access_tokens?.find(
+    (t: any) => t.title === "MyShirtsDope Storefront"
+  );
+
+  if (existing) {
+    cachedStorefrontToken = existing.access_token;
+    return cachedStorefrontToken!;
+  }
+
+  const created = await adminRequest("/storefront_access_tokens.json", {
+    method: "POST",
+    body: JSON.stringify({
+      storefront_access_token: { title: "MyShirtsDope Storefront" },
+    }),
+  });
+
+  cachedStorefrontToken = created.storefront_access_token.access_token;
+  console.log("[Shopify] Created new Storefront API access token");
+  return cachedStorefrontToken!;
+}
+
 async function storefrontQuery(query: string, variables?: Record<string, unknown>): Promise<any> {
-  const { domain, token } = getStorefrontConfig();
+  const { domain } = getAdminConfig();
+  const storefrontToken = await getStorefrontToken();
   const url = `https://${domain}/api/2024-01/graphql.json`;
 
   const res = await fetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "X-Shopify-Storefront-Access-Token": token,
+      "X-Shopify-Storefront-Access-Token": storefrontToken,
     },
     body: JSON.stringify({ query, variables }),
   });
@@ -35,94 +91,64 @@ async function storefrontQuery(query: string, variables?: Record<string, unknown
   return json.data;
 }
 
-const PRODUCTS_QUERY = `
-  query GetProducts($cursor: String) {
-    products(first: 50, after: $cursor) {
-      pageInfo {
-        hasNextPage
-        endCursor
-      }
-      edges {
-        node {
-          id
-          title
-          description
-          productType
-          tags
-          images(first: 10) {
-            edges {
-              node {
-                url
-                altText
-              }
-            }
-          }
-          variants(first: 100) {
-            edges {
-              node {
-                id
-                title
-                price {
-                  amount
-                  currencyCode
-                }
-                selectedOptions {
-                  name
-                  value
-                }
-                image {
-                  url
-                  altText
-                }
-                availableForSale
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-`;
-
-interface ShopifyStorefrontProduct {
-  id: string;
+interface AdminProduct {
+  id: number;
   title: string;
-  description: string;
-  productType: string;
-  tags: string[];
-  images: { edges: { node: { url: string; altText: string | null } }[] };
+  body_html: string;
+  product_type: string;
+  tags: string;
+  images: { id: number; src: string; alt: string | null }[];
   variants: {
-    edges: {
-      node: {
-        id: string;
-        title: string;
-        price: { amount: string; currencyCode: string };
-        selectedOptions: { name: string; value: string }[];
-        image: { url: string; altText: string | null } | null;
-        availableForSale: boolean;
-      };
-    }[];
-  };
+    id: number;
+    title: string;
+    price: string;
+    option1: string | null;
+    option2: string | null;
+    option3: string | null;
+    image_id: number | null;
+    inventory_quantity: number;
+  }[];
+  options: { name: string; position: number; values: string[] }[];
 }
 
-export async function fetchAllStorefrontProducts(): Promise<ShopifyStorefrontProduct[]> {
-  const allProducts: ShopifyStorefrontProduct[] = [];
-  let cursor: string | null = null;
-  let hasNextPage = true;
+export async function fetchAllStorefrontProducts(): Promise<AdminProduct[]> {
+  const { domain, token } = getAdminConfig();
+  const allProducts: AdminProduct[] = [];
+  let nextUrl: string | null =
+    `https://${domain}/admin/api/2024-01/products.json?limit=250&status=active`;
 
-  while (hasNextPage) {
-    const data = await storefrontQuery(PRODUCTS_QUERY, { cursor });
-    const products = data.products;
+  while (nextUrl) {
+    const res = await fetch(nextUrl, {
+      headers: {
+        "X-Shopify-Access-Token": token,
+        "Content-Type": "application/json",
+      },
+    });
 
-    for (const edge of products.edges) {
-      allProducts.push(edge.node);
+    if (res.status === 429) {
+      const retryAfter = parseInt(res.headers.get("retry-after") || "2");
+      console.log(`[Shopify Admin] Rate limited, waiting ${retryAfter}s...`);
+      await new Promise((r) => setTimeout(r, retryAfter * 1000));
+      continue;
     }
 
-    hasNextPage = products.pageInfo.hasNextPage;
-    cursor = products.pageInfo.endCursor;
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Shopify Admin API error (${res.status}): ${text}`);
+    }
+
+    const data = await res.json();
+    allProducts.push(...data.products);
+
+    const linkHeader = res.headers.get("link");
+    nextUrl = null;
+    if (linkHeader) {
+      const nextMatch = linkHeader.match(/<([^>]+)>;\s*rel="next"/);
+      if (nextMatch) nextUrl = nextMatch[1];
+    }
   }
 
-  console.log(`[Shopify Storefront] Fetched ${allProducts.length} products`);
+  console.log(`[Shopify Admin] Fetched ${allProducts.length} products`);
   return allProducts;
 }
 
@@ -137,55 +163,73 @@ function categorizeProduct(productType: string, title: string): string {
   return "Shirts";
 }
 
-export function mapStorefrontProduct(product: ShopifyStorefrontProduct) {
-  const variants = product.variants.edges.map((e) => e.node).filter((v) => v.availableForSale);
+function stripHtml(html: string): string {
+  return html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+}
+
+export function mapStorefrontProduct(product: AdminProduct) {
+  const imageMap = new Map<number, string>();
+  for (const img of product.images) {
+    imageMap.set(img.id, img.src);
+  }
+
+  const sizeOption = product.options.find((o) =>
+    o.name.toLowerCase() === "size"
+  );
+  const colorOption = product.options.find((o) =>
+    o.name.toLowerCase() === "color" || o.name.toLowerCase() === "colour"
+  );
+
+  const sizePos = sizeOption ? sizeOption.position : null;
+  const colorPos = colorOption ? colorOption.position : null;
 
   const sizes = new Set<string>();
   const colors = new Set<string>();
   const colorImages: Record<string, string> = {};
   const shopifyVariants: ShopifyVariantMapping[] = [];
 
-  for (const variant of variants) {
-    let size = "One Size";
-    let color = "Default";
+  for (const variant of product.variants) {
+    const optVals = [variant.option1, variant.option2, variant.option3];
 
-    for (const opt of variant.selectedOptions) {
-      const optName = opt.name.toLowerCase();
-      if (optName === "size") size = opt.value;
-      else if (optName === "color" || optName === "colour") color = opt.value;
-    }
+    let size = sizePos ? (optVals[sizePos - 1] ?? "One Size") : "One Size";
+    let color = colorPos ? (optVals[colorPos - 1] ?? "Default") : "Default";
 
     sizes.add(size);
     colors.add(color);
 
-    if (variant.image?.url && color !== "Default") {
-      colorImages[color] = variant.image.url;
+    if (variant.image_id && imageMap.has(variant.image_id) && color !== "Default") {
+      colorImages[color] = imageMap.get(variant.image_id)!;
     }
 
+    const variantGid = `gid://shopify/ProductVariant/${variant.id}`;
     shopifyVariants.push({
-      variantId: variant.id,
+      variantId: variantGid,
       size,
       color,
-      price: variant.price.amount,
+      price: variant.price,
     });
   }
 
-  const mainImage = product.images.edges[0]?.node.url || "";
-  const lowestPrice = variants.length > 0
-    ? Math.min(...variants.map((v) => parseFloat(v.price.amount)))
-    : 0;
+  const mainImage = product.images[0]?.src || "";
+  const prices = product.variants.map((v) => parseFloat(v.price)).filter((p) => !isNaN(p));
+  const lowestPrice = prices.length > 0 ? Math.min(...prices) : 0;
+
+  const tags = product.tags
+    .split(",")
+    .map((t) => t.trim().toLowerCase())
+    .filter((t) => t.length > 0);
 
   return {
-    shopifyProductId: product.id,
+    shopifyProductId: `gid://shopify/Product/${product.id}`,
     name: product.title,
-    description: product.description || `${product.title} from MyShirtsDope`,
+    description: stripHtml(product.body_html) || `${product.title} from MyShirtsDope`,
     price: lowestPrice,
-    category: categorizeProduct(product.productType, product.title),
+    category: categorizeProduct(product.product_type, product.title),
     imageUrl: mainImage,
     sizes: Array.from(sizes),
     colors: Array.from(colors),
     colorImages,
-    tags: product.tags.map((t) => t.toLowerCase()),
+    tags,
     shopifyVariants,
     isNewDrop: false,
   };
@@ -197,20 +241,6 @@ const CART_CREATE_MUTATION = `
       cart {
         id
         checkoutUrl
-        lines(first: 50) {
-          edges {
-            node {
-              id
-              quantity
-              merchandise {
-                ... on ProductVariant {
-                  id
-                  title
-                }
-              }
-            }
-          }
-        }
       }
       userErrors {
         field
