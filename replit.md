@@ -53,6 +53,21 @@ MyShirtsDope is a vintage arcade / retro video game themed merch store web app. 
 - Color-specific images: selecting a color swaps the product image to that color's preview
 - Products schema has `colorImages` jsonb column mapping color name → preview image URL
 
+## Environment Variables / Secrets
+- `SHOPIFY_STORE_DOMAIN` - Shopify store domain (env var, e.g. `tri-creative-store.myshopify.com`)
+- `SHOPIFY_ACCESS_TOKEN` - Shopify Admin API access token (`shpat_...`) — stored as secret
+- `SHOPIFY_STOREFRONT_TOKEN` - Auto-generated at runtime from Admin API; no need to set manually
+- `PRINTFUL_API_KEY` - Optional; Printful product sync (currently not set — seeding skipped)
+- `DATABASE_URL` - PostgreSQL connection string (managed by Replit)
+
+## Shopify Integration
+- **Product sync**: Admin REST API (`GET /admin/api/2024-01/products.json`) via `server/shopify-storefront.ts`
+- **Checkout**: Storefront API GraphQL (`cartCreate` mutation) via auto-generated Storefront token
+- **Auto token generation**: On first checkout, the server calls `POST /admin/api/2024-01/storefront_access_tokens.json` to create a Storefront API token (cached in memory, titled "MyShirtsDope Storefront")
+- **Variant mapping**: Each product stores `shopifyVariants` (jsonb) with `{variantId, size, color, price}` — variantId is a GID (`gid://shopify/ProductVariant/...`)
+- **Routes**: `POST /api/sync-shopify-products` (sync), `POST /api/checkout` (create checkout URL)
+- **Schema additions**: `shopifyProductId` (text), `shopifyVariants` (jsonb) columns on products table
+
 ## Recent Changes
 - Initial MVP build with all pages, retro arcade theming, cart system
 - Replaced neon pink with electric blue (#00b4ff) for bolder masculine aesthetic
@@ -78,3 +93,10 @@ MyShirtsDope is a vintage arcade / retro video game themed merch store web app. 
   - Depth cueing: cards behind are darker/smaller via brightness/scale
   - Responsive: 500×400 desktop, 320×280 mobile
   - Cards link to product detail pages, neon glow on hover
+- Integrated Shopify Storefront API for full e-commerce selling
+  - Product sync via Admin REST API (2,742 Shopify products synced)
+  - Checkout via Shopify Storefront GraphQL (`cartCreate` mutation)
+  - Storefront API token auto-generated from Admin API token at runtime
+  - Schema extended with `shopifyProductId` and `shopifyVariants` columns
+  - Cart page checkout button wired to `/api/checkout` → redirects to Shopify hosted checkout
+  - Admin API token (`SHOPIFY_ACCESS_TOKEN`) stored as Replit secret
