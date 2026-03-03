@@ -63,7 +63,7 @@ app.use((req, res, next) => {
 (async () => {
   startBackgroundLoad();
 
-  await registerRoutes(httpServer, app);
+  registerRoutes(httpServer, app);
 
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
     const status = err.status || err.statusCode || 500;

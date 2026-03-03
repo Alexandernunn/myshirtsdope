@@ -1,4 +1,4 @@
-import type { ShopifyVariantMapping } from "@shared/schema";
+import type { ShopifyVariantMapping } from "../shared/schema";
 
 function getAdminConfig() {
   const domain = process.env.SHOPIFY_STORE_DOMAIN;

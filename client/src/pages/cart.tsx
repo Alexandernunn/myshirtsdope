@@ -17,12 +17,32 @@ export default function Cart() {
   const handleCheckout = async () => {
     setIsCheckingOut(true);
     try {
-      const sessionId = localStorage.getItem("msd_session");
-      if (!sessionId) {
-        toast({ title: "Error", description: "No session found. Please try again.", variant: "destructive" });
+      const lineItems: { variantId: string; quantity: number }[] = [];
+      const unmapped: string[] = [];
+
+      for (const item of items) {
+        const variants = item.product.shopifyVariants;
+        if (!variants || variants.length === 0) {
+          unmapped.push(item.product.name);
+          continue;
+        }
+        const variant =
+          variants.find((v) => v.size === item.size && v.color === item.color) ||
+          variants.find((v) => v.size === item.size) ||
+          variants[0];
+        if (variant) {
+          lineItems.push({ variantId: variant.variantId, quantity: item.quantity });
+        } else {
+          unmapped.push(`${item.product.name} (${item.size}/${item.color})`);
+        }
+      }
+
+      if (lineItems.length === 0) {
+        toast({ title: "Error", description: "No items could be matched for checkout.", variant: "destructive" });
         return;
       }
-      const res = await apiRequest("POST", "/api/checkout", { sessionId });
+
+      const res = await apiRequest("POST", "/api/checkout", { lineItems });
       const data = await res.json();
       if (data.checkoutUrl) {
         window.location.href = data.checkoutUrl;
