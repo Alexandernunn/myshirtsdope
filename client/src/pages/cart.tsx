@@ -84,7 +84,7 @@ export default function Cart() {
                   <Link href={`/product/${item.productId}`}>
                     <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-md overflow-hidden bg-muted flex-shrink-0 cursor-pointer">
                       <img
-                        src={item.product.imageUrl}
+                        src={item.product.colorImages?.[item.color] || item.product.imageUrl}
                         alt={item.product.name}
                         className="w-full h-full object-cover"
                       />
