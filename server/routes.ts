@@ -44,7 +44,9 @@ export function registerRoutes(httpServer: Server, app: Express): void {
   app.get("/api/products", productLimiter, async (_req, res) => {
     try {
       const products = await loadProducts();
-      res.json(products);
+      res
+        .set("Cache-Control", "public, s-maxage=300, stale-while-revalidate=60")
+        .json(products);
     } catch (error) {
       console.error("Failed to fetch products:", error);
       res.status(500).json({ error: "Failed to fetch products" });

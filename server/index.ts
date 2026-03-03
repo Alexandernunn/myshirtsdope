@@ -61,7 +61,7 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  startBackgroundLoad();
+  // startBackgroundLoad();
 
   registerRoutes(httpServer, app);
 

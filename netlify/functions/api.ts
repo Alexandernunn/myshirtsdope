@@ -11,7 +11,7 @@ app.use(express.urlencoded({ extended: false }));
 
 const httpServer = createServer(app);
 
-startBackgroundLoad();
+// startBackgroundLoad();
 registerRoutes(httpServer, app);
 
 app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
