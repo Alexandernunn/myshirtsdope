@@ -1,29 +1,75 @@
-import type { Express } from "express";
-import { createServer, type Server } from "http";
-import { storage } from "./storage";
-import { insertCartItemSchema, insertContactMessageSchema } from "@shared/schema";
-import { syncPrintfulProducts, fetchColorImagesForProduct, generateTags } from "./printful";
-import { syncShopifyTags } from "./shopify";
-import { fetchAllStorefrontProducts, mapStorefrontProduct, createShopifyCheckout } from "./shopify-storefront";
+import type { Express, Request, Response, NextFunction } from "express";
+import type { Server } from "http";
+import { insertCartItemSchema, contactMessageSchema } from "@shared/schema";
+import {
+  loadProducts,
+  getProduct,
+  getCartItems,
+  addCartItem,
+  updateCartItemQuantity,
+  removeCartItem,
+  clearCart,
+} from "./storage";
+import { createShopifyCheckout } from "./shopify-storefront";
+
+const requestCounts = new Map<string, { count: number; resetAt: number }>();
+
+function rateLimit(maxRequests: number, windowMs: number) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    const key = req.ip || req.socket.remoteAddress || "unknown";
+    const now = Date.now();
+    let entry = requestCounts.get(key);
+
+    if (!entry || now >= entry.resetAt) {
+      entry = { count: 0, resetAt: now + windowMs };
+      requestCounts.set(key, entry);
+    }
+
+    entry.count++;
+
+    if (entry.count > maxRequests) {
+      return res.status(429).json({ error: "Too many requests. Please try again later." });
+    }
+
+    next();
+  };
+}
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of requestCounts) {
+    if (now >= entry.resetAt) {
+      requestCounts.delete(key);
+    }
+  }
+}, 60_000);
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  app.get("/api/products", async (_req, res) => {
+  const productLimiter = rateLimit(60, 60_000);
+  const cartLimiter = rateLimit(30, 60_000);
+  const contactLimiter = rateLimit(5, 60_000);
+  const checkoutLimiter = rateLimit(10, 60_000);
+
+  app.get("/api/products", productLimiter, async (_req, res) => {
     try {
-      const products = await storage.getProducts();
+      const products = await loadProducts();
       res.json(products);
     } catch (error) {
+      console.error("Failed to fetch products:", error);
       res.status(500).json({ error: "Failed to fetch products" });
     }
   });
 
-  app.get("/api/products/:id", async (req, res) => {
+  app.get("/api/products/:id", productLimiter, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) return res.status(400).json({ error: "Invalid product ID" });
-      const product = await storage.getProduct(id);
+
+      await loadProducts();
+      const product = getProduct(id);
       if (!product) return res.status(404).json({ error: "Product not found" });
       res.json(product);
     } catch (error) {
@@ -31,61 +77,58 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/products/:id/color-images", async (req, res) => {
+  app.get("/api/products/:id/color-images", productLimiter, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) return res.status(400).json({ error: "Invalid product ID" });
-      const product = await storage.getProduct(id);
+
+      await loadProducts();
+      const product = getProduct(id);
       if (!product) return res.status(404).json({ error: "Product not found" });
 
-      if (product.colorImages && Object.keys(product.colorImages).length > 0) {
-        return res.json({ colorImages: product.colorImages, cached: true });
-      }
-
-      if (!product.printfulId) {
-        return res.json({ colorImages: {}, cached: false });
-      }
-
-      const colorImages = await fetchColorImagesForProduct(product.printfulId);
-      if (Object.keys(colorImages).length > 0) {
-        await storage.updateProductColorImages(id, colorImages);
-      }
-      res.json({ colorImages, cached: false });
+      res.json({ colorImages: product.colorImages || {}, cached: true });
     } catch (error) {
       console.error("Failed to fetch color images:", error);
       res.json({ colorImages: {}, cached: false });
     }
   });
 
-  app.get("/api/cart/:sessionId", async (req, res) => {
+  app.get("/api/cart/:sessionId", cartLimiter, async (req, res) => {
     try {
-      const items = await storage.getCartItems(req.params.sessionId);
+      const items = getCartItems(req.params.sessionId);
       res.json(items);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch cart" });
     }
   });
 
-  app.post("/api/cart", async (req, res) => {
+  app.post("/api/cart", cartLimiter, async (req, res) => {
     try {
       const parsed = insertCartItemSchema.safeParse(req.body);
       if (!parsed.success) return res.status(400).json({ error: parsed.error.message });
-      const item = await storage.addCartItem(parsed.data);
+
+      await loadProducts();
+      const product = getProduct(parsed.data.productId);
+      if (!product) return res.status(404).json({ error: "Product not found" });
+
+      const item = addCartItem(parsed.data);
       res.json(item);
     } catch (error) {
       res.status(500).json({ error: "Failed to add to cart" });
     }
   });
 
-  app.patch("/api/cart/:id", async (req, res) => {
+  app.patch("/api/cart/:id", cartLimiter, async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
-      if (isNaN(id)) return res.status(400).json({ error: "Invalid ID" });
-      const { quantity } = req.body;
+      const itemId = req.params.id;
+      const { quantity, sessionId } = req.body;
       if (typeof quantity !== "number" || quantity < 1) {
         return res.status(400).json({ error: "Invalid quantity" });
       }
-      const item = await storage.updateCartItemQuantity(id, quantity);
+      if (!sessionId) {
+        return res.status(400).json({ error: "Session ID required" });
+      }
+      const item = updateCartItemQuantity(sessionId, itemId, quantity);
       if (!item) return res.status(404).json({ error: "Cart item not found" });
       res.json(item);
     } catch (error) {
@@ -93,84 +136,37 @@ export async function registerRoutes(
     }
   });
 
-  app.delete("/api/cart/:id", async (req, res) => {
+  app.delete("/api/cart/:id", cartLimiter, async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
-      if (isNaN(id)) return res.status(400).json({ error: "Invalid ID" });
-      await storage.removeCartItem(id);
+      const itemId = req.params.id;
+      const sessionId = req.query.sessionId as string;
+      if (!sessionId) {
+        return res.status(400).json({ error: "Session ID required" });
+      }
+      removeCartItem(sessionId, itemId);
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: "Failed to remove cart item" });
     }
   });
 
-  app.delete("/api/cart/session/:sessionId", async (req, res) => {
+  app.delete("/api/cart/session/:sessionId", cartLimiter, async (req, res) => {
     try {
-      await storage.clearCart(req.params.sessionId);
+      clearCart(req.params.sessionId);
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: "Failed to clear cart" });
     }
   });
 
-  app.post("/api/sync-products", async (_req, res) => {
-    try {
-      const result = await syncPrintfulProducts();
-      res.json(result);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to sync products" });
-    }
-  });
-
-  app.post("/api/regenerate-tags", async (_req, res) => {
-    try {
-      const allProducts = await storage.getProducts();
-      let updated = 0;
-      for (const product of allProducts) {
-        const tags = generateTags(product.name, product.category, product.colors || []);
-        await storage.updateProductTags(product.id, tags);
-        updated++;
-      }
-      res.json({ updated });
-    } catch (error) {
-      res.status(500).json({ error: "Failed to regenerate tags" });
-    }
-  });
-
-  app.post("/api/sync-shopify-tags", async (_req, res) => {
-    try {
-      const result = await syncShopifyTags();
-      res.json(result);
-    } catch (error) {
-      console.error("Shopify tag sync error:", error);
-      res.status(500).json({ error: "Failed to sync Shopify tags" });
-    }
-  });
-
-  app.post("/api/sync-shopify-products", async (_req, res) => {
-    try {
-      const shopifyProducts = await fetchAllStorefrontProducts();
-      let synced = 0;
-      for (const sp of shopifyProducts) {
-        const mapped = mapStorefrontProduct(sp);
-        await storage.upsertProductByShopifyId(sp.id, mapped);
-        synced++;
-      }
-      res.json({ synced, total: shopifyProducts.length });
-    } catch (error) {
-      console.error("Shopify product sync error:", error);
-      res.status(500).json({ error: "Failed to sync Shopify products" });
-    }
-  });
-
-  app.post("/api/checkout", async (req, res) => {
+  app.post("/api/checkout", checkoutLimiter, async (req, res) => {
     try {
       const { sessionId } = req.body;
       if (!sessionId) {
         return res.status(400).json({ error: "Session ID is required" });
       }
 
-      const cartItems = await storage.getCartItems(sessionId);
+      const cartItems = getCartItems(sessionId);
       if (cartItems.length === 0) {
         return res.status(400).json({ error: "Cart is empty" });
       }
@@ -190,7 +186,8 @@ export async function registerRoutes(
         );
 
         if (!variant) {
-          const fallback = product.shopifyVariants.find((v) => v.size === item.size) ||
+          const fallback =
+            product.shopifyVariants.find((v) => v.size === item.size) ||
             product.shopifyVariants[0];
           if (fallback) {
             lineItems.push({ variantId: fallback.variantId, quantity: item.quantity });
@@ -204,7 +201,7 @@ export async function registerRoutes(
 
       if (lineItems.length === 0) {
         return res.status(400).json({
-          error: "No items in cart have Shopify variants. Please sync products from Shopify first.",
+          error: "No items in cart have Shopify variants.",
           unmappedItems,
         });
       }
@@ -223,12 +220,16 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/contact", async (req, res) => {
+  app.post("/api/contact", contactLimiter, async (req, res) => {
     try {
-      const parsed = insertContactMessageSchema.safeParse(req.body);
+      const parsed = contactMessageSchema.safeParse(req.body);
       if (!parsed.success) return res.status(400).json({ error: parsed.error.message });
-      const message = await storage.createContactMessage(parsed.data);
-      res.json(message);
+      console.log("[Contact] Message received:", {
+        name: parsed.data.name,
+        email: parsed.data.email,
+        subject: parsed.data.subject,
+      });
+      res.json({ success: true, message: "Message received" });
     } catch (error) {
       res.status(500).json({ error: "Failed to send message" });
     }

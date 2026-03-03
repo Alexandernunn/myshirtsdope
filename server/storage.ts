@@ -1,155 +1,135 @@
-import { eq, and } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/node-postgres";
-import pg from "pg";
 import {
-  products, cartItems, contactMessages,
-  type Product, type InsertProduct,
-  type CartItem, type InsertCartItem, type CartItemWithProduct,
-  type ContactMessage, type InsertContactMessage,
+  type Product,
+  type CartItem,
+  type CartItemWithProduct,
+  type InsertCartItem,
 } from "@shared/schema";
+import { fetchAllStorefrontProducts, mapStorefrontProduct } from "./shopify-storefront";
 
-const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
-export const db = drizzle(pool);
+let productCache: Product[] = [];
+let productCacheTimestamp = 0;
+const CACHE_TTL_MS = 5 * 60 * 1000;
 
-export interface IStorage {
-  getProducts(): Promise<Product[]>;
-  getProduct(id: number): Promise<Product | undefined>;
-  createProduct(product: InsertProduct): Promise<Product>;
-  upsertProductByPrintfulId(printfulId: number, product: InsertProduct): Promise<Product>;
-  upsertProductByShopifyId(shopifyProductId: string, product: InsertProduct): Promise<Product>;
-  deleteProductsNotInPrintfulIds(printfulIds: number[]): Promise<void>;
+const cartStore = new Map<string, CartItem[]>();
+let cartIdCounter = 0;
 
-  getCartItems(sessionId: string): Promise<CartItemWithProduct[]>;
-  addCartItem(item: InsertCartItem): Promise<CartItem>;
-  updateCartItemQuantity(id: number, quantity: number): Promise<CartItem | undefined>;
-  removeCartItem(id: number): Promise<void>;
-  clearCart(sessionId: string): Promise<void>;
-
-  updateProductColorImages(id: number, colorImages: Record<string, string>): Promise<Product | undefined>;
-  updateProductTags(id: number, tags: string[]): Promise<Product | undefined>;
-
-  createContactMessage(message: InsertContactMessage): Promise<ContactMessage>;
+function nextCartId(): string {
+  cartIdCounter++;
+  return `cart_${cartIdCounter}_${Date.now()}`;
 }
 
-export class DatabaseStorage implements IStorage {
-  async getProducts(): Promise<Product[]> {
-    return db.select().from(products);
+export async function loadProducts(): Promise<Product[]> {
+  const now = Date.now();
+  if (productCache.length > 0 && now - productCacheTimestamp < CACHE_TTL_MS) {
+    return productCache;
   }
 
-  async getProduct(id: number): Promise<Product | undefined> {
-    const [product] = await db.select().from(products).where(eq(products.id, id));
-    return product;
-  }
+  try {
+    console.log("[Storage] Fetching products from Shopify...");
+    const rawProducts = await fetchAllStorefrontProducts();
+    const mapped: Product[] = rawProducts.map((sp, index) => {
+      const data = mapStorefrontProduct(sp);
+      return {
+        id: sp.id,
+        shopifyProductId: data.shopifyProductId,
+        name: data.name,
+        description: data.description,
+        price: data.price,
+        category: data.category,
+        imageUrl: data.imageUrl,
+        badge: null,
+        isNewDrop: data.isNewDrop,
+        sizes: data.sizes,
+        colors: data.colors,
+        colorImages: data.colorImages,
+        tags: data.tags,
+        shopifyVariants: data.shopifyVariants,
+      };
+    });
 
-  async createProduct(product: InsertProduct): Promise<Product> {
-    const [created] = await db.insert(products).values(product).returning();
-    return created;
-  }
-
-  async upsertProductByPrintfulId(printfulId: number, product: InsertProduct): Promise<Product> {
-    const existing = await db.select().from(products).where(eq(products.printfulId, printfulId));
-    if (existing.length > 0) {
-      const [updated] = await db.update(products)
-        .set(product)
-        .where(eq(products.printfulId, printfulId))
-        .returning();
-      return updated;
+    productCache = mapped;
+    productCacheTimestamp = now;
+    console.log(`[Storage] Cached ${mapped.length} products from Shopify`);
+    return mapped;
+  } catch (error) {
+    console.error("[Storage] Failed to fetch products from Shopify:", error);
+    if (productCache.length > 0) {
+      console.log("[Storage] Returning stale cache");
+      return productCache;
     }
-    const [created] = await db.insert(products).values({ ...product, printfulId }).returning();
-    return created;
-  }
-
-  async upsertProductByShopifyId(shopifyProductId: string, product: InsertProduct): Promise<Product> {
-    const existing = await db.select().from(products).where(eq(products.shopifyProductId, shopifyProductId));
-    if (existing.length > 0) {
-      const [updated] = await db.update(products)
-        .set(product)
-        .where(eq(products.shopifyProductId, shopifyProductId))
-        .returning();
-      return updated;
-    }
-    const [created] = await db.insert(products).values({ ...product, shopifyProductId }).returning();
-    return created;
-  }
-
-  async deleteProductsNotInPrintfulIds(printfulIds: number[]): Promise<void> {
-    if (printfulIds.length === 0) return;
-    const allProducts = await db.select().from(products);
-    for (const p of allProducts) {
-      if (!p.printfulId || !printfulIds.includes(p.printfulId)) {
-        await db.delete(products).where(eq(products.id, p.id));
-      }
-    }
-  }
-
-  async getCartItems(sessionId: string): Promise<CartItemWithProduct[]> {
-    const items = await db.select().from(cartItems).where(eq(cartItems.sessionId, sessionId));
-    const result: CartItemWithProduct[] = [];
-    for (const item of items) {
-      const product = await this.getProduct(item.productId);
-      if (product) {
-        result.push({ ...item, product });
-      }
-    }
-    return result;
-  }
-
-  async addCartItem(item: InsertCartItem): Promise<CartItem> {
-    const existing = await db.select().from(cartItems).where(
-      and(
-        eq(cartItems.sessionId, item.sessionId),
-        eq(cartItems.productId, item.productId),
-        eq(cartItems.size, item.size),
-        eq(cartItems.color, item.color),
-      )
-    );
-    if (existing.length > 0) {
-      const [updated] = await db.update(cartItems)
-        .set({ quantity: existing[0].quantity + (item.quantity || 1) })
-        .where(eq(cartItems.id, existing[0].id))
-        .returning();
-      return updated;
-    }
-    const [created] = await db.insert(cartItems).values(item).returning();
-    return created;
-  }
-
-  async updateCartItemQuantity(id: number, quantity: number): Promise<CartItem | undefined> {
-    const [updated] = await db.update(cartItems)
-      .set({ quantity })
-      .where(eq(cartItems.id, id))
-      .returning();
-    return updated;
-  }
-
-  async removeCartItem(id: number): Promise<void> {
-    await db.delete(cartItems).where(eq(cartItems.id, id));
-  }
-
-  async clearCart(sessionId: string): Promise<void> {
-    await db.delete(cartItems).where(eq(cartItems.sessionId, sessionId));
-  }
-
-  async updateProductColorImages(id: number, colorImages: Record<string, string>): Promise<Product | undefined> {
-    const [updated] = await db.update(products)
-      .set({ colorImages })
-      .where(eq(products.id, id))
-      .returning();
-    return updated;
-  }
-
-  async updateProductTags(id: number, tags: string[]): Promise<Product | undefined> {
-    const [updated] = await db.update(products)
-      .set({ tags })
-      .where(eq(products.id, id))
-      .returning();
-    return updated;
-  }
-
-  async createContactMessage(message: InsertContactMessage): Promise<ContactMessage> {
-    const [created] = await db.insert(contactMessages).values(message).returning();
-    return created;
+    return [];
   }
 }
 
-export const storage = new DatabaseStorage();
+export function getProduct(id: number): Product | undefined {
+  return productCache.find((p) => p.id === id);
+}
+
+export function getCartItems(sessionId: string): CartItemWithProduct[] {
+  const items = cartStore.get(sessionId) || [];
+  const result: CartItemWithProduct[] = [];
+  for (const item of items) {
+    const product = getProduct(item.productId);
+    if (product) {
+      result.push({ ...item, product });
+    }
+  }
+  return result;
+}
+
+export function addCartItem(data: InsertCartItem): CartItem {
+  const items = cartStore.get(data.sessionId) || [];
+
+  const existing = items.find(
+    (i) =>
+      i.productId === data.productId &&
+      i.size === data.size &&
+      i.color === data.color
+  );
+
+  if (existing) {
+    existing.quantity += data.quantity || 1;
+    return existing;
+  }
+
+  const newItem: CartItem = {
+    id: nextCartId(),
+    sessionId: data.sessionId,
+    productId: data.productId,
+    quantity: data.quantity || 1,
+    size: data.size,
+    color: data.color,
+  };
+  items.push(newItem);
+  cartStore.set(data.sessionId, items);
+  return newItem;
+}
+
+export function updateCartItemQuantity(
+  sessionId: string,
+  itemId: string,
+  quantity: number
+): CartItem | undefined {
+  const items = cartStore.get(sessionId);
+  if (!items) return undefined;
+  const item = items.find((i) => i.id === itemId);
+  if (!item) return undefined;
+  item.quantity = quantity;
+  return item;
+}
+
+export function removeCartItem(sessionId: string, itemId: string): boolean {
+  const items = cartStore.get(sessionId);
+  if (!items) return false;
+  const idx = items.findIndex((i) => i.id === itemId);
+  if (idx === -1) return false;
+  items.splice(idx, 1);
+  if (items.length === 0) {
+    cartStore.delete(sessionId);
+  }
+  return true;
+}
+
+export function clearCart(sessionId: string): void {
+  cartStore.delete(sessionId);
+}

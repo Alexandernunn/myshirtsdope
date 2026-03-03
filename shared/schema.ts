@@ -1,25 +1,4 @@
-import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, doublePrecision, boolean, timestamp, jsonb } from "drizzle-orm/pg-core";
-import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
-
-export const products = pgTable("products", {
-  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
-  printfulId: integer("printful_id"),
-  shopifyProductId: text("shopify_product_id"),
-  name: text("name").notNull(),
-  description: text("description").notNull(),
-  price: doublePrecision("price").notNull(),
-  category: text("category").notNull(),
-  imageUrl: text("image_url").notNull(),
-  badge: text("badge"),
-  isNewDrop: boolean("is_new_drop").default(false),
-  sizes: text("sizes").array().notNull(),
-  colors: text("colors").array().notNull(),
-  colorImages: jsonb("color_images").$type<Record<string, string>>(),
-  tags: text("tags").array(),
-  shopifyVariants: jsonb("shopify_variants").$type<ShopifyVariantMapping[]>(),
-});
 
 export interface ShopifyVariantMapping {
   variantId: string;
@@ -28,33 +7,53 @@ export interface ShopifyVariantMapping {
   price: string;
 }
 
-export const cartItems = pgTable("cart_items", {
-  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
-  sessionId: text("session_id").notNull(),
-  productId: integer("product_id").notNull(),
-  quantity: integer("quantity").notNull().default(1),
-  size: text("size").notNull(),
-  color: text("color").notNull(),
+export interface Product {
+  id: number;
+  shopifyProductId: string | null;
+  name: string;
+  description: string;
+  price: number;
+  category: string;
+  imageUrl: string;
+  badge: string | null;
+  isNewDrop: boolean | null;
+  sizes: string[];
+  colors: string[];
+  colorImages: Record<string, string> | null;
+  tags: string[] | null;
+  shopifyVariants: ShopifyVariantMapping[] | null;
+}
+
+export interface CartItem {
+  id: string;
+  sessionId: string;
+  productId: number;
+  quantity: number;
+  size: string;
+  color: string;
+}
+
+export interface CartItemWithProduct extends CartItem {
+  product: Product;
+}
+
+export const insertCartItemSchema = z.object({
+  sessionId: z.string().min(1),
+  productId: z.number().int().positive(),
+  quantity: z.number().int().positive().default(1),
+  size: z.string().min(1),
+  color: z.string().min(1),
 });
 
-export const contactMessages = pgTable("contact_messages", {
-  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
-  name: text("name").notNull(),
-  email: text("email").notNull(),
-  subject: text("subject").notNull(),
-  message: text("message").notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
-export const insertProductSchema = createInsertSchema(products).omit({ id: true });
-export const insertCartItemSchema = createInsertSchema(cartItems).omit({ id: true });
-export const insertContactMessageSchema = createInsertSchema(contactMessages).omit({ id: true, createdAt: true });
-
-export type Product = typeof products.$inferSelect;
-export type InsertProduct = z.infer<typeof insertProductSchema>;
-export type CartItem = typeof cartItems.$inferSelect;
 export type InsertCartItem = z.infer<typeof insertCartItemSchema>;
-export type ContactMessage = typeof contactMessages.$inferSelect;
-export type InsertContactMessage = z.infer<typeof insertContactMessageSchema>;
 
-export type CartItemWithProduct = CartItem & { product: Product };
+export const contactMessageSchema = z.object({
+  name: z.string().min(1),
+  email: z.string().email(),
+  subject: z.string().min(1),
+  message: z.string().min(10),
+});
+
+export type ContactMessage = z.infer<typeof contactMessageSchema>;
+
+export const insertContactMessageSchema = contactMessageSchema;

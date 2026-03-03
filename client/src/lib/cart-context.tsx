@@ -18,8 +18,8 @@ interface CartContextType {
   totalItems: number;
   totalPrice: number;
   addToCart: (product: Product, size: string, color: string) => void;
-  removeFromCart: (id: number) => void;
-  updateQuantity: (id: number, quantity: number) => void;
+  removeFromCart: (id: string) => void;
+  updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
   isAdding: boolean;
 }
@@ -43,8 +43,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
   });
 
   const removeMutation = useMutation({
-    mutationFn: async (id: number) => {
-      await apiRequest("DELETE", `/api/cart/${id}`);
+    mutationFn: async (id: string) => {
+      await apiRequest("DELETE", `/api/cart/${id}?sessionId=${encodeURIComponent(sessionId)}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/cart", sessionId] });
@@ -52,8 +52,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, quantity }: { id: number; quantity: number }) => {
-      await apiRequest("PATCH", `/api/cart/${id}`, { quantity });
+    mutationFn: async ({ id, quantity }: { id: string; quantity: number }) => {
+      await apiRequest("PATCH", `/api/cart/${id}`, { quantity, sessionId });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/cart", sessionId] });
@@ -73,11 +73,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
     addMutation.mutate({ productId: product.id, size, color });
   }, [addMutation]);
 
-  const removeFromCart = useCallback((id: number) => {
+  const removeFromCart = useCallback((id: string) => {
     removeMutation.mutate(id);
   }, [removeMutation]);
 
-  const updateQuantity = useCallback((id: number, quantity: number) => {
+  const updateQuantity = useCallback((id: string, quantity: number) => {
     if (quantity <= 0) {
       removeMutation.mutate(id);
     } else {
