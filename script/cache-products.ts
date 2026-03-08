@@ -3,6 +3,12 @@ import type { Product } from "../shared/schema";
 import { mkdir, writeFile } from "fs/promises";
 import path from "path";
 
+if (!process.env.SHOPIFY_ACCESS_TOKEN || !process.env.SHOPIFY_STORE_DOMAIN) {
+  console.warn("[Cache] Skipping product cache: missing SHOPIFY_ACCESS_TOKEN or SHOPIFY_STORE_DOMAIN");
+  console.warn("[Cache] The site will load products from the API instead of static JSON");
+  process.exit(0);
+}
+
 async function cacheProducts() {
   console.log("[Cache] Fetching products from Shopify...");
   const rawProducts = await fetchAllStorefrontProducts();
@@ -64,6 +70,7 @@ async function cacheProducts() {
 }
 
 cacheProducts().catch((err) => {
-  console.error("[Cache] Failed:", err);
-  process.exit(1);
+  console.warn("[Cache] Warning: Failed to generate product cache:", err.message || err);
+  console.warn("[Cache] The site will load products from the API instead of static JSON");
+  process.exit(0);
 });
