@@ -18,14 +18,6 @@ export default function Home() {
   const tagline = "Shirts, hoodies, onesies, and accessories for all ages inspired by music, culture and love.";
 
   useEffect(() => {
-    const seen = sessionStorage.getItem("msd_intro_seen");
-    if (seen) {
-      setShowContent(true);
-      setTypedText(tagline);
-    }
-  }, []);
-
-  useEffect(() => {
     if (!showContent) return;
     if (typedText.length >= tagline.length) return;
     const timer = setTimeout(() => {
@@ -36,7 +28,6 @@ export default function Home() {
 
   const handleStart = () => {
     setShowContent(true);
-    sessionStorage.setItem("msd_intro_seen", "1");
   };
 
   if (!showContent) {
