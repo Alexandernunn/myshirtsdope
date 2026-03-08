@@ -1,7 +1,7 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import type { Server } from "http";
 import { contactMessageSchema } from "../shared/schema";
-import { loadProducts, getProduct } from "./storage";
+import { loadProducts, getProduct, forceRefreshProducts } from "./storage";
 import { createShopifyCheckout } from "./shopify-storefront";
 
 function getAllowedOrigins(): string[] {
@@ -120,6 +120,48 @@ export function registerRoutes(httpServer: Server, app: Express): void {
     } catch (error) {
       console.error("Failed to fetch products:", error);
       res.status(500).json({ error: "Failed to fetch products" });
+    }
+  });
+
+  app.get("/api/products/slim", productLimiter, async (_req, res) => {
+    try {
+      const products = await loadProducts();
+      const slim = products.map((p) => ({
+        id: p.id,
+        name: p.name,
+        price: p.price,
+        category: p.category,
+        imageUrl: p.imageUrl,
+        badge: p.badge,
+        isNewDrop: p.isNewDrop,
+        tags: p.tags,
+        sizes: p.sizes,
+        colors: p.colors,
+      }));
+      res
+        .set("Cache-Control", "public, s-maxage=300, stale-while-revalidate=60")
+        .json(slim);
+    } catch (error) {
+      console.error("Failed to fetch slim products:", error);
+      res.status(500).json({ error: "Failed to fetch products" });
+    }
+  });
+
+  app.post("/api/products/refresh", productLimiter, async (req, res) => {
+    const refreshSecret = process.env.REFRESH_SECRET;
+    if (refreshSecret) {
+      const provided = req.headers["x-refresh-secret"];
+      if (provided !== refreshSecret) {
+        res.status(403).json({ error: "Forbidden" });
+        return;
+      }
+    }
+    try {
+      const products = await forceRefreshProducts();
+      res.json({ success: true, count: products.length });
+    } catch (error) {
+      console.error("Failed to refresh products:", error);
+      res.status(500).json({ error: "Failed to refresh products" });
     }
   });
 

@@ -1,15 +1,17 @@
-import type { Product } from "@shared/schema";
+import type { Product, ProductSummary } from "@shared/schema";
 
 const YOUTH_KEYWORDS = /\b(youth|kids|kid)\b/i;
 const TODDLER_KEYWORDS = /\b(toddler|baby|infant)\b/i;
 
 export type FitType = "adult" | "youth" | "toddler";
 
+export type ListingProduct = Product | ProductSummary;
+
 export interface ProductGroup {
   baseName: string;
-  adult: Product;
-  youth: Product | null;
-  toddler: Product | null;
+  adult: ListingProduct;
+  youth: ListingProduct | null;
+  toddler: ListingProduct | null;
   fits: FitType[];
   category: string;
 }
@@ -29,10 +31,10 @@ function getFitType(name: string): FitType {
   return "adult";
 }
 
-export function groupProducts(products: Product[]): ProductGroup[] {
+export function groupProducts(products: ListingProduct[]): ProductGroup[] {
   const groupMap = new Map<
     string,
-    { adults: Product[]; youths: Product[]; toddlers: Product[] }
+    { adults: ListingProduct[]; youths: ListingProduct[]; toddlers: ListingProduct[] }
   >();
 
   for (const product of products) {
@@ -83,7 +85,7 @@ export function groupProducts(products: Product[]): ProductGroup[] {
 }
 
 export function findGroupForProduct(
-  products: Product[],
+  products: ListingProduct[],
   productId: number
 ): ProductGroup | null {
   const groups = groupProducts(products);
@@ -102,7 +104,7 @@ export function findGroupForProduct(
 export function getProductForFit(
   group: ProductGroup,
   fit: FitType
-): Product {
+): ListingProduct {
   if (fit === "youth" && group.youth) return group.youth;
   if (fit === "toddler" && group.toddler) return group.toddler;
   return group.adult;

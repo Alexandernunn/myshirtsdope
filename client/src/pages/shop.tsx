@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { groupProducts, interleaveGroups, getFitBadgeLabel, type ProductGroup } from "@/lib/product-grouping";
-import type { Product } from "@shared/schema";
+import type { Product, ProductSummary } from "@shared/schema";
 
 const PRODUCTS_PER_PAGE = 15;
 
@@ -183,8 +183,25 @@ export default function Shop() {
   const [currentPage, setCurrentPage] = useState(1);
   const { placeholder: typingPlaceholder, setFocused, setHasInput } = useTypingPlaceholder();
 
-  const { data: products = [], isLoading } = useQuery<Product[]>({
-    queryKey: ["/api/products"],
+  const { data: products = [], isLoading } = useQuery<(Product | ProductSummary)[]>({
+    queryKey: ["/api/products/listing"],
+    queryFn: async () => {
+      try {
+        const staticRes = await fetch("/data/products-slim.json");
+        if (staticRes.ok) {
+          const data = await staticRes.json();
+          if (Array.isArray(data) && data.length > 0) return data;
+        }
+      } catch {}
+      const res = await fetch("/api/products/slim", {
+        headers: {
+          "X-Requested-With": "XMLHttpRequest",
+          "X-App-Token": import.meta.env.VITE_APP_TOKEN || "msd-storefront-v1",
+        },
+      });
+      if (!res.ok) throw new Error(`${res.status}: ${res.statusText}`);
+      return res.json();
+    },
   });
 
   const allGroups = groupProducts(products);

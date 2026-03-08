@@ -24,6 +24,19 @@ export interface Product {
   shopifyVariants: ShopifyVariantMapping[] | null;
 }
 
+export interface ProductSummary {
+  id: number;
+  name: string;
+  price: number;
+  category: string;
+  imageUrl: string;
+  badge: string | null;
+  isNewDrop: boolean | null;
+  tags: string[] | null;
+  sizes: string[];
+  colors: string[];
+}
+
 export interface CartItem {
   id: string;
   sessionId: string;

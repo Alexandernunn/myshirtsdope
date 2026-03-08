@@ -74,6 +74,13 @@ export async function loadProducts(): Promise<Product[]> {
   }
 }
 
+export async function forceRefreshProducts(): Promise<Product[]> {
+  loadingPromise = null;
+  productCacheTimestamp = 0;
+  productCache = [];
+  return loadProducts();
+}
+
 export function getProduct(id: number): Product | undefined {
   return productCache.find((p) => p.id === id);
 }

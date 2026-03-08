@@ -28,8 +28,19 @@ MyShirtsDope is a vintage arcade / retro video game themed merch store web app. 
 - `server/storage.ts` - In-memory product cache and cart store (backed by Shopify API)
 - `server/shopify-storefront.ts` - Shopify Admin REST API + Storefront GraphQL API integration
 
+## Performance / Build-Time Caching
+- `script/cache-products.ts` - Fetches all Shopify products at build time and writes static JSON to `dist/public/data/`
+- Two cache files: `products.json` (full, ~11MB) and `products-slim.json` (lightweight listing data, ~1.3MB)
+- Shop page loads `/data/products-slim.json` first (CDN-served, instant), falls back to `/api/products/slim`
+- Product detail page still uses `/api/products/:id` for full data (variants, colorImages, etc.)
+- Netlify build command: `npm run build:netlify` = `vite build && npx tsx script/cache-products.ts`
+- Static JSON cached 5 min with stale-while-revalidate via Netlify headers
+- `ListingProduct` type (`Product | ProductSummary`) supports both full and slim product data in shared code
+
 ## API Routes
 - GET /api/products - List all products (cached from Shopify)
+- GET /api/products/slim - Lightweight product list for shop listings (id, name, price, category, imageUrl, badge, isNewDrop, tags, sizes, colors)
+- POST /api/products/refresh - Force refresh product cache from Shopify (requires `X-Refresh-Secret` header when `REFRESH_SECRET` env var is set)
 - GET /api/products/:id - Get single product
 - GET /api/products/:id/color-images - Get color-specific images for a product
 - GET /api/cart/:sessionId - Get cart items for session
@@ -71,6 +82,7 @@ MyShirtsDope is a vintage arcade / retro video game themed merch store web app. 
 - `SITE_URL` - Production site URL for CORS (e.g., `https://myshirtsdope.netlify.app`)
 - `API_APP_TOKEN` - (optional) Custom app token for API verification; set matching value in `VITE_APP_TOKEN` for frontend
 - `VITE_APP_TOKEN` - (optional) Frontend app token, must match `API_APP_TOKEN` on server
+- `REFRESH_SECRET` - (optional) Secret for `/api/products/refresh` endpoint; when set, requests must include `X-Refresh-Secret` header
 
 ## Design Theme
 - Dark background with pixel grid overlay
