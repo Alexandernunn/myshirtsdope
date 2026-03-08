@@ -1,7 +1,7 @@
 import { useEffect, useRef, useCallback, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import type { Product } from "@shared/schema";
+import type { Product, ProductSummary } from "@shared/schema";
 
 const CARD_COUNT = 8;
 const RADIUS = 320;
@@ -16,8 +16,25 @@ const TAP_MAX_TIME = 300;
 const DRAG_DEAD_ZONE = 5;
 
 export default function CultureDeck() {
-  const { data: products = [] } = useQuery<Product[]>({
-    queryKey: ["/api/products"],
+  const { data: products = [] } = useQuery<(Product | ProductSummary)[]>({
+    queryKey: ["/api/products/deck"],
+    queryFn: async () => {
+      try {
+        const staticRes = await fetch("/data/products-slim-1.json");
+        if (staticRes.ok) {
+          const data = await staticRes.json();
+          if (Array.isArray(data) && data.length > 0) return data;
+        }
+      } catch {}
+      const res = await fetch("/api/products/slim", {
+        headers: {
+          "X-Requested-With": "XMLHttpRequest",
+          "X-App-Token": import.meta.env.VITE_APP_TOKEN || "msd-storefront-v1",
+        },
+      });
+      if (!res.ok) throw new Error(`${res.status}: ${res.statusText}`);
+      return res.json();
+    },
   });
   const [, navigate] = useLocation();
 
