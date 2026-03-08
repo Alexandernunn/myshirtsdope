@@ -4,6 +4,60 @@ import { contactMessageSchema } from "../shared/schema";
 import { loadProducts, getProduct } from "./storage";
 import { createShopifyCheckout } from "./shopify-storefront";
 
+function getAllowedOrigins(): string[] {
+  const origins: string[] = [];
+  if (process.env.SITE_URL) {
+    try {
+      const u = new URL(process.env.SITE_URL);
+      origins.push(u.origin);
+    } catch {}
+  }
+  if (process.env.REPLIT_DEV_DOMAIN) {
+    origins.push(`https://${process.env.REPLIT_DEV_DOMAIN}`);
+  }
+  return origins;
+}
+
+function corsMiddleware(req: Request, res: Response, next: NextFunction) {
+  const origin = req.headers.origin || "";
+
+  if (process.env.NODE_ENV === "development") {
+    res.setHeader("Access-Control-Allow-Origin", origin || "*");
+  } else {
+    const allowed = getAllowedOrigins();
+    if (origin && allowed.includes(origin)) {
+      res.setHeader("Access-Control-Allow-Origin", origin);
+    }
+  }
+
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, X-Requested-With, X-App-Token");
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Max-Age", "86400");
+
+  if (req.method === "OPTIONS") {
+    return res.status(204).end();
+  }
+
+  next();
+}
+
+function verifyAppToken(req: Request, res: Response, next: NextFunction) {
+  if (process.env.NODE_ENV === "development") {
+    return next();
+  }
+
+  const xRequestedWith = req.headers["x-requested-with"];
+  const xAppToken = req.headers["x-app-token"];
+  const expectedToken = process.env.API_APP_TOKEN || "msd-storefront-v1";
+
+  if (xRequestedWith !== "XMLHttpRequest" || xAppToken !== expectedToken) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+
+  next();
+}
+
 const requestCounts = new Map<string, { count: number; resetAt: number }>();
 
 function rateLimit(maxRequests: number, windowMs: number) {
@@ -37,13 +91,29 @@ setInterval(() => {
 }, 60_000);
 
 export function registerRoutes(httpServer: Server, app: Express): void {
+  app.use("/api", corsMiddleware, verifyAppToken);
   const productLimiter = rateLimit(60, 60_000);
   const contactLimiter = rateLimit(5, 60_000);
   const checkoutLimiter = rateLimit(10, 60_000);
 
-  app.get("/api/products", productLimiter, async (_req, res) => {
+  app.get("/api/products", productLimiter, async (req, res) => {
     try {
       const products = await loadProducts();
+
+      const page = parseInt(req.query.page as string) || 0;
+      const limit = Math.min(parseInt(req.query.limit as string) || 0, 100);
+
+      if (page > 0 && limit > 0) {
+        const total = products.length;
+        const totalPages = Math.ceil(total / limit);
+        const start = (page - 1) * limit;
+        const chunk = products.slice(start, start + limit);
+
+        return res
+          .set("Cache-Control", "public, s-maxage=300, stale-while-revalidate=60")
+          .json({ products: chunk, total, page, totalPages });
+      }
+
       res
         .set("Cache-Control", "public, s-maxage=300, stale-while-revalidate=60")
         .json(products);

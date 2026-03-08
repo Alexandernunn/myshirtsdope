@@ -7,6 +7,11 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
+const API_HEADERS: Record<string, string> = {
+  "X-Requested-With": "XMLHttpRequest",
+  "X-App-Token": import.meta.env.VITE_APP_TOKEN || "msd-storefront-v1",
+};
+
 export async function apiRequest(
   method: string,
   url: string,
@@ -14,7 +19,10 @@ export async function apiRequest(
 ): Promise<Response> {
   const res = await fetch(url, {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
+    headers: {
+      ...API_HEADERS,
+      ...(data ? { "Content-Type": "application/json" } : {}),
+    },
     body: data ? JSON.stringify(data) : undefined,
     credentials: "include",
   });
@@ -31,6 +39,7 @@ export const getQueryFn: <T>(options: {
   async ({ queryKey }) => {
     const res = await fetch(queryKey.join("/") as string, {
       credentials: "include",
+      headers: API_HEADERS,
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {

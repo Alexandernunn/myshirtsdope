@@ -47,15 +47,30 @@ MyShirtsDope is a vintage arcade / retro video game themed merch store web app. 
 - **Rate limit handling**: Automatic retry on 429 responses from Shopify
 - **Caching**: Products cached in memory for 5 minutes, background refresh when stale
 
+## API Security
+- CORS: Only allows requests from the app's own domain (configured via `SITE_URL` env var or Replit dev domain)
+- App token verification: All `/api/*` requests must include `X-Requested-With: XMLHttpRequest` and `X-App-Token: msd-storefront-v1` headers (enforced in production only)
+- Security headers on Netlify: X-Frame-Options DENY, X-Content-Type-Options nosniff, CSP, Referrer-Policy, Permissions-Policy
+- Rate limiting per IP on all endpoints
+
 ## Rate Limiting
 - Products: 60 requests/minute per IP
 - Cart operations: 30 requests/minute per IP
 - Contact form: 5 requests/minute per IP
 - Checkout: 10 requests/minute per IP
 
+## Pagination / Chunking
+- GET /api/products supports optional `?page=N&limit=M` query params for paginated responses
+- When pagination params are provided, response shape is `{ products, total, page, totalPages }`
+- Without params, returns full array for backward compatibility
+- Max limit capped at 100 per request
+
 ## Environment Variables / Secrets
 - `SHOPIFY_STORE_DOMAIN` - Shopify store domain (e.g., `store.myshopify.com`)
 - `SHOPIFY_ACCESS_TOKEN` - Shopify Admin API access token (`shpat_...`)
+- `SITE_URL` - Production site URL for CORS (e.g., `https://myshirtsdope.netlify.app`)
+- `API_APP_TOKEN` - (optional) Custom app token for API verification; set matching value in `VITE_APP_TOKEN` for frontend
+- `VITE_APP_TOKEN` - (optional) Frontend app token, must match `API_APP_TOKEN` on server
 
 ## Design Theme
 - Dark background with pixel grid overlay
