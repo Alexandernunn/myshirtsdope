@@ -22,13 +22,7 @@ export default function Home() {
     if (seen) {
       setShowContent(true);
       setTypedText(tagline);
-      return;
     }
-    const timer = setTimeout(() => {
-      setShowContent(true);
-      sessionStorage.setItem("msd_intro_seen", "1");
-    }, 1200);
-    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
@@ -40,9 +34,18 @@ export default function Home() {
     return () => clearTimeout(timer);
   }, [showContent, typedText]);
 
+  const handleStart = () => {
+    setShowContent(true);
+    sessionStorage.setItem("msd_intro_seen", "1");
+  };
+
   if (!showContent) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background pixel-grid-bg relative overflow-hidden">
+      <div
+        className="min-h-screen flex flex-col items-center justify-center bg-background pixel-grid-bg relative overflow-hidden cursor-pointer"
+        onClick={handleStart}
+        data-testid="button-start-game"
+      >
         <Starfield />
         <div className="relative z-10 text-center animate-pixel-fade-in">
           <p className="font-pixel text-xs sm:text-sm text-neon-green neon-text-green mb-6">PLAYER 1</p>
@@ -50,7 +53,7 @@ export default function Home() {
             SELECT
           </h1>
           <div className="mt-8">
-            <span className="font-pixel text-[10px] text-muted-foreground animate-blink">LOADING CULTURE...</span>
+            <span className="font-pixel text-[10px] text-muted-foreground animate-blink">PRESS ANYWHERE TO START</span>
           </div>
         </div>
       </div>
