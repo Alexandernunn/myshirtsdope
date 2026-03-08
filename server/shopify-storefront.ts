@@ -117,6 +117,8 @@ export async function fetchAllStorefrontProducts(): Promise<AdminProduct[]> {
   let nextUrl: string | null =
     `https://${domain}/admin/api/2024-01/products.json?limit=250&status=active`;
 
+  console.log(`[Shopify Admin] Requesting: ${nextUrl}`);
+
   while (nextUrl) {
     const res = await fetch(nextUrl, {
       headers: {
@@ -135,6 +137,12 @@ export async function fetchAllStorefrontProducts(): Promise<AdminProduct[]> {
     if (!res.ok) {
       const text = await res.text();
       throw new Error(`Shopify Admin API error (${res.status}): ${text}`);
+    }
+
+    const contentType = res.headers.get("content-type") || "";
+    if (!contentType.includes("application/json")) {
+      const text = await res.text();
+      throw new Error(`Shopify returned non-JSON response (${contentType}): ${text.substring(0, 200)}`);
     }
 
     const data = await res.json();
