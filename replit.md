@@ -30,8 +30,9 @@ MyShirtsDope is a vintage arcade / retro video game themed merch store web app. 
 
 ## Performance / Build-Time Caching
 - `script/cache-products.ts` - Fetches all Shopify products at build time and writes static JSON to `dist/public/data/`
-- Two cache files: `products.json` (full, ~11MB) and `products-slim.json` (lightweight listing data, ~1.3MB)
-- Shop page loads `/data/products-slim.json` first (CDN-served, instant), falls back to `/api/products/slim`
+- Four cache files: `products.json` (full, ~11MB), `products-slim.json` (all slim, ~1.3MB), `products-slim-1.json` (first 200, ~97KB), `products-slim-rest.json` (remaining, ~1.2MB)
+- Shop page loads in two phases: `/data/products-slim-1.json` first (tiny, instant render), then `/data/products-slim-rest.json` in the background
+- Falls back to `/api/products/slim` if static files are unavailable
 - Product detail page still uses `/api/products/:id` for full data (variants, colorImages, etc.)
 - Netlify build command: `npm run build:netlify` = `vite build && npx tsx script/cache-products.ts`
 - Static JSON cached 5 min with stale-while-revalidate via Netlify headers

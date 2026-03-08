@@ -183,11 +183,41 @@ export default function Shop() {
   const [currentPage, setCurrentPage] = useState(1);
   const { placeholder: typingPlaceholder, setFocused, setHasInput } = useTypingPlaceholder();
 
-  const { data: products = [], isLoading } = useQuery<(Product | ProductSummary)[]>({
-    queryKey: ["/api/products/listing"],
+  const [initialSource, setInitialSource] = useState<"chunk" | "full">("chunk");
+
+  const { data: initialProducts = [], isLoading } = useQuery<(Product | ProductSummary)[]>({
+    queryKey: ["/api/products/listing-initial"],
     queryFn: async () => {
       try {
-        const staticRes = await fetch("/data/products-slim.json");
+        const staticRes = await fetch("/data/products-slim-1.json");
+        if (staticRes.ok) {
+          const data = await staticRes.json();
+          if (Array.isArray(data) && data.length > 0) {
+            setInitialSource("chunk");
+            return data;
+          }
+        }
+      } catch {}
+      setInitialSource("full");
+      const res = await fetch("/api/products/slim", {
+        headers: {
+          "X-Requested-With": "XMLHttpRequest",
+          "X-App-Token": import.meta.env.VITE_APP_TOKEN || "msd-storefront-v1",
+        },
+      });
+      if (!res.ok) throw new Error(`${res.status}: ${res.statusText}`);
+      return res.json();
+    },
+  });
+
+  const needsRest = initialSource === "chunk" && initialProducts.length > 0;
+
+  const { data: restProducts = [], isLoading: loadingRest } = useQuery<(Product | ProductSummary)[]>({
+    queryKey: ["/api/products/listing-rest"],
+    enabled: needsRest,
+    queryFn: async () => {
+      try {
+        const staticRes = await fetch("/data/products-slim-rest.json");
         if (staticRes.ok) {
           const data = await staticRes.json();
           if (Array.isArray(data) && data.length > 0) return data;
@@ -199,10 +229,16 @@ export default function Shop() {
           "X-App-Token": import.meta.env.VITE_APP_TOKEN || "msd-storefront-v1",
         },
       });
-      if (!res.ok) throw new Error(`${res.status}: ${res.statusText}`);
-      return res.json();
+      if (!res.ok) return [];
+      const allData = await res.json();
+      if (Array.isArray(allData)) return allData.slice(initialProducts.length);
+      return [];
     },
   });
+
+  const products = needsRest && restProducts.length > 0
+    ? [...initialProducts, ...restProducts]
+    : initialProducts;
 
   const allGroups = groupProducts(products);
 
@@ -323,7 +359,7 @@ export default function Shop() {
         ) : (
           <>
             <p className="font-display text-xs text-muted-foreground text-center mb-4" data-testid="text-product-count">
-              Showing {(currentPage - 1) * PRODUCTS_PER_PAGE + 1}-{Math.min(currentPage * PRODUCTS_PER_PAGE, displayGroups.length)} of {displayGroups.length} items
+              Showing {(currentPage - 1) * PRODUCTS_PER_PAGE + 1}-{Math.min(currentPage * PRODUCTS_PER_PAGE, displayGroups.length)} of {loadingRest && needsRest ? `${displayGroups.length}+` : displayGroups.length} items
             </p>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
