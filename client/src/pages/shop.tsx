@@ -98,6 +98,20 @@ const categoryColors: Record<string, string> = {
   "Accessories": "text-neon-orange",
 };
 
+const ONESIE_PATTERN = /\b(onesie|onesies)\b/i;
+const ACCESSORY_PATTERN = /\b(mug|mugs|cup|candle|candles|tumbler|bottle|hat|cap|beanie|snapback|trucker)\b/i;
+
+function getDisplayCategory(group: ProductGroup): string {
+  const name = group.adult.name.toLowerCase();
+  const tags = group.adult.tags?.map(t => t.toLowerCase()).join(" ") || "";
+  const text = `${name} ${tags}`;
+
+  if (ONESIE_PATTERN.test(text)) return "Onesies";
+  if (ACCESSORY_PATTERN.test(text) || group.category === "Hats") return "Accessories";
+  if (group.category === "Hoodies") return "Hoodies";
+  return "Shirts";
+}
+
 const badgeColors: Record<string, string> = {
   "Hip Hop": "bg-neon-blue/20 text-neon-blue",
   "R&B": "bg-neon-yellow/20 text-neon-yellow",
@@ -243,7 +257,8 @@ export default function Shop() {
   const allGroups = groupProducts(products);
 
   const filtered = allGroups.filter((g) => {
-    const matchesCategory = activeCategory === "All" || g.category === activeCategory;
+    const displayCat = getDisplayCategory(g);
+    const matchesCategory = activeCategory === "All" || displayCat === activeCategory;
     if (searchQuery === "") return matchesCategory;
     const q = searchQuery.toLowerCase();
     const matchesName =
