@@ -5,6 +5,7 @@
 
 [build.environment]
   NODE_VERSION = "20"
+  SHOPIFY_STORE_DOMAIN = "tri-creative-store.myshopify.com"
 
 [functions]
   node_bundler = "esbuild"

@@ -86,10 +86,43 @@ export default function ProductDetail() {
 
   const { data: product, isLoading } = useQuery<Product>({
     queryKey: ["/api/products", id],
+    queryFn: async () => {
+      try {
+        const staticRes = await fetch("/data/products.json");
+        if (staticRes.ok) {
+          const data: Product[] = await staticRes.json();
+          const found = data.find((p) => String(p.id) === String(id));
+          if (found) return found;
+        }
+      } catch {}
+      const headers: Record<string, string> = {
+        "X-Requested-With": "XMLHttpRequest",
+        "X-App-Token": import.meta.env.VITE_APP_TOKEN || "msd-storefront-v1",
+      };
+      const res = await fetch(`/api/products/${id}`, { headers });
+      if (!res.ok) throw new Error(`${res.status}: ${res.statusText}`);
+      return res.json();
+    },
   });
 
   const { data: allProducts = [] } = useQuery<Product[]>({
     queryKey: ["/api/products"],
+    queryFn: async () => {
+      try {
+        const staticRes = await fetch("/data/products.json");
+        if (staticRes.ok) {
+          const data = await staticRes.json();
+          if (Array.isArray(data) && data.length > 0) return data;
+        }
+      } catch {}
+      const headers: Record<string, string> = {
+        "X-Requested-With": "XMLHttpRequest",
+        "X-App-Token": import.meta.env.VITE_APP_TOKEN || "msd-storefront-v1",
+      };
+      const res = await fetch("/api/products", { headers });
+      if (!res.ok) throw new Error(`${res.status}: ${res.statusText}`);
+      return res.json();
+    },
   });
 
   const activeProductId = product?.id;
