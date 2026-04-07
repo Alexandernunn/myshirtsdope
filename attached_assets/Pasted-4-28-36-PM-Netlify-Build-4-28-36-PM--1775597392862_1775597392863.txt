@@ -1,0 +1,122 @@
+4:28:36 PM: Netlify Build                                                 
+4:28:36 PM: ────────────────────────────────────────────────────────────────
+4:28:36 PM: ​
+4:28:36 PM: ❯ Version
+4:28:36 PM:   @netlify/build 35.11.2
+4:28:36 PM: ​
+4:28:36 PM: ❯ Flags
+4:28:36 PM:   accountId: 6913f57327cb922a7f69306a
+4:28:36 PM:   baseRelDir: true
+4:28:36 PM:   buildId: 69d576fb31e3cc000821102c
+4:28:36 PM:   deployId: 69d576fb31e3cc000821102e
+4:28:36 PM: ​
+4:28:36 PM: ❯ Current directory
+4:28:36 PM:   /opt/build/repo
+4:28:36 PM: ​
+4:28:36 PM: ❯ Config file
+4:28:36 PM:   /opt/build/repo/netlify.toml
+4:28:36 PM: ​
+4:28:36 PM: ❯ Context
+4:28:36 PM:   production
+4:28:36 PM: ​
+4:28:36 PM: build.command from netlify.toml                               
+4:28:36 PM: ────────────────────────────────────────────────────────────────
+4:28:36 PM: ​
+4:28:36 PM: $ npm run build:netlify
+4:28:36 PM: > rest-express@1.0.0 build:netlify
+4:28:36 PM: > vite build && npx tsx script/cache-products.ts
+4:28:37 PM: vite v7.3.1 building client environment for production...
+4:28:37 PM: transforming...
+4:28:40 PM: A PostCSS plugin did not pass the `from` option to `postcss.parse`. This may cause imported assets to be incorrectly transformed. If you've recently added a PostCSS plugin that raised this warning, please contact the package author to fix the issue.
+✓ 1681 modules transformed.
+4:28:41 PM: rendering chunks...
+4:28:41 PM: computing gzip size...
+4:28:41 PM: ../dist/public/index.html                   1.15 kB │ gzip:   0.60 kB
+4:28:41 PM: ../dist/public/assets/index-BDLxv_DT.css   79.43 kB │ gzip:  13.28 kB
+4:28:41 PM: ../dist/public/assets/index-DjvILVqY.js   407.95 kB │ gzip: 126.91 kB
+4:28:41 PM: ✓ built in 3.95s
+4:28:41 PM: [Cache] Fetching products from Shopify...
+4:28:41 PM: [Shopify Admin] Requesting: ****admin/api/2024-01/products.json?limit=250&status=active
+4:28:50 PM: [Shopify Admin] Fetched 2742 products
+4:28:51 PM: [Cache] Cached 2742 products
+4:28:51 PM: [Cache] Full: 11461.8KB, Slim: 1308.7KB
+4:28:51 PM: [Cache] Chunked: Initial 200 products (97.1KB), Rest 2542 products (1211.6KB)
+4:28:51 PM: [Cache] Written to /opt/build/repo/dist/public/data
+4:28:51 PM: ​
+4:28:51 PM: (build.command completed in 14.3s)
+4:28:51 PM: ​
+4:28:51 PM: Functions bundling                                            
+4:28:51 PM: ────────────────────────────────────────────────────────────────
+4:28:51 PM: ​
+4:28:51 PM: Packaging Functions from netlify/functions directory:
+4:28:51 PM:  - api.ts
+4:28:51 PM: ​
+4:28:51 PM: ​
+4:28:51 PM: (Functions bundling completed in 203ms)
+4:28:52 PM: Failed during stage 'building site': Build script returned non-zero exit code: 2 (https://ntl.fyi/exit-code-2)
+4:28:52 PM: ​
+4:28:52 PM: Scanning for secrets in code and build output.                
+4:28:52 PM: ────────────────────────────────────────────────────────────────
+4:28:52 PM: ​
+4:28:52 PM: ​
+4:28:52 PM: ❯ Scanning complete. 138 file(s) scanned. Secrets scanning found 1 instance(s) of secrets in build output or repo code.
+4:28:52 PM: ​
+4:28:52 PM: Secret env var "SHOPIFY_STORE_DOMAIN"'s value detected:
+  found value at line 44 in .replit
+4:28:52 PM:   found value at line 8 in netlify.toml
+4:28:52 PM: ​
+4:28:52 PM: To prevent exposing secrets, the build will fail until these secret values are not found in build output or repo files.
+4:28:52 PM: ​
+4:28:52 PM: If these are expected, use SECRETS_SCAN_OMIT_PATHS, SECRETS_SCAN_OMIT_KEYS, or SECRETS_SCAN_ENABLED to prevent detecting.
+4:28:52 PM: ​
+4:28:52 PM: For more information on secrets scanning, see the Netlify Docs: https://ntl.fyi/configure-secrets-scanning
+4:28:52 PM: ​
+4:28:52 PM: Secrets scanning detected secrets in files during build.      
+4:28:52 PM: ────────────────────────────────────────────────────────────────
+4:28:52 PM: ​
+4:28:52 PM:   Error message
+4:28:52 PM:   Secrets scanning found secrets in build.
+4:28:52 PM: ​
+4:28:52 PM:   Resolved config
+4:28:52 PM:   build:
+4:28:52 PM:     command: npm run build:netlify
+4:28:52 PM:     commandOrigin: config
+4:28:52 PM:     environment:
+4:28:52 PM:       - SHOPIFY_ACCESS_TOKEN
+4:28:52 PM:       - SHOPIFY_STORE_DOMAIN
+4:28:52 PM:       - SITE_URL
+4:28:52 PM:       - NODE_VERSION
+4:28:52 PM:     publish: /opt/build/repo/dist/public
+4:28:52 PM:     publishOrigin: config
+4:28:52 PM:   functions:
+4:28:52 PM:     "*":
+4:28:52 PM:       node_bundler: esbuild
+4:28:52 PM:   functionsDirectory: /opt/build/repo/netlify/functions
+4:28:52 PM:   headers:
+4:28:52 PM:     - for: /*
+      values:
+        Content-Security-Policy: "default-src 'self'; script-src 'self' 'unsafe-inline'
+          'unsafe-eval'; style-src 'self' 'unsafe-inline'
+          https://fonts.googleapis.com; img-src 'self' https: data:; font-src
+          'self' https://fonts.gstatic.com https: data:; connect-src 'self'
+          https:; frame-ancestors 'none'"
+        Permissions-Policy: camera=(), microphone=(), geolocation=()
+        Referrer-Policy: strict-origin-when-cross-origin
+        X-Content-Type-Options: nosniff
+        X-Frame-Options: DENY
+    - for: /data/*.json
+      values:
+        Cache-Control: public, max-age=300, stale-while-revalidate=60
+  headersOrigin: config
+  redirects:
+    - force: true
+      from: /api/*
+      status: 200
+      to: /.netlify/functions/api
+    - from: /*
+      status: 200
+      to: /index.html
+  redirectsOrigin: config
+4:28:52 PM: Build failed due to a user error: Build script returned non-zero exit code: 2
+4:28:52 PM: Failing build: Failed to build site
+4:28:52 PM: Finished processing build request in 24.816s
