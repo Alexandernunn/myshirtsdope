@@ -4,6 +4,14 @@ import { useLocation } from "wouter";
 import type { Product, ProductSummary } from "@shared/schema";
 
 const CARD_COUNT = 8;
+
+function pickVariantIndex(productId: number, cardIndex: number, count: number): number {
+  let h = (productId * 2654435761 + cardIndex * 40503) >>> 0;
+  h ^= h >>> 16;
+  h = Math.imul(h, 0x45d9f3b);
+  h ^= h >>> 16;
+  return h % count;
+}
 const RADIUS = 320;
 const IDLE_DEG_PER_SEC = 360 / 45;
 const DRAG_SENSITIVITY = 0.6;
@@ -213,6 +221,12 @@ export default function CultureDeck() {
         >
           {shuffledProducts.map((product, i) => {
             const angle = i * angleStep;
+            const variants = ('colorImageVariants' in product && Array.isArray((product as ProductSummary).colorImageVariants) && ((product as ProductSummary).colorImageVariants?.length ?? 0) > 0)
+              ? (product as ProductSummary).colorImageVariants!
+              : null;
+            const cardImageUrl = variants
+              ? variants[pickVariantIndex(product.id, i, variants.length)]
+              : product.imageUrl;
             return (
               <div
                 key={product.id}
@@ -242,7 +256,7 @@ export default function CultureDeck() {
                     data-testid={`culture-card-${product.id}`}
                   >
                     <img
-                      src={product.imageUrl}
+                      src={cardImageUrl}
                       alt={product.name}
                       className="w-full h-full object-cover pointer-events-none"
                       loading="lazy"
@@ -250,9 +264,13 @@ export default function CultureDeck() {
                       style={{ backfaceVisibility: "hidden" }}
                       onError={(e) => {
                         const target = e.currentTarget;
-                        target.style.display = "none";
-                        const fallback = target.nextElementSibling as HTMLElement;
-                        if (fallback) fallback.style.display = "flex";
+                        if (target.src !== product.imageUrl) {
+                          target.src = product.imageUrl;
+                        } else {
+                          target.style.display = "none";
+                          const fallback = target.nextElementSibling as HTMLElement;
+                          if (fallback) fallback.style.display = "flex";
+                        }
                       }}
                     />
                     <div className="w-full h-full items-center justify-center hidden absolute inset-0 bg-[#0a0a0a]">
