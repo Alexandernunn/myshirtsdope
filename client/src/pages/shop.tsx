@@ -121,23 +121,33 @@ const badgeColors: Record<string, string> = {
   "Pop": "bg-purple-500/20 text-purple-400",
 };
 
+function pickVariantIndex(productId: number, cardIndex: number, count: number): number {
+  let h = (productId * 2654435761 + cardIndex * 40503) >>> 0;
+  h ^= h >>> 16;
+  h = Math.imul(h, 0x45d9f3b);
+  h ^= h >>> 16;
+  return h % count;
+}
+
 function GroupedProductCard({ group, index }: { group: ProductGroup; index: number }) {
   const product = group.adult;
   const variants = ('colorImageVariants' in product && Array.isArray(product.colorImageVariants) && product.colorImageVariants.length > 0)
     ? product.colorImageVariants
     : null;
-  const displayImage = variants
-    ? variants[(index * 7) % variants.length]
-    : product.imageUrl;
+  const pickedVariant = variants
+    ? variants[pickVariantIndex(product.id, index, variants.length)]
+    : null;
+  const [imgSrc, setImgSrc] = useState(pickedVariant ?? product.imageUrl);
   return (
     <Link href={`/product/${product.id}`} data-testid={`link-product-${product.id}`}>
       <div className="group bg-card border border-card-border rounded-md overflow-visible hover-elevate active-elevate-2 transition-transform duration-200 cursor-pointer">
         <div className="relative overflow-hidden rounded-t-md bg-muted" style={{ aspectRatio: "1", maxHeight: "220px" }}>
           <img
-            src={displayImage}
+            src={imgSrc}
             alt={product.name}
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
             loading="lazy"
+            onError={() => { if (imgSrc !== product.imageUrl) setImgSrc(product.imageUrl); }}
           />
 
           {product.isNewDrop && (
