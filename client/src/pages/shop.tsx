@@ -121,9 +121,14 @@ const badgeColors: Record<string, string> = {
   "Pop": "bg-purple-500/20 text-purple-400",
 };
 
-function GroupedProductCard({ group }: { group: ProductGroup }) {
+function GroupedProductCard({ group, index }: { group: ProductGroup; index: number }) {
   const product = group.adult;
-  const displayImage = ('featuredColorImageUrl' in product && product.featuredColorImageUrl) ? product.featuredColorImageUrl : product.imageUrl;
+  const variants = ('colorImageVariants' in product && Array.isArray(product.colorImageVariants) && product.colorImageVariants.length > 0)
+    ? product.colorImageVariants
+    : null;
+  const displayImage = variants
+    ? variants[(index * 7) % variants.length]
+    : product.imageUrl;
   return (
     <Link href={`/product/${product.id}`} data-testid={`link-product-${product.id}`}>
       <div className="group bg-card border border-card-border rounded-md overflow-visible hover-elevate active-elevate-2 transition-transform duration-200 cursor-pointer">
@@ -379,8 +384,12 @@ export default function Shop() {
             </p>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
-              {paginatedGroups.map((group) => (
-                <GroupedProductCard key={group.adult.id} group={group} />
+              {paginatedGroups.map((group, i) => (
+                <GroupedProductCard
+                  key={group.adult.id}
+                  group={group}
+                  index={(currentPage - 1) * PRODUCTS_PER_PAGE + i}
+                />
               ))}
             </div>
 

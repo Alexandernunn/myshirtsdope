@@ -30,7 +30,7 @@ export interface ProductSummary {
   price: number;
   category: string;
   imageUrl: string;
-  featuredColorImageUrl?: string;
+  colorImageVariants?: string[];
   badge: string | null;
   isNewDrop: boolean | null;
   tags: string[] | null;

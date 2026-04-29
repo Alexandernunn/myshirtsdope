@@ -130,27 +130,27 @@ export function registerRoutes(httpServer: Server, app: Express): void {
     "light gray", "sand", "oatmeal",
   ]);
 
-  function pickFeaturedColorImage(colorImages: Record<string, string> | null): string | undefined {
-    if (!colorImages) return undefined;
+  function getColorImageVariants(colorImages: Record<string, string> | null): string[] {
+    if (!colorImages) return [];
     const entries = Object.entries(colorImages);
-    if (entries.length === 0) return undefined;
-    const colorful = entries.find(([color]) => !NEUTRAL_COLORS.has(color.toLowerCase().trim()));
-    const chosen = colorful ?? entries[0];
-    return chosen[1];
+    if (entries.length === 0) return [];
+    const colorful = entries.filter(([color]) => !NEUTRAL_COLORS.has(color.toLowerCase().trim()));
+    const source = colorful.length > 0 ? colorful : entries;
+    return source.map(([, url]) => url);
   }
 
   app.get("/api/products/slim", productLimiter, async (_req, res) => {
     try {
       const products = await loadProducts();
       const slim = products.map((p) => {
-        const featured = pickFeaturedColorImage(p.colorImages);
+        const variants = getColorImageVariants(p.colorImages);
         return {
           id: p.id,
           name: p.name,
           price: p.price,
           category: p.category,
           imageUrl: p.imageUrl,
-          ...(featured ? { featuredColorImageUrl: featured } : {}),
+          ...(variants.length > 0 ? { colorImageVariants: variants } : {}),
           badge: p.badge,
           isNewDrop: p.isNewDrop,
           tags: p.tags,
