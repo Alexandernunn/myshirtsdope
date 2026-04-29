@@ -255,12 +255,11 @@ export default function ProductDetail() {
 
         <div className="flex flex-col md:flex-row items-start gap-6 md:gap-10">
           <div className="w-full md:max-w-[320px] flex-shrink-0">
-            <div className="relative bg-card border border-card-border rounded-md overflow-hidden max-h-[240px] md:max-h-[320px]">
+            <div className="relative bg-card border border-card-border rounded-md overflow-hidden h-[240px] md:h-[320px]">
               <img
                 src={displayImage || activeProduct.imageUrl}
                 alt={activeProduct.name}
                 className={`w-full h-full object-contain transition-opacity duration-150 ${imageFading ? "opacity-0" : "opacity-100"}`}
-                style={{ maxHeight: "320px" }}
               />
               {activeProduct.isNewDrop && (
                 <div className="absolute top-3 left-3">
