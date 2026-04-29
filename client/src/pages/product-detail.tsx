@@ -132,14 +132,14 @@ export default function ProductDetail() {
     enabled: !!activeProductId,
   });
 
-  const colorImages = colorImagesData?.colorImages || {};
-
   usePageTitle(product?.name || "Product");
 
   const group = product ? findGroupForProduct(allProducts, Number(id)) : null;
   const hasMutipleFits = group ? group.fits.length > 1 : false;
 
   const activeProduct = (group ? getProductForFit(group, activeFit) : product) as Product | undefined;
+
+  const colorImages = colorImagesData?.colorImages || activeProduct?.colorImages || product?.colorImages || {};
 
   useEffect(() => {
     setSelectedSize("");
