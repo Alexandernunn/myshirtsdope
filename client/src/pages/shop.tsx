@@ -99,16 +99,16 @@ const categoryColors: Record<string, string> = {
 };
 
 const ONESIE_PATTERN = /\b(onesie|onesies)\b/i;
-const ACCESSORY_PATTERN = /\b(mug|mugs|cup|candle|candles|tumbler|bottle|hat|cap|beanie|snapback|trucker)\b/i;
+const SHIRT_PATTERN = /\b(shirt|tee|t-shirt|tshirt)\b/i;
+const ACCESSORY_NAME_PATTERN = /\b(mug|mugs|cup|candle|candles|tumbler|bottle)\b/i;
 
 function getDisplayCategory(group: ProductGroup): string {
   const name = group.adult.name.toLowerCase();
-  const tags = group.adult.tags?.map(t => t.toLowerCase()).join(" ") || "";
-  const text = `${name} ${tags}`;
 
-  if (ONESIE_PATTERN.test(text)) return "Onesies";
-  if (ACCESSORY_PATTERN.test(text) || group.category === "Hats") return "Accessories";
-  if (group.category === "Hoodies") return "Hoodies";
+  if (ONESIE_PATTERN.test(name)) return "Onesies";
+  if (SHIRT_PATTERN.test(name)) return "Shirts";
+  if (group.category === "Hoodies" || /\b(hoodie|sweatshirt|crewneck)\b/i.test(name)) return "Hoodies";
+  if (group.category === "Accessories" || group.category === "Hats" || ACCESSORY_NAME_PATTERN.test(name)) return "Accessories";
   return "Shirts";
 }
 
@@ -123,12 +123,13 @@ const badgeColors: Record<string, string> = {
 
 function GroupedProductCard({ group }: { group: ProductGroup }) {
   const product = group.adult;
+  const displayImage = ('featuredColorImageUrl' in product && product.featuredColorImageUrl) ? product.featuredColorImageUrl : product.imageUrl;
   return (
     <Link href={`/product/${product.id}`} data-testid={`link-product-${product.id}`}>
       <div className="group bg-card border border-card-border rounded-md overflow-visible hover-elevate active-elevate-2 transition-transform duration-200 cursor-pointer">
         <div className="relative overflow-hidden rounded-t-md bg-muted" style={{ aspectRatio: "1", maxHeight: "220px" }}>
           <img
-            src={product.imageUrl}
+            src={displayImage}
             alt={product.name}
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
             loading="lazy"

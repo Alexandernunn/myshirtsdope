@@ -166,7 +166,12 @@ function categorizeProduct(productType: string, title: string): string {
 
   if (type.includes("hoodie") || name.includes("hoodie")) return "Hoodies";
   if (type.includes("hat") || type.includes("cap") || name.includes("hat") || name.includes("cap")) return "Hats";
-  if (type.includes("accessory") || type.includes("accessories")) return "Accessories";
+  if (
+    type.includes("accessory") || type.includes("accessories") ||
+    type.includes("mug") || type.includes("drinkware") || type.includes("cup") ||
+    type.includes("candle") || type.includes("tumbler") || type.includes("bottle") ||
+    name.includes("mug") || name.includes("tumbler") || name.includes("candle")
+  ) return "Accessories";
   if (type.includes("pants") || type.includes("jogger") || name.includes("pants") || name.includes("jogger")) return "Pants";
   return "Shirts";
 }
