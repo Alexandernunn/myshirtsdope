@@ -266,16 +266,9 @@ export default function CultureDeck() {
                         const target = e.currentTarget;
                         if (target.src !== product.imageUrl) {
                           target.src = product.imageUrl;
-                        } else {
-                          target.style.display = "none";
-                          const fallback = target.nextElementSibling as HTMLElement;
-                          if (fallback) fallback.style.display = "flex";
                         }
                       }}
                     />
-                    <div className="w-full h-full items-center justify-center hidden absolute inset-0 bg-[#0a0a0a]">
-                      <span className="font-pixel text-[8px] text-neon-blue/40">MSD</span>
-                    </div>
                     <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/60 to-transparent p-2 pt-8">
                       <p className="font-display text-[10px] text-white/90 line-clamp-2 leading-tight">
                         {product.name}
