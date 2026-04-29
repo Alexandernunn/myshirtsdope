@@ -43,3 +43,7 @@ build = ["npm", "run", "build"]
 
 [userenv.shared]
 SHOPIFY_STORE_DOMAIN = "tri-creative-store.myshopify.com"
+
+[postMerge]
+path = "scripts/post-merge.sh"
+timeoutMs = 20000
