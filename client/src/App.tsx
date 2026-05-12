@@ -16,6 +16,12 @@ import Contact from "@/pages/contact";
 import NotFound from "@/pages/not-found";
 import { Volume2, VolumeX } from "lucide-react";
 
+declare global {
+  interface Window {
+    gtag?: (...args: any[]) => void;
+  }
+}
+
 function ScrollToTop() {
   const [location] = useLocation();
 
@@ -24,6 +30,18 @@ function ScrollToTop() {
   }, [location]);
 
   return null;
+}
+
+function usePageTracking() {
+  const [location] = useLocation();
+
+  useEffect(() => {
+    const gtag = window.gtag;
+    if (!gtag) return;
+    gtag("config", "G-EV5P2LKEHE", {
+      page_path: location.pathname,
+    });
+  }, [location]);
 }
 
 function Router() {
@@ -104,6 +122,8 @@ function BackgroundMusic() {
 }
 
 function App() {
+  usePageTracking();
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
