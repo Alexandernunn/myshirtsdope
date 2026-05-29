@@ -287,7 +287,20 @@ export default function Shop() {
     return matchesCategory && (matchesName || matchesTags || matchesColors);
   });
 
-  const displayGroups = activeCategory === "All" ? interleaveGroups(filtered) : filtered;
+  const sortedGroups = [...filtered];
+  if (activeCategory === "Accessories") {
+    const featuredIds = [6703224520768, 6703312764992, 6703311716416];
+    sortedGroups.sort((a, b) => {
+      const aIdx = featuredIds.indexOf(a.adult.id);
+      const bIdx = featuredIds.indexOf(b.adult.id);
+      if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
+      if (aIdx !== -1) return -1;
+      if (bIdx !== -1) return 1;
+      return 0;
+    });
+  }
+
+  const displayGroups = activeCategory === "All" ? interleaveGroups(sortedGroups) : sortedGroups;
 
   const totalPages = Math.max(1, Math.ceil(displayGroups.length / PRODUCTS_PER_PAGE));
   const paginatedGroups = displayGroups.slice(
