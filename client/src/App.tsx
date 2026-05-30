@@ -19,6 +19,7 @@ import { Volume2, VolumeX } from "lucide-react";
 declare global {
   interface Window {
     gtag?: (...args: any[]) => void;
+    fbq?: (...args: any[]) => void;
   }
 }
 
