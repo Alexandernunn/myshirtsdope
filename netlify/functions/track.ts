@@ -1,6 +1,6 @@
 import type { Handler } from "@netlify/functions";
 
-const PIXEL_ID = "1085522715399637";
+const PIXEL_ID = process.env.VITE_META_PIXEL_ID || "";
 
 function buildCustomData(eventName: string, d: Record<string, any>): Record<string, any> | undefined {
   const base: Record<string, any> = {};
