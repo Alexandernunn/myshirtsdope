@@ -42,10 +42,23 @@ export default function Cart() {
         return;
       }
 
+      const cartValue = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+      const cartIds = items.map((item) => String(item.product.id));
+      const { trackEvent } = await import("@/lib/meta-capi");
+      trackEvent("InitiateCheckout", {
+        content_ids: cartIds,
+        content_type: "product",
+        value: cartValue,
+        currency: "USD",
+        num_items: items.reduce((s, i) => s + i.quantity, 0),
+      });
+
       const res = await apiRequest("POST", "/api/checkout", { lineItems });
       const data = await res.json();
       if (data.checkoutUrl) {
-        window.location.href = data.checkoutUrl;
+        const returnUrl = `${window.location.origin}/order-confirmation?value=${cartValue.toFixed(2)}&currency=USD&items=${cartIds.length}`;
+        const checkoutWithReturn = `${data.checkoutUrl}${data.checkoutUrl.includes("?") ? "&" : "?"}return_url=${encodeURIComponent(returnUrl)}`;
+        window.location.href = checkoutWithReturn;
       } else {
         toast({ title: "Error", description: "Could not create checkout. Please try again.", variant: "destructive" });
       }

@@ -142,6 +142,19 @@ export default function ProductDetail() {
   const colorImages = colorImagesData?.colorImages || activeProduct?.colorImages || product?.colorImages || {};
 
   useEffect(() => {
+    if (!activeProduct) return;
+    import("@/lib/meta-capi").then(({ trackEvent }) => {
+      trackEvent("ViewContent", {
+        content_ids: [String(activeProduct.id)],
+        content_name: activeProduct.name,
+        content_type: "product",
+        value: activeProduct.price,
+        currency: "USD",
+      });
+    });
+  }, [activeProduct?.id]);
+
+  useEffect(() => {
     setSelectedSize("");
     setSelectedColor("");
     setDisplayImage("");
@@ -209,18 +222,14 @@ export default function ProductDetail() {
       description: `${activeProduct.name} has been added to your cart.`,
     });
     setTimeout(() => setJustAdded(false), 2000);
-    const cartPayload = {
-      content_name: activeProduct.name,
-      content_ids: [String(activeProduct.id)],
-      content_type: "product",
-      value: activeProduct.price,
-      currency: "USD",
-    };
-    if (typeof window.fbq === "function") {
-      window.fbq("track", "AddToCart", cartPayload);
-    }
-    import("@/lib/meta-capi").then(({ trackServerEvent }) => {
-      trackServerEvent("AddToCart", cartPayload);
+    import("@/lib/meta-capi").then(({ trackEvent }) => {
+      trackEvent("AddToCart", {
+        content_name: activeProduct.name,
+        content_ids: [String(activeProduct.id)],
+        content_type: "product",
+        value: activeProduct.price,
+        currency: "USD",
+      });
     });
   };
 

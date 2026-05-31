@@ -14,6 +14,7 @@ import CartPage from "@/pages/cart";
 import About from "@/pages/about";
 import Contact from "@/pages/contact";
 import NotFound from "@/pages/not-found";
+import OrderConfirmation from "@/pages/order-confirmation";
 import { Volume2, VolumeX } from "lucide-react";
 
 declare global {
@@ -43,11 +44,8 @@ function usePageTracking() {
         page_path: location.pathname,
       });
     }
-    if (typeof window.fbq === "function") {
-      window.fbq("track", "PageView");
-    }
-    import("@/lib/meta-capi").then(({ trackServerEvent }) => {
-      trackServerEvent("PageView");
+    import("@/lib/meta-capi").then(({ trackEvent }) => {
+      trackEvent("PageView");
     });
   }, [location]);
 }
@@ -61,6 +59,7 @@ function Router() {
       <Route path="/cart" component={CartPage} />
       <Route path="/about" component={About} />
       <Route path="/contact" component={Contact} />
+      <Route path="/order-confirmation" component={OrderConfirmation} />
       <Route component={NotFound} />
     </Switch>
   );

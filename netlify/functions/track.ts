@@ -2,6 +2,23 @@ import type { Handler } from "@netlify/functions";
 
 const PIXEL_ID = "1085522715399637";
 
+function buildCustomData(eventName: string, d: Record<string, any>): Record<string, any> | undefined {
+  const base: Record<string, any> = {};
+
+  if (d.content_ids) base.content_ids = d.content_ids;
+  if (d.content_name) base.content_name = d.content_name;
+  if (d.content_type) base.content_type = d.content_type;
+  if (d.value !== undefined) base.value = d.value;
+  if (d.currency) base.currency = d.currency;
+  if (d.num_items !== undefined) base.num_items = d.num_items;
+
+  if (["Purchase", "AddToCart", "ViewContent", "InitiateCheckout"].includes(eventName) && !base.content_type) {
+    base.content_type = "product";
+  }
+
+  return Object.keys(base).length > 0 ? base : undefined;
+}
+
 export const handler: Handler = async (event) => {
   if (event.httpMethod !== "POST") {
     return { statusCode: 405, body: "Method Not Allowed" };
@@ -28,26 +45,26 @@ export const handler: Handler = async (event) => {
   const ip = event.headers["x-forwarded-for"]?.split(",")[0]?.trim() ?? "";
   const ua = event.headers["user-agent"] ?? "";
 
+  const userData: Record<string, any> = {};
+  if (ip) userData.client_ip_address = ip;
+  if (ua) userData.client_user_agent = ua;
+  if (eventData?.fbp) userData.fbp = eventData.fbp;
+  if (eventData?.fbc) userData.fbc = eventData.fbc;
+
   const payload: Record<string, any> = {
     event_name: eventName,
     event_time: Math.floor(Date.now() / 1000),
     event_source_url: eventData?.url ?? "",
     action_source: "website",
-    user_data: {
-      ...(ip ? { client_ip_address: ip } : {}),
-      ...(ua ? { client_user_agent: ua } : {}),
-    },
+    user_data: userData,
   };
 
-  if (eventName === "AddToCart" && eventData) {
-    payload.custom_data = {
-      content_name: eventData.content_name,
-      content_ids: eventData.content_ids,
-      content_type: "product",
-      value: eventData.value,
-      currency: eventData.currency ?? "USD",
-    };
+  if (eventData?.event_id) {
+    payload.event_id = eventData.event_id;
   }
+
+  const customData = buildCustomData(eventName, eventData ?? {});
+  if (customData) payload.custom_data = customData;
 
   try {
     const res = await fetch(

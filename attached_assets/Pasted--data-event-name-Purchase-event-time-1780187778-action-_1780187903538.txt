@@ -1,0 +1,136 @@
+{
+"data": [
+{
+"event_name": "Purchase",
+"event_time": 1780187778,
+"action_source": "website",
+"user_data": {
+"em": [
+"7b17fb0bd173f625b58636fb796407c22b3d16fc78302d79f0fd30c2fc2fc068"
+],
+"ph": [
+null
+]
+},
+"attribution_data": {
+"attribution_share": "0.3"
+},
+"custom_data": {
+"currency": "USD",
+"value": "142.52"
+},
+"original_event_data": {
+"event_name": "Purchase",
+"event_time": 1780187778
+}
+}
+]
+}
+Include Selected Events and Parameters in Your Payload
+Your colleague has defined the required events and parameters for a complete Conversions API set up.
+Set Up View content Event
+A visit to a content page you care about, such as a product page, landing page or article. Information about the page viewed can be passed to Facebook for use in dynamic ads.
+Event Parameters
+Content Type
+Action Source
+Num Items
+Event Name
+Event Source URL
+Currency
+Value
+Event Time
+Content IDs
+Customer Information Parameters
+Client User Agent - Do Not Hash
+Set Up Purchase Event
+The completion of a purchase, usually signified by receiving order/purchase confirmation or a transaction receipt.
+Event Parameters
+Event Time
+Event Name
+Event Source URL
+Action Source
+Content Type
+Currency
+Value
+Content IDs
+Customer Information Parameters
+Last Name
+Client User Agent - Do Not Hash
+Email
+First Name
+Set Up Add to cart Event
+The addition of an item to a shopping cart or basket (example: clicking an Add to Cart button on a website).
+Event Parameters
+Event ID
+Content Type
+Opt Out
+Content Category
+Action Source
+Data Processing Options
+Num Items
+Predicted LTV
+Search String
+Delivery Category
+Order ID
+Event Name
+Event Source URL
+Currency
+Value
+Content Name
+Event Time
+Content IDs
+Status
+Data Processing Options State
+Contents
+Data Processing Options Country
+Customer Information Parameters
+Email
+Phone
+Gender
+Date of Birth
+Last Name
+First Name
+City
+State
+Zip Code
+Country
+External ID
+Client IP Address - Do Not Hash
+Client User Agent - Do Not Hash
+Click ID (fbc) Cookie - Do Not Hash
+Browser ID (fbp) Cookie - Do Not Hash
+Subscription ID - Do Not Hash
+Set Up Initiate checkout Event
+The start of a checkout process.
+Event Parameters
+Content Type
+Action Source
+Num Items
+Event Name
+Event Source URL
+Currency
+Value
+Event Time
+Content IDs
+Customer Information Parameters
+Client User Agent - Do Not Hash
+Set Up PageView Event
+Check with your marketing partner to determine when this event should be sent.
+Event Parameters
+Event Time
+Event Name
+Event Source URL
+Action Source
+Customer Information Parameters
+Last Name
+Client User Agent - Do Not Hash
+Email
+First Name
+Event Transaction Time
+The event_time parameter is the event transaction time. The specified time may be earlier than the time you send the event to Facebook. If the event_time is greater than 7 days in the past, we return an error for the entire request and process no events. Learn more
+Deduplicating Pixel and Server Events
+Facebook tries to deduplicate identical events sent through both the Meta Pixel and the Conversions API. We determine if events are identical based on their event ID and event name. Learn more
+Batching Events
+You can send up to 1,000 events in data. However, for optimal performance, we recommend sending events as soon as they occur. If any event you send within a batch is invalid, we reject the entire batch. Learn more
+Test Your Events
+Use a test ID to send test events directly from your server to verify that they're received correctly by Facebook.
