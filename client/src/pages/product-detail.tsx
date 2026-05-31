@@ -209,15 +209,19 @@ export default function ProductDetail() {
       description: `${activeProduct.name} has been added to your cart.`,
     });
     setTimeout(() => setJustAdded(false), 2000);
+    const cartPayload = {
+      content_name: activeProduct.name,
+      content_ids: [String(activeProduct.id)],
+      content_type: "product",
+      value: activeProduct.price,
+      currency: "USD",
+    };
     if (typeof window.fbq === "function") {
-      window.fbq("track", "AddToCart", {
-        content_name: activeProduct.name,
-        content_ids: [String(activeProduct.id)],
-        content_type: "product",
-        value: activeProduct.price,
-        currency: "USD",
-      });
+      window.fbq("track", "AddToCart", cartPayload);
     }
+    import("@/lib/meta-capi").then(({ trackServerEvent }) => {
+      trackServerEvent("AddToCart", cartPayload);
+    });
   };
 
   if (isLoading) {

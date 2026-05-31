@@ -38,9 +38,16 @@ function usePageTracking() {
 
   useEffect(() => {
     const gtag = window.gtag;
-    if (!gtag) return;
-    gtag("config", "G-EV5P2LKEHE", {
-      page_path: location.pathname,
+    if (gtag) {
+      gtag("config", "G-EV5P2LKEHE", {
+        page_path: location.pathname,
+      });
+    }
+    if (typeof window.fbq === "function") {
+      window.fbq("track", "PageView");
+    }
+    import("@/lib/meta-capi").then(({ trackServerEvent }) => {
+      trackServerEvent("PageView");
     });
   }, [location]);
 }
