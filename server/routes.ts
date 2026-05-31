@@ -94,7 +94,7 @@ export function registerRoutes(httpServer: Server, app: Express): void {
   app.use("/api", corsMiddleware, verifyAppToken);
   const productLimiter = rateLimit(60, 60_000);
   const contactLimiter = rateLimit(5, 60_000);
-  const checkoutLimiter = rateLimit(10, 60_000);
+  const checkoutLimiter = rateLimit(30, 60_000);
 
   app.get("/api/products", productLimiter, async (req, res) => {
     try {
