@@ -1,0 +1,100 @@
+Netlify doesn't run a persistent server, but you can use **Netlify Functions** — they work perfectly for this and are free.
+
+---
+
+**Step 1: Create the function**
+
+In your project, create this file:
+
+```
+/netlify/functions/track.js
+```
+
+```javascript
+const axios = require('axios');
+
+exports.handler = async (event) => {
+  const { eventName, eventData } = JSON.parse(event.body);
+
+  await axios.post(
+    `https://graph.facebook.com/v18.0/YOUR_PIXEL_ID/events`,
+    {
+      data: [{
+        event_name: eventName,
+        event_time: Math.floor(Date.now() / 1000),
+        event_source_url: eventData.url,
+        user_data: {
+          client_ip_address: event.headers['x-forwarded-for'],
+          client_user_agent: event.headers['user-agent']
+        },
+        action_source: "website"
+      }],
+      access_token: process.env.META_ACCESS_TOKEN
+    }
+  );
+
+  return { statusCode: 200 };
+};
+```
+
+---
+
+**Step 2: Add your access token as an env variable**
+
+In Netlify dashboard:
+- Site Settings → **Environment Variables**
+- Add: `META_ACCESS_TOKEN` = your token
+
+Never hardcode it in the file.
+
+---
+
+**Step 3: Install axios**
+
+In your project root:
+```bash
+npm install axios
+```
+
+Make sure you have a `package.json` in the root — Netlify needs it to install dependencies for functions.
+
+---
+
+**Step 4: Update your HTML tracking script**
+
+Change the fetch URL to your Netlify function:
+
+```html
+<script>
+  function trackEvent(eventName, extraData = {}) {
+    fetch('/.netlify/functions/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        eventName,
+        eventData: { url: window.location.href, ...extraData }
+      })
+    });
+  }
+
+  // Page view
+  trackEvent('PageView');
+
+  // Button/link clicks
+  document.querySelectorAll('a, button').forEach(el => {
+    el.addEventListener('click', () => {
+      trackEvent('Lead', { element: el.innerText });
+    });
+  });
+</script>
+```
+
+---
+
+**Step 5: Deploy and test**
+
+Push to GitHub → Netlify auto-deploys. Then go to **Meta Events Manager → Test Events** and browse your site — you should see PageView events coming in with source labeled as **server.**
+
+---
+
+Do you manage this site's code through GitHub or are you editing it directly on Replit?
