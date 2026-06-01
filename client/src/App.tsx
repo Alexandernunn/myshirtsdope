@@ -24,6 +24,31 @@ declare global {
   }
 }
 
+const PIXEL_ID = import.meta.env.VITE_META_PIXEL_ID as string | undefined;
+
+function useMetaPixel() {
+  useEffect(() => {
+    if (!PIXEL_ID || window.fbq) return;
+    const n: any = function (...args: any[]) {
+      n.callMethod ? n.callMethod(...args) : n.queue.push(args);
+    };
+    n.push = n;
+    n.loaded = true;
+    n.version = "2.0";
+    n.queue = [];
+    window.fbq = n;
+    (window as any)._fbq = n;
+    const s = document.createElement("script");
+    s.async = true;
+    s.src = "https://connect.facebook.net/en_US/fbevents.js";
+    document.head.appendChild(s);
+    window.fbq("init", PIXEL_ID);
+    const noscript = document.createElement("noscript");
+    noscript.innerHTML = `<img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=${PIXEL_ID}&ev=PageView&noscript=1" />`;
+    document.body.prepend(noscript);
+  }, []);
+}
+
 function ScrollToTop() {
   const [location] = useLocation();
 
@@ -129,6 +154,7 @@ function BackgroundMusic() {
 }
 
 function App() {
+  useMetaPixel();
   usePageTracking();
 
   return (
