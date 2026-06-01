@@ -289,7 +289,7 @@ export default function Shop() {
 
   const sortedGroups = [...filtered];
   if (activeCategory === "Accessories") {
-    const featuredIds = [6703224520768, 6703312764992, 6703311716416];
+    const featuredIds = [6703224520768, 6703312764992, 6703311716416, 6703313780800];
     sortedGroups.sort((a, b) => {
       const aIdx = featuredIds.indexOf(a.adult.id);
       const bIdx = featuredIds.indexOf(b.adult.id);
