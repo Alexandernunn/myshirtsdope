@@ -43,7 +43,6 @@ build = ["npm", "run", "build"]
 
 [userenv.shared]
 SHOPIFY_STORE_DOMAIN = "tri-creative-store.myshopify.com"
-VITE_META_PIXEL_ID = "1085522715399637"
 
 [postMerge]
 path = "scripts/post-merge.sh"

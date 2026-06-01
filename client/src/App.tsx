@@ -24,7 +24,7 @@ declare global {
   }
 }
 
-const PIXEL_ID = import.meta.env.VITE_META_PIXEL_ID as string | undefined;
+const PIXEL_ID = "1085522715399637";
 
 function useMetaPixel() {
   useEffect(() => {
