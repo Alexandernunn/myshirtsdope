@@ -69,32 +69,76 @@ function applyPageMetadata(
     `<meta property="og:description" content="${description}" />`,
   );
 
-  const extraTags = [
-    `<link rel="canonical" href="${canonicalUrl}" />`,
-    `<meta property="og:site_name" content="MyShirtsDope" />`,
-    `<meta property="og:type" content="${metadata.ogType}" />`,
-    `<meta property="og:url" content="${canonicalUrl}" />`,
-    `<meta name="twitter:card" content="${metadata.imageUrl ? "summary_large_image" : "summary"}" />`,
-    `<meta name="twitter:title" content="${title}" />`,
-    `<meta name="twitter:description" content="${description}" />`,
+  const headTags = [
+    {
+      matcher: /<link\s+rel=["']canonical["'][^>]*>/i,
+      replacement: `<link rel="canonical" href="${canonicalUrl}" />`,
+    },
+    {
+      matcher: /<meta\s+property=["']og:site_name["'][^>]*>/i,
+      replacement: `<meta property="og:site_name" content="MyShirtsDope" />`,
+    },
+    {
+      matcher: /<meta\s+property=["']og:type["'][^>]*>/i,
+      replacement: `<meta property="og:type" content="${metadata.ogType}" />`,
+    },
+    {
+      matcher: /<meta\s+property=["']og:url["'][^>]*>/i,
+      replacement: `<meta property="og:url" content="${canonicalUrl}" />`,
+    },
+    {
+      matcher: /<meta\s+name=["']twitter:card["'][^>]*>/i,
+      replacement: `<meta name="twitter:card" content="${metadata.imageUrl ? "summary_large_image" : "summary"}" />`,
+    },
+    {
+      matcher: /<meta\s+name=["']twitter:title["'][^>]*>/i,
+      replacement: `<meta name="twitter:title" content="${title}" />`,
+    },
+    {
+      matcher: /<meta\s+name=["']twitter:description["'][^>]*>/i,
+      replacement: `<meta name="twitter:description" content="${description}" />`,
+    },
   ];
 
   if (metadata.imageUrl) {
     const imageUrl = escapeHtml(metadata.imageUrl);
-    extraTags.push(`<meta property="og:image" content="${imageUrl}" />`);
-    extraTags.push(`<meta name="twitter:image" content="${imageUrl}" />`);
+    headTags.push(
+      {
+        matcher: /<meta\s+property=["']og:image["'][^>]*>/i,
+        replacement: `<meta property="og:image" content="${imageUrl}" />`,
+      },
+      {
+        matcher: /<meta\s+name=["']twitter:image["'][^>]*>/i,
+        replacement: `<meta name="twitter:image" content="${imageUrl}" />`,
+      },
+    );
   }
 
   if (metadata.price !== undefined) {
-    extraTags.push(`<meta property="product:price:amount" content="${metadata.price.toFixed(2)}" />`);
-    extraTags.push(`<meta property="product:price:currency" content="USD" />`);
+    headTags.push(
+      {
+        matcher: /<meta\s+property=["']product:price:amount["'][^>]*>/i,
+        replacement: `<meta property="product:price:amount" content="${metadata.price.toFixed(2)}" />`,
+      },
+      {
+        matcher: /<meta\s+property=["']product:price:currency["'][^>]*>/i,
+        replacement: `<meta property="product:price:currency" content="USD" />`,
+      },
+    );
+  }
+
+  for (const { matcher, replacement } of headTags) {
+    html = replaceHeadTag(html, matcher, replacement);
   }
 
   if (metadata.jsonLd) {
-    extraTags.push(`<script type="application/ld+json">${safeJsonLd(metadata.jsonLd)}</script>`);
+    html = html.replace(
+      /<\/head>/i,
+      `    <script type="application/ld+json">${safeJsonLd(metadata.jsonLd)}</script>\n  </head>`,
+    );
   }
 
-  return html.replace(/<\/head>/i, `    ${extraTags.join("\n    ")}\n  </head>`);
+  return html;
 }
 
 function injectPrerenderedRoot(template: string, content: string): string {
@@ -191,6 +235,7 @@ function renderShopPage(template: string, products: Product[]): string {
     description: "Browse MyShirtsDope shirts, hoodies, onesies, and accessories inspired by music, culture, and love.",
     canonicalUrl,
     ogType: "website",
+    imageUrl: `${SITE_URL}/favicon.png`,
   });
   return injectPrerenderedRoot(html, renderShopContent(products));
 }
@@ -202,7 +247,7 @@ function renderProductPage(template: string, product: Product): string {
     description: product.description || `${product.name} from MyShirtsDope`,
     canonicalUrl,
     ogType: "product",
-    imageUrl: product.imageUrl,
+    imageUrl: product.imageUrl || `${SITE_URL}/favicon.png`,
     price: product.price,
     jsonLd: productJsonLd(product, canonicalUrl),
   });
