@@ -1,3 +1,5 @@
+import { queueMetaPixelEvent } from "@/lib/marketing-scripts";
+
 function getCookie(name: string): string {
   const match = document.cookie.match(new RegExp("(?:^|; )" + name + "=([^;]*)"));
   return match ? decodeURIComponent(match[1]) : "";
@@ -31,9 +33,7 @@ export function trackEvent(eventName: string, options: TrackOptions = {}) {
   if (fbpCookie) capiData.fbp = fbpCookie;
   if (fbcCookie) capiData.fbc = fbcCookie;
 
-  if (typeof window.fbq === "function") {
-    window.fbq("track", eventName, pixelParams, { eventID: eventId });
-  }
+  queueMetaPixelEvent(eventName, pixelParams, eventId);
 
   fetch("/.netlify/functions/track", {
     method: "POST",

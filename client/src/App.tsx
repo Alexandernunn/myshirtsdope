@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -16,36 +16,15 @@ import Contact from "@/pages/contact";
 import NotFound from "@/pages/not-found";
 import OrderConfirmation from "@/pages/order-confirmation";
 import { Volume2, VolumeX } from "lucide-react";
+import {
+  deferMarketingScriptsUntilInteraction,
+  queueGooglePageView,
+} from "@/lib/marketing-scripts";
+import { trackEvent } from "@/lib/meta-capi";
 
-declare global {
-  interface Window {
-    gtag?: (...args: any[]) => void;
-    fbq?: (...args: any[]) => void;
-  }
-}
-
-const PIXEL_ID = "1085522715399637";
-
-function useMetaPixel() {
-  useEffect(() => {
-    if (!PIXEL_ID || window.fbq) return;
-    const n: any = function (...args: any[]) {
-      n.callMethod ? n.callMethod(...args) : n.queue.push(args);
-    };
-    n.push = n;
-    n.loaded = true;
-    n.version = "2.0";
-    n.queue = [];
-    window.fbq = n;
-    (window as any)._fbq = n;
-    const s = document.createElement("script");
-    s.async = true;
-    s.src = "https://connect.facebook.net/en_US/fbevents.js";
-    document.head.appendChild(s);
-    window.fbq("init", PIXEL_ID);
-    const noscript = document.createElement("noscript");
-    noscript.innerHTML = `<img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=${PIXEL_ID}&ev=PageView&noscript=1" />`;
-    document.body.prepend(noscript);
+function useDeferredMarketingScripts() {
+  useLayoutEffect(() => {
+    return deferMarketingScriptsUntilInteraction();
   }, []);
 }
 
@@ -62,16 +41,9 @@ function ScrollToTop() {
 function usePageTracking() {
   const [location] = useLocation();
 
-  useEffect(() => {
-    const gtag = window.gtag;
-    if (gtag) {
-      gtag("config", "G-EV5P2LKEHE", {
-        page_path: location.pathname,
-      });
-    }
-    import("@/lib/meta-capi").then(({ trackEvent }) => {
-      trackEvent("PageView");
-    });
+  useLayoutEffect(() => {
+    queueGooglePageView(location);
+    trackEvent("PageView");
   }, [location]);
 }
 
@@ -154,7 +126,7 @@ function BackgroundMusic() {
 }
 
 function App() {
-  useMetaPixel();
+  useDeferredMarketingScripts();
   usePageTracking();
 
   return (

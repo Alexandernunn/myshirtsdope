@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { trackEvent } from "@/lib/meta-capi";
 
 export default function Cart() {
   usePageTitle("Cart");
@@ -44,7 +45,6 @@ export default function Cart() {
 
       const cartValue = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
       const cartIds = items.map((item) => String(item.product.id));
-      const { trackEvent } = await import("@/lib/meta-capi");
       trackEvent("InitiateCheckout", {
         content_ids: cartIds,
         content_type: "product",

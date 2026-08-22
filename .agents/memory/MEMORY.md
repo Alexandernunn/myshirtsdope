@@ -1,1 +1,2 @@
 - [Catalog prerendering](catalog-prerendering.md) — generate bot-visible shop/product HTML during the Netlify catalog build, not through runtime SSR.
+- [Marketing script deferral](marketing-script-deferral.md) — queue browser analytics immediately, load vendors after interaction, and keep Meta CAPI immediate.

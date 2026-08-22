@@ -9,6 +9,7 @@ import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { findGroupForProduct, groupProducts, getProductForFit, getFitLabel, type FitType } from "@/lib/product-grouping";
+import { trackEvent } from "@/lib/meta-capi";
 import type { Product } from "@shared/schema";
 
 const COLOR_HEX_MAP: Record<string, string> = {
@@ -143,14 +144,12 @@ export default function ProductDetail() {
 
   useEffect(() => {
     if (!activeProduct) return;
-    import("@/lib/meta-capi").then(({ trackEvent }) => {
-      trackEvent("ViewContent", {
-        content_ids: [String(activeProduct.id)],
-        content_name: activeProduct.name,
-        content_type: "product",
-        value: activeProduct.price,
-        currency: "USD",
-      });
+    trackEvent("ViewContent", {
+      content_ids: [String(activeProduct.id)],
+      content_name: activeProduct.name,
+      content_type: "product",
+      value: activeProduct.price,
+      currency: "USD",
     });
   }, [activeProduct?.id]);
 
@@ -222,14 +221,12 @@ export default function ProductDetail() {
       description: `${activeProduct.name} has been added to your cart.`,
     });
     setTimeout(() => setJustAdded(false), 2000);
-    import("@/lib/meta-capi").then(({ trackEvent }) => {
-      trackEvent("AddToCart", {
-        content_name: activeProduct.name,
-        content_ids: [String(activeProduct.id)],
-        content_type: "product",
-        value: activeProduct.price,
-        currency: "USD",
-      });
+    trackEvent("AddToCart", {
+      content_name: activeProduct.name,
+      content_ids: [String(activeProduct.id)],
+      content_type: "product",
+      value: activeProduct.price,
+      currency: "USD",
     });
   };
 

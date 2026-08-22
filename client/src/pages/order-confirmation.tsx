@@ -4,6 +4,7 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { ShoppingBag, CheckCircle } from "lucide-react";
+import { trackEvent } from "@/lib/meta-capi";
 
 export default function OrderConfirmation() {
   usePageTitle("Order Confirmed");
@@ -18,13 +19,11 @@ export default function OrderConfirmation() {
     if (firedRef.current) return;
     firedRef.current = true;
 
-    import("@/lib/meta-capi").then(({ trackEvent }) => {
-      trackEvent("Purchase", {
-        value: value || undefined,
-        currency,
-        content_type: "product",
-        num_items: items || undefined,
-      });
+    trackEvent("Purchase", {
+      value: value || undefined,
+      currency,
+      content_type: "product",
+      num_items: items || undefined,
     });
   }, []);
 
