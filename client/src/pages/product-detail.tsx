@@ -307,9 +307,11 @@ export default function ProductDetail() {
               </p>
             </div>
 
-            <p className="text-sm text-muted-foreground leading-relaxed" data-testid="text-product-description">
-              {activeProduct.description}
-            </p>
+            <div className="hidden md:block">
+              <p className="text-sm text-muted-foreground leading-relaxed" data-testid="text-product-description">
+                {activeProduct.description}
+              </p>
+            </div>
 
             {hasMutipleFits && group && (
               <div>
@@ -389,6 +391,15 @@ export default function ProductDetail() {
                 </div>
               </div>
             </div>
+
+            <details className="md:hidden border border-card-border rounded-md overflow-hidden" data-testid="details-product-description">
+              <summary className="font-pixel text-[9px] text-neon-blue px-4 py-3 cursor-pointer select-none">
+                DETAILS
+              </summary>
+              <p className="text-sm text-muted-foreground leading-relaxed px-4 pb-4" data-testid="text-product-description-mobile">
+                {activeProduct.description}
+              </p>
+            </details>
 
             <div className="retro-divider my-1" />
 
