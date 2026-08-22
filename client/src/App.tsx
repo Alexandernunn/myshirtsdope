@@ -116,7 +116,8 @@ function BackgroundMusic() {
       <button
         onClick={toggleMute}
         data-testid="button-music-toggle"
-        title={muted ? "Unmute music" : "Mute music"}
+        aria-label={muted ? "Unmute background music" : "Mute background music"}
+        title={muted ? "Unmute background music" : "Mute background music"}
         className="fixed bottom-5 right-5 z-50 w-10 h-10 rounded-full bg-background/80 border border-neon-blue/40 backdrop-blur-sm flex items-center justify-center text-neon-blue hover:bg-neon-blue/10 transition-colors shadow-lg"
       >
         {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}

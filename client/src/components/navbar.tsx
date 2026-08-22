@@ -40,22 +40,32 @@ export default function Navbar() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Link href="/cart" data-testid="link-cart">
-            <Button variant="ghost" size="icon" className="relative">
+          <Button asChild variant="ghost" size="icon" className="relative">
+            <Link
+              href="/cart"
+              aria-label={`Shopping cart, ${totalItems} ${totalItems === 1 ? "item" : "items"}`}
+              data-testid="link-cart"
+            >
               <ShoppingCart className="w-5 h-5" />
               {totalItems > 0 && (
-                <span className="absolute -top-1 -right-1 bg-neon-blue text-white text-[9px] font-pixel rounded-full w-5 h-5 flex items-center justify-center">
+                <span
+                  aria-hidden="true"
+                  className="absolute -top-1 -right-1 bg-neon-blue text-white text-[9px] font-pixel rounded-full w-5 h-5 flex items-center justify-center"
+                >
                   {totalItems}
                 </span>
               )}
-            </Button>
-          </Link>
+            </Link>
+          </Button>
 
           <Button
             variant="ghost"
             size="icon"
             className="md:hidden"
             onClick={() => setMobileOpen(!mobileOpen)}
+            aria-label={mobileOpen ? "Close navigation menu" : "Open navigation menu"}
+            aria-expanded={mobileOpen}
+            aria-controls="mobile-navigation-menu"
             data-testid="button-mobile-menu"
           >
             {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -64,7 +74,7 @@ export default function Navbar() {
       </div>
 
       {mobileOpen && (
-        <div className="md:hidden border-t border-border bg-background px-4 pb-4">
+        <div id="mobile-navigation-menu" className="md:hidden border-t border-border bg-background px-4 pb-4">
           {navLinks.map((link) => (
             <Link key={link.href} href={link.href} onClick={() => setMobileOpen(false)} data-testid={`link-mobile-${link.label.toLowerCase()}`}>
               <div className={`py-3 font-display text-sm tracking-wide border-b border-border/50 ${

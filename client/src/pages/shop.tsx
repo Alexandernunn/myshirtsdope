@@ -423,6 +423,7 @@ export default function Shop() {
                   size="icon"
                   onClick={() => goToPage(currentPage - 1)}
                   disabled={currentPage === 1}
+                  aria-label="Previous page"
                   data-testid="button-page-prev"
                 >
                   <ChevronLeft className="w-4 h-4" />
@@ -439,6 +440,8 @@ export default function Shop() {
                       variant={currentPage === page ? "default" : "outline"}
                       size="sm"
                       onClick={() => goToPage(page as number)}
+                      aria-label={`Go to page ${page}`}
+                      aria-current={currentPage === page ? "page" : undefined}
                       data-testid={`button-page-${page}`}
                     >
                       <span className="font-display text-sm">{page}</span>
@@ -451,6 +454,7 @@ export default function Shop() {
                   size="icon"
                   onClick={() => goToPage(currentPage + 1)}
                   disabled={currentPage === totalPages}
+                  aria-label="Next page"
                   data-testid="button-page-next"
                 >
                   <ChevronRight className="w-4 h-4" />

@@ -139,6 +139,7 @@ export default function Cart() {
                       variant="ghost"
                       size="icon"
                       onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                      aria-label={`Decrease quantity of ${item.product.name}`}
                       data-testid={`button-decrease-${item.id}`}
                     >
                       <Minus className="w-3 h-3" />
@@ -150,6 +151,7 @@ export default function Cart() {
                       variant="ghost"
                       size="icon"
                       onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                      aria-label={`Increase quantity of ${item.product.name}`}
                       data-testid={`button-increase-${item.id}`}
                     >
                       <Plus className="w-3 h-3" />
@@ -160,6 +162,7 @@ export default function Cart() {
                     variant="ghost"
                     size="icon"
                     onClick={() => removeFromCart(item.id)}
+                    aria-label={`Remove ${item.product.name} from cart`}
                     data-testid={`button-remove-${item.id}`}
                     className="text-destructive flex-shrink-0"
                   >
