@@ -1,0 +1,13 @@
+User-agent: *
+
+# Keep the public storefront and catalog crawlable.
+Allow: /
+Allow: /shop
+Allow: /product/
+Allow: /data/
+Allow: /images/
+
+# Keep API and transactional pages out of search results.
+Disallow: /api/
+Disallow: /cart
+Disallow: /order-confirmation
