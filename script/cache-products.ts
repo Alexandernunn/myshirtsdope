@@ -2,6 +2,7 @@ import { fetchAllStorefrontProducts, mapStorefrontProduct } from "../server/shop
 import type { Product } from "../shared/schema";
 import { mkdir, writeFile } from "fs/promises";
 import path from "path";
+import { prerenderCatalog } from "./prerender-catalog";
 
 const NEUTRAL_COLORS = new Set([
   "white", "off white", "off-white", "natural", "ash", "cornsilk", "ivory",
@@ -20,9 +21,9 @@ function getColorImageVariants(colorImages: Record<string, string> | null): stri
 }
 
 if (!process.env.SHOPIFY_ACCESS_TOKEN || !process.env.SHOPIFY_STORE_DOMAIN) {
-  console.warn("[Cache] Skipping product cache: missing SHOPIFY_ACCESS_TOKEN or SHOPIFY_STORE_DOMAIN");
-  console.warn("[Cache] The site will load products from the API instead of static JSON");
-  process.exit(0);
+  console.error("[Cache] Build failed: missing SHOPIFY_ACCESS_TOKEN or SHOPIFY_STORE_DOMAIN");
+  console.error("[Cache] Product data and prerendered catalog pages are required build artifacts");
+  process.exit(1);
 }
 
 async function cacheProducts() {
@@ -77,6 +78,7 @@ async function cacheProducts() {
   await writeFile(path.join(outDir, "products-slim.json"), JSON.stringify(slim));
   await writeFile(path.join(outDir, "products-slim-1.json"), JSON.stringify(slimInitial));
   await writeFile(path.join(outDir, "products-slim-rest.json"), JSON.stringify(slimRest));
+  await prerenderCatalog(products);
 
   const fullSize = Buffer.byteLength(JSON.stringify(products)) / 1024;
   const slimSize = Buffer.byteLength(JSON.stringify(slim)) / 1024;
@@ -90,7 +92,6 @@ async function cacheProducts() {
 }
 
 cacheProducts().catch((err) => {
-  console.warn("[Cache] Warning: Failed to generate product cache:", err.message || err);
-  console.warn("[Cache] The site will load products from the API instead of static JSON");
-  process.exit(0);
+  console.error("[Cache] Build failed while generating product data or prerendered pages:", err.message || err);
+  process.exit(1);
 });

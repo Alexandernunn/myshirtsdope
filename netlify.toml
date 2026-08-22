@@ -30,6 +30,11 @@
   force = true
 
 [[redirects]]
+  from = "/product/*"
+  to = "/index.html"
+  status = 404
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
