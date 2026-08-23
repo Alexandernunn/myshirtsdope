@@ -195,8 +195,9 @@ export default function CultureDeck() {
     navigate(`/product/${productId}`);
   }, [navigate]);
 
-  if (shuffledProducts.length === 0) return null;
-
+  // Always render the fixed-size stage (label, deck box, hint) so the hero
+  // reserves the deck's space before product data arrives — cards pop into a
+  // box that never changes size, producing zero layout shift.
   return (
     <div className="flex flex-col items-center mt-12 mb-12">
       <p className="font-pixel text-[9px] sm:text-[10px] text-neon-yellow neon-text-yellow mb-6 tracking-widest">

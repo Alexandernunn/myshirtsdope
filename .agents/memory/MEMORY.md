@@ -2,4 +2,4 @@
 - [Critical stylesheet loading](critical-stylesheet-loading.md) — preload full CSS, activate it after load from the entry module, and retain critical/no-JS fallbacks.
 - [Marketing script deferral](marketing-script-deferral.md) — queue browser analytics immediately, load vendors after interaction, and keep Meta CAPI immediate.
 - [Shopify image transforms](shopify-image-transforms.md) — width/format=webp CDN params (Accept-negotiated), LCP preload must mirror the client's negative-index variant fallback.
-- [Prerender hydration geometry](prerender-hydration-geometry.md) — static PDP markup and critical geometry must mirror the interactive shell above the fold to prevent root-replacement CLS.
+- [Prerender hydration geometry](prerender-hydration-geometry.md) — static PDP/homepage markup and critical geometry must mirror the interactive shell; CSS specificity, Tailwind line-height, and CLS-probe gotchas.

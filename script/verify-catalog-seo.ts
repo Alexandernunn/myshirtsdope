@@ -77,6 +77,38 @@ async function verifyPublishedCatalog(): Promise<void> {
     );
   }
 
+  const homeHtml = await readFile(path.join(OUTPUT_DIR, "index.html"), "utf8");
+  assert(homeHtml.includes('<div id="root" data-prerendered="true">'), "homepage must ship a prerendered shell");
+  assert(homeHtml.includes("data-prerendered-home-shell"), "homepage shell marker is missing");
+  assert(homeHtml.includes('data-prerendered-home-critical="true"'), "homepage critical geometry styles are missing");
+  assert(homeHtml.includes('data-home-shell-gate="true"'), "homepage shell gate script is missing");
+  assert(homeHtml.includes("data-non-home-route"), "homepage shell must hide itself on non-home fallback routes");
+  assert(homeHtml.includes('data-home-modulepreload="true"'), "homepage modulepreload script is missing");
+  assert(/\/assets\/home-[\w-]+\.js/.test(homeHtml), "homepage must preload the home route chunk");
+  assert(homeHtml.includes("data-prerendered-home-deck-stage"), "homepage shell must reserve the culture deck stage");
+  assert(homeHtml.includes("data-prerendered-home-tagline-sizer"), "homepage shell must reserve the tagline height");
+  assert(homeHtml.includes("data-prerendered-home-footer"), "homepage shell must reserve the footer");
+
+  // Shell/hydrated content parity: the prerendered homepage duplicates copy from
+  // client/src/pages/home.tsx, so any copy edit there must also land in
+  // script/prerender-catalog.ts or the shell will visibly change at hydration.
+  const homeSource = await readFile(path.resolve("client/src/pages/home.tsx"), "utf8");
+  const taglineMatch = homeSource.match(/const tagline = "([^"]+)"/);
+  assert(taglineMatch !== null, "could not locate the hero tagline constant in home.tsx");
+  assert(
+    homeHtml.includes(taglineMatch![1]),
+    "homepage shell tagline no longer matches the hero tagline in home.tsx — update renderHomeContent in script/prerender-catalog.ts",
+  );
+  for (const descMatch of homeSource.matchAll(/desc: "([^"]+)"/g)) {
+    assert(
+      homeHtml.includes(descMatch[1]),
+      `homepage shell is missing category card copy from home.tsx: "${descMatch[1]}" — update renderHomeContent in script/prerender-catalog.ts`,
+    );
+  }
+  for (const label of ["WELCOME TO", "MyShirtsDope", "ENTER THE STORE", "LATEST DROPS", "WHAT WE REP", "READY TO PLAY?", "BROWSE COLLECTION"]) {
+    assert(homeHtml.includes(label), `homepage shell is missing the "${label}" copy — update renderHomeContent in script/prerender-catalog.ts`);
+  }
+
   const shopHtml = await readFile(path.join(OUTPUT_DIR, "shop/index.html"), "utf8");
   const preload = shopHtml.match(/<link rel="preload" as="image"[^>]*>/)?.[0];
   const primaryImage = shopHtml.match(/<img [^>]*loading="eager"[^>]*fetchpriority="high"[^>]*>/)?.[0];
@@ -92,14 +124,30 @@ async function verifyPublishedCatalog(): Promise<void> {
 }
 
 async function verifyPageSpeedContracts(): Promise<void> {
-  const [template, styles, footer, shop, productDetail, app] = await Promise.all([
+  const [template, styles, footer, shop, productDetail, app, home, cultureDeck] = await Promise.all([
     readFile(path.resolve("client/index.html"), "utf8"),
     readFile(path.resolve("client/src/index.css"), "utf8"),
     readFile(path.resolve("client/src/components/footer.tsx"), "utf8"),
     readFile(path.resolve("client/src/pages/shop.tsx"), "utf8"),
     readFile(path.resolve("client/src/pages/product-detail.tsx"), "utf8"),
     readFile(path.resolve("client/src/App.tsx"), "utf8"),
+    readFile(path.resolve("client/src/pages/home.tsx"), "utf8"),
+    readFile(path.resolve("client/src/components/culture-deck.tsx"), "utf8"),
   ]);
+
+  assert(
+    home.includes('aria-hidden="true"') && home.includes("invisible font-display"),
+    "the hero tagline must reserve its full wrapped height with an invisible sizer",
+  );
+  assert(
+    home.includes("absolute inset-0 font-display"),
+    "the typed tagline must overlay the reserved sizer instead of growing the hero",
+  );
+  assert(
+    !/shuffledProducts\.length === 0\) return null/.test(cultureDeck),
+    "the culture deck must always render its fixed-size stage so the hero never grows",
+  );
+  assert(cultureDeck.includes('data-testid="culture-deck-container"'));
 
   assert(template.includes('<link rel="preconnect" href="https://cdn.shopify.com" crossorigin />'));
   const fontRules = [...template.matchAll(/@font-face\s*\{([^}]*)\}/g)].map((match) => match[1]);

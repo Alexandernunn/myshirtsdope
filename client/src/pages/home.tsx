@@ -73,8 +73,14 @@ export default function Home() {
               MyShirtsDope
             </h1>
 
-            <div className="max-w-2xl mx-auto mb-10">
-              <p className="font-display text-lg sm:text-xl text-foreground/90 leading-relaxed min-h-[56px]">
+            <div className="relative max-w-2xl mx-auto mb-10">
+              {/* Invisible full-length copy reserves the final wrapped height so the
+                  typing animation never pushes the button, deck, or footer down. */}
+              <p aria-hidden="true" className="invisible font-display text-lg sm:text-xl leading-relaxed min-h-[56px]">
+                {tagline}
+                <span>|</span>
+              </p>
+              <p className="absolute inset-0 font-display text-lg sm:text-xl text-foreground/90 leading-relaxed">
                 {typedText}
                 <span className="animate-blink text-neon-yellow">|</span>
               </p>
