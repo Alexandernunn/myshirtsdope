@@ -74,6 +74,68 @@ function getColorHex(colorName: string): string | null {
   return null;
 }
 
+const PDP_HERO_PRELOAD_ATTRIBUTE = "data-pdp-hero-preload";
+const PRERENDERED_PRODUCT_DATA_SELECTOR = 'script[data-prerendered-product="true"]';
+
+function readPrerenderedProduct(root: ParentNode, expectedId: string | undefined): Product | undefined {
+  const serializedProduct = root.querySelector(PRERENDERED_PRODUCT_DATA_SELECTOR)?.textContent;
+  if (!serializedProduct) return undefined;
+
+  try {
+    const product = JSON.parse(serializedProduct) as Product;
+    return String(product.id) === String(expectedId) ? product : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+async function fetchPrerenderedProduct(id: string | undefined): Promise<Product | undefined> {
+  if (!id) return undefined;
+
+  const response = await fetch(`/product/${id}`);
+  if (!response.ok) return undefined;
+
+  const documentFragment = new DOMParser().parseFromString(await response.text(), "text/html");
+  return readPrerenderedProduct(documentFragment, id);
+}
+
+function upsertPdpHeroPreload(imageUrl: string | undefined): HTMLLinkElement | null {
+  if (!imageUrl || typeof document === "undefined") return null;
+
+  const imageProps = shopifyImageProps(imageUrl, IMAGE_PRESETS.productDetail);
+  let preload = document.head.querySelector<HTMLLinkElement>(
+    `link[${PDP_HERO_PRELOAD_ATTRIBUTE}="true"]`,
+  );
+  const isNewPreload = !preload;
+  if (!preload) {
+    preload = document.createElement("link");
+  }
+
+  preload.href = imageProps.src;
+  preload.as = "image";
+  preload.setAttribute("fetchpriority", "high");
+  preload.setAttribute(PDP_HERO_PRELOAD_ATTRIBUTE, "true");
+
+  if (imageProps.srcSet && imageProps.sizes) {
+    preload.setAttribute("imagesrcset", imageProps.srcSet);
+    preload.setAttribute("imagesizes", imageProps.sizes);
+  } else {
+    preload.removeAttribute("imagesrcset");
+    preload.removeAttribute("imagesizes");
+  }
+  preload.rel = "preload";
+  if (isNewPreload) document.head.appendChild(preload);
+
+  return preload;
+}
+
+function usePdpHeroPreload(imageUrl: string | undefined): void {
+  useEffect(() => {
+    const preload = upsertPdpHeroPreload(imageUrl);
+    return () => preload?.remove();
+  }, [imageUrl]);
+}
+
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
   const { addToCart, isAdding } = useCart();
@@ -83,21 +145,24 @@ export default function ProductDetail() {
   const [displayImage, setDisplayImage] = useState<string>("");
   const [imageFading, setImageFading] = useState(false);
   const [justAdded, setJustAdded] = useState(false);
-  const [activeFit, setActiveFit] = useState<FitType>("adult");
+  const [activeFit, setActiveFit] = useState<FitType | null>(null);
+  const [fitProductId, setFitProductId] = useState<number | null>(null);
   const [transitioning, setTransitioning] = useState(false);
+  const [secondaryProductId, setSecondaryProductId] = useState<number | null>(null);
+  const prerenderedProduct = typeof document === "undefined"
+    ? undefined
+    : readPrerenderedProduct(document, id);
 
   const { data: product, isLoading } = useQuery<Product>({
     queryKey: ["/api/products", id],
+    initialData: prerenderedProduct,
     queryFn: async () => {
       if (!import.meta.env.DEV) {
-        try {
-          const staticRes = await fetch("/data/products.json");
-          if (staticRes.ok) {
-            const data: Product[] = await staticRes.json();
-            const found = data.find((p) => String(p.id) === String(id));
-            if (found) return found;
-          }
-        } catch {}
+        const staticProduct = await fetchPrerenderedProduct(id);
+        if (staticProduct) {
+          upsertPdpHeroPreload(staticProduct.imageUrl);
+          return staticProduct;
+        }
       }
       const headers: Record<string, string> = {
         "X-Requested-With": "XMLHttpRequest",
@@ -105,9 +170,32 @@ export default function ProductDetail() {
       };
       const res = await fetch(`/api/products/${id}`, { headers });
       if (!res.ok) throw new Error(`${res.status}: ${res.statusText}`);
-      return res.json();
+      const found = await res.json() as Product;
+      upsertPdpHeroPreload(found.imageUrl);
+      return found;
     },
   });
+
+  useEffect(() => {
+    setSecondaryProductId(null);
+    if (!product?.id) return;
+
+    const loadSecondaryContent = () => setSecondaryProductId(product.id);
+    const browserWindow = window as Window & {
+      requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number;
+      cancelIdleCallback?: (handle: number) => void;
+    };
+
+    if (browserWindow.requestIdleCallback) {
+      const idleHandle = browserWindow.requestIdleCallback(loadSecondaryContent, { timeout: 1000 });
+      return () => browserWindow.cancelIdleCallback?.(idleHandle);
+    }
+
+    const timeoutHandle = window.setTimeout(loadSecondaryContent, 250);
+    return () => window.clearTimeout(timeoutHandle);
+  }, [product?.id]);
+
+  const secondaryContentEnabled = secondaryProductId === product?.id;
 
   const { data: allProducts = [] } = useQuery<Product[]>({
     queryKey: ["/api/products"],
@@ -129,13 +217,14 @@ export default function ProductDetail() {
       if (!res.ok) throw new Error(`${res.status}: ${res.statusText}`);
       return res.json();
     },
+    enabled: secondaryContentEnabled,
   });
 
   const activeProductId = product?.id;
 
   const { data: colorImagesData } = useQuery<{ colorImages: Record<string, string>; cached: boolean }>({
     queryKey: ["/api/products", activeProductId, "color-images"],
-    enabled: !!activeProductId,
+    enabled: !!activeProductId && secondaryContentEnabled,
   });
 
   usePageTitle(product?.name || "Product");
@@ -179,12 +268,23 @@ export default function ProductDetail() {
     };
   }, [isLoading, product]);
 
-  const group = product ? findGroupForProduct(allProducts, Number(id)) : null;
+  const group = product && allProducts.length > 0 ? findGroupForProduct(allProducts, Number(id)) : null;
   const hasMutipleFits = group ? group.fits.length > 1 : false;
 
-  const activeProduct = (group ? getProductForFit(group, activeFit) : product) as Product | undefined;
+  const productFit: FitType | null = group && product
+    ? group.youth?.id === product.id
+      ? "youth"
+      : group.toddler?.id === product.id
+        ? "toddler"
+        : "adult"
+    : null;
+  const selectedFit = fitProductId === product?.id ? activeFit : null;
+  const effectiveFit = selectedFit ?? productFit ?? "adult";
+  const activeProduct = (group ? getProductForFit(group, effectiveFit) : product) as Product | undefined;
 
   const colorImages = colorImagesData?.colorImages || activeProduct?.colorImages || product?.colorImages || {};
+
+  usePdpHeroPreload(activeProduct?.imageUrl);
 
   useEffect(() => {
     if (!activeProduct) return;
@@ -201,10 +301,11 @@ export default function ProductDetail() {
     setSelectedSize("");
     setSelectedColor("");
     setDisplayImage("");
-  }, [activeFit]);
+  }, [activeFit, fitProductId]);
 
   useEffect(() => {
-    setActiveFit("adult");
+    setActiveFit(null);
+    setFitProductId(null);
     setSelectedSize("");
     setSelectedColor("");
     setDisplayImage("");
@@ -240,10 +341,11 @@ export default function ProductDetail() {
     .slice(0, 4);
 
   const handleFitChange = (newFit: FitType) => {
-    if (newFit === activeFit) return;
+    if (newFit === effectiveFit) return;
     setTransitioning(true);
     setTimeout(() => {
       setActiveFit(newFit);
+      setFitProductId(product?.id ?? null);
       setTransitioning(false);
     }, 150);
   };
@@ -278,7 +380,7 @@ export default function ProductDetail() {
     return (
       <div className="max-w-[1400px] mx-auto px-6 sm:px-8 py-10">
         <div className="flex flex-col md:flex-row items-start gap-6 md:gap-10">
-          <Skeleton className="w-full md:max-w-[320px] aspect-square rounded-md" style={{ maxHeight: "320px" }} />
+          <Skeleton className="w-full md:max-w-[320px] aspect-square rounded-md" data-testid="product-hero-skeleton" />
           <div className="flex-1 space-y-4">
             <Skeleton className="h-6 w-3/4" />
             <Skeleton className="h-5 w-1/4" />
@@ -318,7 +420,7 @@ export default function ProductDetail() {
 
         <div className="flex flex-col md:flex-row items-start gap-6 md:gap-10">
           <div className="w-full md:max-w-[320px] flex-shrink-0">
-            <div className="relative bg-card border border-card-border rounded-md overflow-hidden h-[240px] md:h-[320px]">
+            <div className="relative aspect-square bg-card border border-card-border rounded-md overflow-hidden" data-testid="product-hero-image-container">
               <img
                 {...shopifyImageProps(displayImage || activeProduct.imageUrl, IMAGE_PRESETS.productDetail)}
                 alt={activeProduct.name}
@@ -345,9 +447,11 @@ export default function ProductDetail() {
               <h1 className="font-display text-2xl sm:text-3xl text-foreground mb-1.5" data-testid="text-product-name">
                 {activeProduct.name}
               </h1>
-              <p className="font-pixel text-sm text-neon-yellow neon-text-yellow" data-testid="text-product-price">
-                ${activeProduct.price.toFixed(2)}
-              </p>
+              <div className="min-h-[44px] flex items-center" data-testid="product-price-container">
+                <p className="font-pixel text-sm text-neon-yellow neon-text-yellow" data-testid="text-product-price">
+                  ${activeProduct.price.toFixed(2)}
+                </p>
+              </div>
             </div>
 
             <div className="hidden md:block">
@@ -365,8 +469,8 @@ export default function ProductDetail() {
                       key={fit}
                       onClick={() => handleFitChange(fit)}
                       data-testid={`button-fit-${fit}`}
-                      className={`font-display text-xs px-3 py-1.5 rounded-md border transition-all ${
-                        activeFit === fit
+                      className={`font-display text-xs px-3 py-1.5 min-h-[44px] rounded-md border transition-all ${
+                        effectiveFit === fit
                           ? "bg-neon-green/20 border-neon-green text-neon-green"
                           : "border-border text-muted-foreground"
                       }`}
@@ -381,13 +485,13 @@ export default function ProductDetail() {
             <div className={`transition-opacity duration-150 ${transitioning ? "opacity-0" : "opacity-100"}`}>
               <div>
                 <label className="font-pixel text-[8px] text-muted-foreground block mb-2">SELECT SIZE</label>
-                <div className="flex flex-wrap gap-1.5">
+                <div className="min-h-[44px] flex flex-wrap gap-1.5">
                   {activeProduct.sizes.map((size) => (
                     <button
                       key={size}
                       onClick={() => setSelectedSize(size)}
                       data-testid={`button-size-${size}`}
-                      className={`font-display text-xs px-3 py-1.5 rounded-md border transition-all ${
+                      className={`font-display text-xs px-3 py-1.5 min-h-[44px] rounded-md border transition-all ${
                         selectedSize === size
                           ? "bg-neon-blue/20 border-neon-blue text-neon-blue"
                           : "border-border text-muted-foreground"
@@ -401,7 +505,7 @@ export default function ProductDetail() {
 
               <div className="mt-4">
                 <label className="font-pixel text-[8px] text-muted-foreground block mb-2">SELECT COLOR</label>
-                <div className="flex flex-wrap gap-1.5">
+                <div className="min-h-[44px] flex flex-wrap gap-1.5">
                   {activeProduct.colors.map((color) => {
                     const hex = getColorHex(color);
                     const previewImg = colorImages[color];
@@ -410,7 +514,7 @@ export default function ProductDetail() {
                         key={color}
                         onClick={() => handleColorSelect(color)}
                         data-testid={`button-color-${color}`}
-                        className={`font-display text-xs px-3 py-1.5 rounded-md border transition-all flex items-center gap-1.5 ${
+                        className={`font-display text-xs px-3 py-1.5 min-h-[44px] rounded-md border transition-all flex items-center gap-1.5 ${
                           selectedColor === color
                             ? "bg-neon-yellow/20 border-neon-yellow text-neon-yellow shadow-[0_0_8px_hsl(52_100%_50%/0.3)]"
                             : "border-border text-muted-foreground"
@@ -450,7 +554,7 @@ export default function ProductDetail() {
               onClick={handleAddToCart}
               disabled={isAdding || justAdded}
               data-testid="button-add-to-cart"
-              className={`font-pixel text-[10px] py-5 gap-3 no-default-hover-elevate no-default-active-elevate transition-all active:scale-[0.97] ${
+              className={`font-pixel text-[10px] py-5 min-h-[44px] gap-3 no-default-hover-elevate no-default-active-elevate transition-all active:scale-[0.97] ${
                 justAdded
                   ? "bg-neon-green border-neon-green text-black"
                   : "bg-neon-blue border-neon-blue text-white hover:shadow-[0_0_20px_hsl(200_100%_55%/0.6)]"

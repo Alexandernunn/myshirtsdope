@@ -54,12 +54,13 @@ function replaceHeadTag(html: string, matcher: RegExp, replacement: string): str
  * srcset/sizes, the preload carries matching imagesrcset/imagesizes so the
  * browser preloads exactly the rendition it will render.
  */
-function imagePreloadTag(url: string, preset: ShopifyImagePreset): string {
+function imagePreloadTag(url: string, preset: ShopifyImagePreset, attributes = ""): string {
   const props = shopifyImageProps(url, preset);
   let tag = `<link rel="preload" as="image" href="${escapeHtml(props.src)}"`;
   if (props.srcSet && props.sizes) {
     tag += ` imagesrcset="${escapeHtml(props.srcSet)}" imagesizes="${escapeHtml(props.sizes)}"`;
   }
+  if (attributes) tag += ` ${attributes}`;
   tag += ` fetchpriority="high" />`;
   return tag;
 }
@@ -105,7 +106,7 @@ function applyPageMetadata(
     imageUrl?: string;
     price?: number;
     jsonLd?: unknown;
-    preloadImage?: { url: string; preset: ShopifyImagePreset };
+    preloadImage?: { url: string; preset: ShopifyImagePreset; attributes?: string };
   },
 ): string {
   const title = escapeHtml(metadata.title);
@@ -194,7 +195,11 @@ function applyPageMetadata(
   if (metadata.preloadImage) {
     html = html.replace(
       /<\/head>/i,
-      `    ${imagePreloadTag(metadata.preloadImage.url, metadata.preloadImage.preset)}\n  </head>`,
+      `    ${imagePreloadTag(
+        metadata.preloadImage.url,
+        metadata.preloadImage.preset,
+        metadata.preloadImage.attributes,
+      )}\n  </head>`,
     );
   }
 
@@ -268,8 +273,8 @@ function renderProductContent(product: Product): string {
   // inside a box with reserved dimensions (no layout shift when it paints).
   const image = product.imageUrl && imageProps
     ? `<link itemprop="image" href="${escapeHtml(product.imageUrl)}" />
-          <div style="width: 100%; max-width: 320px; height: 320px;">
-            <img src="${escapeHtml(imageProps.src)}"${responsiveAttrs} alt="${escapeHtml(product.name)}" fetchpriority="high" width="320" height="320" style="width: 100%; height: 100%; object-fit: contain;" />
+          <div style="width: 100%; max-width: 320px; aspect-ratio: 1;">
+            <img src="${escapeHtml(imageProps.src)}"${responsiveAttrs} alt="${escapeHtml(product.name)}" loading="eager" fetchpriority="high" width="320" height="320" style="width: 100%; height: 100%; object-fit: contain;" />
           </div>`
     : "";
   const sizes = product.sizes.length > 0
@@ -368,10 +373,18 @@ function renderProductPage(template: string, product: Product): string {
     price: product.price,
     jsonLd: productJsonLd(product, canonicalUrl),
     preloadImage: product.imageUrl
-      ? { url: product.imageUrl, preset: IMAGE_PRESETS.productDetail }
+      ? {
+          url: product.imageUrl,
+          preset: IMAGE_PRESETS.productDetail,
+          attributes: 'data-pdp-hero-preload="true"',
+        }
       : undefined,
   });
-  return injectPrerenderedRoot(html, renderProductContent(product));
+  const htmlWithProductData = html.replace(
+    /<\/head>/i,
+    `    <script type="application/json" data-prerendered-product="true">${safeJsonLd(product)}</script>\n  </head>`,
+  );
+  return injectPrerenderedRoot(htmlWithProductData, renderProductContent(product));
 }
 
 export async function prerenderCatalog(

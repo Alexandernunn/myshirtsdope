@@ -43,7 +43,28 @@ async function verifyPublishedCatalog(): Promise<void> {
     assert(jsonLd, `product ${productId} is missing Product JSON-LD`);
     const productSchema = JSON.parse(jsonLd);
     const offer = productSchema.offers;
+    const productPreload = productHtml.match(
+      /<link rel="preload" as="image"[^>]*data-pdp-hero-preload="true"[^>]*>/,
+    )?.[0];
+    const productHero = productHtml.match(
+      /<img [^>]*loading="eager"[^>]*fetchpriority="high"[^>]*>/,
+    )?.[0];
+    const productData = productHtml.match(
+      /<script type="application\/json" data-prerendered-product="true">([^<]+)<\/script>/,
+    )?.[1];
+    assert(productPreload, `product ${productId} is missing its LCP image preload`);
+    assert(productPreload.includes("width=640&amp;format=webp"), `product ${productId} preload is not the product-detail WebP rendition`);
+    assert(productPreload.includes("imagesrcset=") && productPreload.includes("imagesizes="));
+    assert(productHero, `product ${productId} is missing an eager high-priority hero image`);
+    assert(productHero.includes("srcset=") && productHero.includes("sizes="));
+    assert(productData, `product ${productId} is missing its hydration data`);
+    assert.equal(String(JSON.parse(productData).id), productId, `product ${productId} hydration data mismatch`);
+    assert.equal(productSchema["@type"], "Product", `product ${productId} schema type mismatch`);
+    assert(productSchema.name, `product ${productId} schema name is missing`);
+    assert.equal(productSchema.sku, productId, `product ${productId} schema SKU mismatch`);
+    assert(Array.isArray(productSchema.image) && productSchema.image.length > 0, `product ${productId} schema image is missing`);
     assert.equal(offer.priceCurrency, "USD", `product ${productId} must use USD`);
+    assert(offer.price || offer.lowPrice, `product ${productId} schema price is missing`);
     assert(
       ["http://schema.org/InStock", "http://schema.org/OutOfStock"].includes(offer.availability),
       `product ${productId} has invalid schema availability`,
@@ -65,11 +86,12 @@ async function verifyPublishedCatalog(): Promise<void> {
 }
 
 async function verifyPageSpeedContracts(): Promise<void> {
-  const [template, styles, footer, shop] = await Promise.all([
+  const [template, styles, footer, shop, productDetail] = await Promise.all([
     readFile(path.resolve("client/index.html"), "utf8"),
     readFile(path.resolve("client/src/index.css"), "utf8"),
     readFile(path.resolve("client/src/components/footer.tsx"), "utf8"),
     readFile(path.resolve("client/src/pages/shop.tsx"), "utf8"),
+    readFile(path.resolve("client/src/pages/product-detail.tsx"), "utf8"),
   ]);
 
   assert(template.includes('<link rel="preconnect" href="https://cdn.shopify.com" crossorigin />'));
@@ -132,6 +154,21 @@ async function verifyPageSpeedContracts(): Promise<void> {
   assert(shop.includes("window.requestIdleCallback"));
   assert(shop.includes("shouldLoadRest && initialSource === \"chunk\""));
   assert(shop.includes('window.addEventListener("scroll", loadAfterFirstPaint'));
+  assert(productDetail.includes('data-testid="product-hero-image-container"'));
+  assert(productDetail.includes("aspect-square"));
+  assert(productDetail.includes('loading="eager"'));
+  assert(productDetail.includes('fetchpriority: "high"'));
+  assert(productDetail.includes("requestIdleCallback"));
+  assert(productDetail.includes("enabled: secondaryContentEnabled"));
+  assert(productDetail.includes('loading="lazy"'));
+  assert(productDetail.includes("min-h-[44px]"));
+  const primaryProductQuery = productDetail.slice(
+    productDetail.indexOf('queryKey: ["/api/products", id]'),
+    productDetail.indexOf("useEffect(() => {", productDetail.indexOf('queryKey: ["/api/products", id]')),
+  );
+  assert(primaryProductQuery.includes("initialData: prerenderedProduct"));
+  assert(primaryProductQuery.includes("fetchPrerenderedProduct(id)"));
+  assert(!primaryProductQuery.includes("/data/products.json"), "the primary PDP query must not load the full catalog");
 }
 
 async function verifyWebhookSecurityAndDeliveryDedupe(): Promise<void> {
