@@ -6,7 +6,6 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { CartProvider } from "@/lib/cart-context";
 import Navbar from "@/components/navbar";
-import Footer from "@/components/footer";
 import Home from "@/pages/home";
 import { Volume2, VolumeX } from "lucide-react";
 import { queueGooglePageView } from "@/lib/marketing-scripts";
@@ -151,7 +150,7 @@ function BackgroundMusic() {
         data-testid="button-music-toggle"
         aria-label={muted ? "Play background music" : "Mute background music"}
         title={muted ? "Play background music" : "Mute background music"}
-        className="fixed bottom-5 right-5 z-50 w-10 h-10 rounded-full bg-background/80 border border-neon-blue/40 backdrop-blur-sm flex items-center justify-center text-neon-blue hover:bg-neon-blue/10 transition-colors shadow-lg"
+        className="music-toggle fixed bottom-5 right-5 z-50 w-10 h-10 rounded-full bg-background/80 border border-neon-blue/40 backdrop-blur-sm flex items-center justify-center text-neon-blue hover:bg-neon-blue/10 transition-colors shadow-lg"
       >
         {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
       </button>
@@ -166,14 +165,13 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <CartProvider>
-          <div className="min-h-screen flex flex-col bg-background pixel-grid-bg">
+          <>
             <ScrollToTop />
             <Navbar />
             <main className="flex-1">
               <Router />
             </main>
-            <Footer />
-          </div>
+          </>
           <BackgroundMusic />
         </CartProvider>
         <Toaster />

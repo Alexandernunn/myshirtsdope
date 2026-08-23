@@ -65,11 +65,13 @@ async function verifyPublishedCatalog(): Promise<void> {
 }
 
 async function verifyPageSpeedContracts(): Promise<void> {
-  const [template, styles, footer, shop] = await Promise.all([
+  const [template, styles, footer, shop, app, main] = await Promise.all([
     readFile(path.resolve("client/index.html"), "utf8"),
     readFile(path.resolve("client/src/index.css"), "utf8"),
     readFile(path.resolve("client/src/components/footer.tsx"), "utf8"),
     readFile(path.resolve("client/src/pages/shop.tsx"), "utf8"),
+    readFile(path.resolve("client/src/App.tsx"), "utf8"),
+    readFile(path.resolve("client/src/main.tsx"), "utf8"),
   ]);
   const productCardSource = shop.slice(
     shop.indexOf("function GroupedProductCard"),
@@ -90,6 +92,33 @@ async function verifyPageSpeedContracts(): Promise<void> {
   assert(template.includes('font-family: "Inter Fallback"'));
   assert(template.includes('font-family: "Press Start 2P Fallback"'));
   assert(template.includes('font-family: "Permanent Marker Fallback"'));
+  assert(template.includes("html {\n        scrollbar-gutter: stable;\n      }"));
+  assert(
+    template.includes('<div id="site-shell">') &&
+      template.includes('<div id="root"></div>') &&
+      template.includes('<div id="footer-root">'),
+    "client shell must keep the footer outside the replaceable app root",
+  );
+  assert(
+    template.includes('<footer class="storefront-footer border-t border-border bg-background min-h-[300px]">') &&
+      template.includes('data-testid="link-footer-shop"') &&
+      template.includes('data-testid="link-footer-accessories"'),
+    "client shell must contain the complete prerendered footer",
+  );
+  assert(
+    main.includes('import { createRoot } from "react-dom/client";') &&
+      !main.includes("hydrateRoot") &&
+      !main.includes("footer-root"),
+    "the persistent footer shell must not be replaced during app startup",
+  );
+  assert(!app.includes('import Footer from "@/components/footer";') && !app.includes("<Footer />"));
+  assert(
+    template.includes(".music-toggle {\n        box-sizing: border-box;") &&
+      template.includes("width: 2.5rem;") &&
+      template.includes("height: 2.5rem;") &&
+      template.includes("padding: 0;"),
+    "critical styles must lock the music button box before the full stylesheet loads",
+  );
   assert(
     styles.includes(
       ".catalog-grid > a > div.group {\n    position: relative !important;\n    overflow: hidden !important;\n    contain: layout;\n  }",
@@ -119,6 +148,16 @@ async function verifyPageSpeedContracts(): Promise<void> {
       ".catalog-section {\n    contain: layout;\n  }",
     ),
     "catalog section must retain layout containment without a rigid reservation",
+  );
+  assert(
+    styles.includes("html {\n    scrollbar-gutter: stable;\n  }"),
+    "global stylesheet must reserve scrollbar space",
+  );
+  assert(
+    styles.includes(
+      ".music-toggle {\n    box-sizing: border-box;\n    width: 2.5rem;\n    min-width: 2.5rem;\n    max-width: 2.5rem;\n    height: 2.5rem;\n    min-height: 2.5rem;\n    max-height: 2.5rem;\n    padding: 0;\n  }",
+    ),
+    "music button must retain a fixed border-box dimension",
   );
   assert(
     !shop.includes("min-h-[1200px]") &&
