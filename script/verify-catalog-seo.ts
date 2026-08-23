@@ -71,6 +71,14 @@ async function verifyPageSpeedContracts(): Promise<void> {
     readFile(path.resolve("client/src/components/footer.tsx"), "utf8"),
     readFile(path.resolve("client/src/pages/shop.tsx"), "utf8"),
   ]);
+  const productCardSource = shop.slice(
+    shop.indexOf("function GroupedProductCard"),
+    shop.indexOf("function ProductSkeleton"),
+  );
+  const skeletonSource = shop.slice(
+    shop.indexOf("function ProductSkeleton"),
+    shop.indexOf("export default function Shop"),
+  );
 
   assert(template.includes('<link rel="preconnect" href="https://cdn.shopify.com" crossorigin />'));
   const fontRules = [...template.matchAll(/@font-face\s*\{([^}]*)\}/g)].map((match) => match[1]);
@@ -95,11 +103,16 @@ async function verifyPageSpeedContracts(): Promise<void> {
     "product-card hover overlays must be positioned and contained",
   );
   assert(
-    styles.includes("contain-intrinsic-size: auto 274px;") &&
-      styles.includes("min-height: 274px;") &&
-      styles.includes("contain-intrinsic-size: auto 210px;") &&
-      styles.includes("min-height: 210px;"),
-    "catalog cards must reserve stable geometry",
+    styles.includes(
+      ".catalog-card {\n    contain: layout style;\n    contain-intrinsic-size: auto 274px;\n    min-height: 274px;\n  }",
+    ),
+    "catalog cards must use layout containment and reserve stable geometry",
+  );
+  assert(
+    styles.includes(
+      "@media (max-width: 639px) {\n    .catalog-card {\n      contain-intrinsic-size: auto 210px;\n      min-height: 210px;\n    }\n  }",
+    ),
+    "mobile catalog card geometry must remain reserved",
   );
   assert(
     styles.includes(
@@ -127,7 +140,16 @@ async function verifyPageSpeedContracts(): Promise<void> {
   );
   assert(footer.includes('className="storefront-footer border-t border-border bg-background min-h-[300px]"'));
   assert(footer.includes('style={{ contain: "layout style", contentVisibility: "auto" }}'));
-  assert(shop.includes('<section aria-labelledby="catalog-heading" className="catalog-section">'));
+  assert(shop.includes('<section aria-labelledby="catalog-heading" className="catalog-section md:min-h-[1200px] w-full">'));
+  assert(
+    productCardSource.includes('className="relative aspect-square w-full overflow-hidden rounded-md bg-muted"') &&
+      productCardSource.includes('className="object-cover w-full h-full'),
+    "populated catalog cards must reserve a square image box",
+  );
+  assert(
+    skeletonSource.includes('className="relative aspect-square w-full overflow-hidden rounded-md bg-muted"'),
+    "loading skeletons must reserve the same square image box",
+  );
   assert(shop.includes('className="catalog-card group'));
   assert(shop.includes("window.requestIdleCallback"));
   assert(shop.includes("shouldLoadRest && initialSource === \"chunk\""));

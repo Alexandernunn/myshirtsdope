@@ -240,16 +240,14 @@
     contain-intrinsic-size: auto 1200px;
   }
 
-  .catalog-grid > a > .catalog-card,
-  .catalog-grid > .catalog-card {
+  .catalog-card {
     contain: layout style;
     contain-intrinsic-size: auto 274px;
     min-height: 274px;
   }
 
   @media (max-width: 639px) {
-    .catalog-grid > a > .catalog-card,
-    .catalog-grid > .catalog-card {
+    .catalog-card {
       contain-intrinsic-size: auto 210px;
       min-height: 210px;
     }

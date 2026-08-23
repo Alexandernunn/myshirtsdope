@@ -135,13 +135,13 @@ function GroupedProductCard({ group, index }: { group: ProductGroup; index: numb
   return (
     <Link href={`/product/${product.id}`} data-testid={`link-product-${product.id}`}>
       <div className="catalog-card group bg-card border border-card-border rounded-md overflow-hidden hover-elevate active-elevate-2 transition-transform duration-200 cursor-pointer">
-        <div className="relative overflow-hidden rounded-t-md bg-muted" style={{ aspectRatio: "1", maxHeight: "220px" }}>
+        <div className="relative aspect-square w-full overflow-hidden rounded-md bg-muted">
           <img
             {...shopifyImageProps(imgSrc, IMAGE_PRESETS.gridCard)}
             alt={product.name}
             width={400}
             height={400}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
             loading={index === 0 ? "eager" : "lazy"}
             {...(index === 0
               ? ({ fetchpriority: "high" } as Record<string, string>)
@@ -192,7 +192,7 @@ function GroupedProductCard({ group, index }: { group: ProductGroup; index: numb
 function ProductSkeleton() {
   return (
     <div className="catalog-card bg-card border border-card-border rounded-md overflow-hidden">
-      <div style={{ aspectRatio: "1", maxHeight: "220px" }}>
+      <div className="relative aspect-square w-full overflow-hidden rounded-md bg-muted">
         <Skeleton className="w-full h-full" />
       </div>
       <div className="p-2.5 space-y-1.5">
@@ -420,7 +420,7 @@ export default function Shop() {
           ))}
         </div>
 
-        <section aria-labelledby="catalog-heading" className="catalog-section">
+        <section aria-labelledby="catalog-heading" className="catalog-section md:min-h-[1200px] w-full">
           <h2 id="catalog-heading" className="sr-only">Product catalog</h2>
           {isLoading ? (
             <div className="catalog-grid grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
