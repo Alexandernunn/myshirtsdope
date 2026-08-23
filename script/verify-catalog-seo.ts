@@ -73,19 +73,40 @@ async function verifyPageSpeedContracts(): Promise<void> {
   ]);
 
   assert(template.includes('<link rel="preconnect" href="https://cdn.shopify.com" crossorigin />'));
+  const fontRules = [...template.matchAll(/@font-face\s*\{([^}]*)\}/g)].map((match) => match[1]);
   for (const font of ["Inter", "Press Start 2P", "Permanent Marker"]) {
-    assert.match(
-      template,
-      new RegExp(`font-family: "${font}";[\\s\\S]*?font-display: swap;`),
-      `${font} must use font-display: swap`,
-    );
+    const fontRule = fontRules.find((rule) => rule.includes(`font-family: "${font}";`));
+    assert(fontRule, `${font} @font-face rule is missing`);
+    assert(fontRule.includes("font-display: optional;"), `${font} must use font-display: optional`);
   }
   assert(template.includes('font-family: "Inter Fallback"'));
   assert(template.includes('font-family: "Press Start 2P Fallback"'));
   assert(template.includes('font-family: "Permanent Marker Fallback"'));
-  assert(styles.includes(".grid > a > div.group::after"));
-  assert(styles.includes("contain: layout size;"));
-  assert(footer.includes("min-h-[640px] sm:min-h-[336px]"));
+  assert(
+    styles.includes(
+      ".grid > a > div.group::after {\n    position: absolute;\n    inset: 0;\n    contain: layout size;\n  }",
+    ),
+    "product-card hover overlays must be positioned and contained",
+  );
+  assert(
+    styles.includes(
+      ".storefront-footer {\n    contain: layout style;\n    content-visibility: auto;\n    min-height: 300px;\n  }",
+    ),
+    "footer must reserve and contain its layout",
+  );
+  assert(
+    styles.includes(
+      "@media (max-width: 639px) {\n    .storefront-footer {\n      min-height: 640px;\n    }\n  }",
+    ),
+    "mobile footer reservation is missing",
+  );
+  assert(
+    styles.includes(
+      "@media (min-width: 640px) {\n    .storefront-footer {\n      min-height: 336px;\n    }\n  }",
+    ),
+    "desktop footer reservation is missing",
+  );
+  assert(footer.includes('className="storefront-footer border-t border-border bg-background"'));
   assert(shop.includes("window.requestIdleCallback"));
   assert(shop.includes("shouldLoadRest && initialSource === \"chunk\""));
   assert(shop.includes('window.addEventListener("scroll", loadAfterFirstPaint'));

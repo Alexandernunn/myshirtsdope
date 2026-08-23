@@ -2,7 +2,7 @@ import { Link } from "wouter";
 
 export default function Footer() {
   return (
-    <footer className="border-t border-border bg-background min-h-[640px] sm:min-h-[336px]">
+    <footer className="storefront-footer border-t border-border bg-background">
       <div className="retro-divider" />
       <div className="max-w-7xl mx-auto px-4 py-10">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">

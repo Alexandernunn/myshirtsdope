@@ -224,7 +224,27 @@
   }
 
   .grid > a > div.group::after {
+    position: absolute;
+    inset: 0;
     contain: layout size;
+  }
+
+  .storefront-footer {
+    contain: layout style;
+    content-visibility: auto;
+    min-height: 300px;
+  }
+
+  @media (max-width: 639px) {
+    .storefront-footer {
+      min-height: 640px;
+    }
+  }
+
+  @media (min-width: 640px) {
+    .storefront-footer {
+      min-height: 336px;
+    }
   }
 }
 
