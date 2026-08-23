@@ -237,7 +237,6 @@
 
   .catalog-section {
     contain: layout;
-    contain-intrinsic-size: auto 1200px;
   }
 
   .catalog-card {
@@ -253,9 +252,8 @@
     }
   }
 
-  .storefront-footer {
-    contain: layout style;
-    content-visibility: auto;
+  footer.storefront-footer {
+    contain: layout;
     min-height: 300px;
   }
 

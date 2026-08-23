@@ -116,15 +116,20 @@ async function verifyPageSpeedContracts(): Promise<void> {
   );
   assert(
     styles.includes(
-      ".catalog-section {\n    contain: layout;\n    contain-intrinsic-size: auto 1200px;\n  }",
+      ".catalog-section {\n    contain: layout;\n  }",
     ),
-    "catalog section must reserve contained geometry",
+    "catalog section must retain layout containment without a rigid reservation",
+  );
+  assert(
+    !shop.includes("min-h-[1200px]") &&
+      !styles.includes("contain-intrinsic-size: auto 1200px;"),
+    "catalog section must not use a rigid 1200px reservation",
   );
   assert(
     styles.includes(
-      ".storefront-footer {\n    contain: layout style;\n    content-visibility: auto;\n    min-height: 300px;\n  }",
+      "footer.storefront-footer {\n    contain: layout;\n    min-height: 300px;\n  }",
     ),
-    "footer must reserve and contain its layout",
+    "footer must reserve and contain its layout without culling during paint",
   );
   assert(
     styles.includes(
@@ -139,16 +144,37 @@ async function verifyPageSpeedContracts(): Promise<void> {
     "desktop footer reservation is missing",
   );
   assert(footer.includes('className="storefront-footer border-t border-border bg-background min-h-[300px]"'));
-  assert(footer.includes('style={{ contain: "layout style", contentVisibility: "auto" }}'));
-  assert(shop.includes('<section aria-labelledby="catalog-heading" className="catalog-section md:min-h-[1200px] w-full">'));
+  assert(!footer.includes("contentVisibility"));
+  assert(shop.includes('<section aria-labelledby="catalog-heading" className="catalog-section w-full">'));
   assert(
-    productCardSource.includes('className="relative aspect-square w-full overflow-hidden rounded-md bg-muted"') &&
-      productCardSource.includes('className="object-cover w-full h-full'),
-    "populated catalog cards must reserve a square image box",
+    productCardSource.includes('className="relative aspect-square w-full shrink-0 overflow-hidden rounded-md bg-muted"') &&
+      productCardSource.includes('className="absolute inset-0 h-full w-full object-cover'),
+    "populated catalog cards must reserve and fill a square image box",
   );
   assert(
-    skeletonSource.includes('className="relative aspect-square w-full overflow-hidden rounded-md bg-muted"'),
+    skeletonSource.includes('className="relative aspect-square w-full shrink-0 overflow-hidden rounded-md bg-muted"') &&
+      skeletonSource.includes('className="absolute inset-0 h-full w-full"'),
     "loading skeletons must reserve the same square image box",
+  );
+  assert(
+    productCardSource.includes('line-clamp-2 h-[2.5rem] min-h-[2.5rem]') &&
+      skeletonSource.includes('line-clamp-2 h-[2.5rem] min-h-[2.5rem]'),
+    "populated and loading titles must reserve two lines",
+  );
+  assert(
+    productCardSource.includes('flex h-[6rem] min-h-[6rem] shrink-0 flex-col p-4') &&
+      skeletonSource.includes('flex h-[6rem] min-h-[6rem] shrink-0 flex-col p-4') &&
+      productCardSource.includes('h-[1.25rem] min-h-[1.25rem]') &&
+      skeletonSource.includes('h-[1.25rem] min-h-[1.25rem]'),
+    "populated and loading card info geometry must match",
+  );
+  assert(
+    shop.includes('<div aria-hidden="true" className="mb-4 h-4 min-h-4" />'),
+    "loading catalog must reserve the product-count row before the grid",
+  );
+  assert(
+    shop.includes('<div aria-hidden="true" className="mt-8 h-9 min-h-9" />'),
+    "loading catalog must reserve the pagination row after the grid",
   );
   assert(shop.includes('className="catalog-card group'));
   assert(shop.includes("window.requestIdleCallback"));

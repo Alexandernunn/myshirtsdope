@@ -2,3 +2,4 @@
 - [Critical stylesheet loading](critical-stylesheet-loading.md) — preload full CSS, activate it after load from the entry module, and retain critical/no-JS fallbacks.
 - [Marketing script deferral](marketing-script-deferral.md) — queue browser analytics immediately, load vendors after interaction, and keep Meta CAPI immediate.
 - [Shopify image transforms](shopify-image-transforms.md) — width/format=webp CDN params (Accept-negotiated), LCP preload must mirror the client's negative-index variant fallback.
+- [Catalog loading geometry](catalog-loading-geometry.md) — mirror live count/pagination rows in the loading state; avoid fixed catalog section heights and footer content-visibility culling.
