@@ -123,12 +123,6 @@ const badgeColors: Record<string, string> = {
   "Pop": "bg-purple-500/20 text-purple-400",
 };
 
-// The first grid row is above the fold: load those images eagerly, and give
-// the first two (both visible in the 2-column mobile grid, where one is the
-// LCP candidate) high fetch priority. Everything below stays lazy.
-const EAGER_CARD_COUNT = 4;
-const HIGH_PRIORITY_CARD_COUNT = 2;
-
 function GroupedProductCard({ group, index }: { group: ProductGroup; index: number }) {
   const product = group.adult;
   const variants = ('colorImageVariants' in product && Array.isArray(product.colorImageVariants) && product.colorImageVariants.length > 0)
@@ -145,9 +139,11 @@ function GroupedProductCard({ group, index }: { group: ProductGroup; index: numb
           <img
             {...shopifyImageProps(imgSrc, IMAGE_PRESETS.gridCard)}
             alt={product.name}
+            width={400}
+            height={400}
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-            loading={index < EAGER_CARD_COUNT ? "eager" : "lazy"}
-            {...(index < HIGH_PRIORITY_CARD_COUNT
+            loading={index === 0 ? "eager" : "lazy"}
+            {...(index === 0
               ? ({ fetchpriority: "high" } as Record<string, string>)
               : {})}
             onError={() => { if (imgSrc !== product.imageUrl) setImgSrc(product.imageUrl); }}

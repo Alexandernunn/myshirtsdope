@@ -13,6 +13,12 @@ const OUTPUT_DIR = path.resolve("dist/public");
 const SITE_URL = (process.env.PUBLIC_SITE_URL || "https://myshirtsdope.com").replace(/\/+$/, "");
 const PRODUCT_BATCH_SIZE = 50;
 
+interface ShopLcpImage {
+  url: string;
+  productId: number;
+  productName: string;
+}
+
 function escapeHtml(value: unknown): string {
   return String(value ?? "")
     .replace(/&/g, "&amp;")
@@ -64,6 +70,10 @@ function imagePreloadTag(url: string, preset: ShopifyImagePreset): string {
  * source), then apply the same deterministic variant pick for card index 0.
  */
 export function computeShopLcpImageUrl(slimInitial: ProductSummary[]): string | null {
+  return computeShopLcpImage(slimInitial)?.url ?? null;
+}
+
+function computeShopLcpImage(slimInitial: ProductSummary[]): ShopLcpImage | null {
   const groups = interleaveGroups(groupProducts(slimInitial));
   const first = groups[0];
   if (!first) return null;
@@ -79,7 +89,10 @@ export function computeShopLcpImageUrl(slimInitial: ProductSummary[]): string | 
   const pickedVariant = variants
     ? variants[pickVariantIndex(product.id, 0, variants.length)]
     : null;
-  return pickedVariant ?? product.imageUrl;
+  const url = pickedVariant ?? product.imageUrl;
+  return url
+    ? { url, productId: product.id, productName: product.name }
+    : null;
 }
 
 function applyPageMetadata(
@@ -207,7 +220,11 @@ function injectPrerenderedRoot(template: string, content: string): string {
   );
 }
 
-function renderShopContent(products: Product[]): string {
+function renderShopContent(products: Product[], lcpImage: ShopLcpImage): string {
+  const imageProps = shopifyImageProps(lcpImage.url, IMAGE_PRESETS.gridCard);
+  const responsiveAttrs = imageProps.srcSet && imageProps.sizes
+    ? ` srcset="${escapeHtml(imageProps.srcSet)}" sizes="${escapeHtml(imageProps.sizes)}"`
+    : "";
   const productLinks = products
     .map(
       (product) => `
@@ -226,6 +243,11 @@ function renderShopContent(products: Product[]): string {
           <h1>Shop MyShirtsDope</h1>
           <p>Browse shirts, hoodies, onesies, and accessories inspired by music, culture, and love.</p>
         </header>
+        <section aria-label="Featured product">
+          <a href="/product/${lcpImage.productId}" style="display: block; width: min(46vw, 254px); aspect-ratio: 1; margin: 1.5rem 0; overflow: hidden;">
+            <img src="${escapeHtml(imageProps.src)}"${responsiveAttrs} alt="${escapeHtml(lcpImage.productName)}" width="400" height="400" loading="eager" fetchpriority="high" style="display: block; width: 100%; height: 100%; object-fit: cover;" />
+          </a>
+        </section>
         <section aria-labelledby="catalog-heading">
           <h2 id="catalog-heading">Product catalog</h2>
           <ul>${productLinks}
@@ -321,7 +343,7 @@ function productJsonLd(product: Product, canonicalUrl: string) {
 function renderShopPage(
   template: string,
   products: Product[],
-  lcpImageUrl: string | null,
+  lcpImage: ShopLcpImage,
 ): string {
   const canonicalUrl = `${SITE_URL}/shop`;
   const html = applyPageMetadata(template, {
@@ -330,11 +352,9 @@ function renderShopPage(
     canonicalUrl,
     ogType: "website",
     imageUrl: `${SITE_URL}/favicon.png`,
-    preloadImage: lcpImageUrl
-      ? { url: lcpImageUrl, preset: IMAGE_PRESETS.gridCard }
-      : undefined,
+    preloadImage: { url: lcpImage.url, preset: IMAGE_PRESETS.gridCard },
   });
-  return injectPrerenderedRoot(html, renderShopContent(products));
+  return injectPrerenderedRoot(html, renderShopContent(products, lcpImage));
 }
 
 function renderProductPage(template: string, product: Product): string {
@@ -362,8 +382,8 @@ export async function prerenderCatalog(
     throw new Error("Cannot prerender an empty product catalog");
   }
 
-  const shopLcpImageUrl = computeShopLcpImageUrl(slimInitial);
-  if (!shopLcpImageUrl) {
+  const shopLcpImage = computeShopLcpImage(slimInitial);
+  if (!shopLcpImage) {
     throw new Error("Could not determine the shop page LCP image for preloading");
   }
 
@@ -380,7 +400,7 @@ export async function prerenderCatalog(
   await mkdir(shopOutputDir, { recursive: true });
   await writeFile(
     path.join(shopOutputDir, "index.html"),
-    renderShopPage(template, uniqueProducts, shopLcpImageUrl),
+    renderShopPage(template, uniqueProducts, shopLcpImage),
   );
 
   for (let index = 0; index < uniqueProducts.length; index += PRODUCT_BATCH_SIZE) {

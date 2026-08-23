@@ -113,52 +113,30 @@ const BACKGROUND_MUSIC_SRC = "/bg-music.m4a";
 
 function BackgroundMusic() {
   const audioRef = useRef<HTMLAudioElement>(null);
-  const [muted, setMuted] = useState(false);
-  const startedRef = useRef(false);
+  const [muted, setMuted] = useState(true);
 
   // The audio file is NOT downloaded on page load: the <audio> element starts
-  // with no src and preload="none". The src is attached on the user's first
-  // interaction (the same moment playback could actually begin under browser
-  // autoplay policies), mirroring the marketing-script deferral pattern.
-  const tryPlay = () => {
+  // with no src and preload="none". Its src is attached only when the visitor
+  // explicitly uses the music button, preventing it from competing with LCP.
+  const startPlayback = () => {
     const audio = audioRef.current;
-    if (!audio || startedRef.current) return;
+    if (!audio) return;
     if (!audio.getAttribute("src")) {
       audio.setAttribute("src", BACKGROUND_MUSIC_SRC);
       audio.load();
     }
-    audio.play().then(() => {
-      startedRef.current = true;
-    }).catch(() => {});
+    audio.muted = false;
+    audio.play().catch(() => {});
   };
-
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    const onInteraction = () => {
-      tryPlay();
-    };
-
-    document.addEventListener("click", onInteraction, { once: true });
-    document.addEventListener("touchstart", onInteraction, { once: true });
-    document.addEventListener("keydown", onInteraction, { once: true });
-
-    return () => {
-      document.removeEventListener("click", onInteraction);
-      document.removeEventListener("touchstart", onInteraction);
-      document.removeEventListener("keydown", onInteraction);
-    };
-  }, []);
 
   const toggleMute = (e: React.MouseEvent) => {
     e.stopPropagation();
     const audio = audioRef.current;
     if (!audio) return;
-    if (muted) {
+    if (muted || !audio.getAttribute("src")) {
       audio.muted = false;
       setMuted(false);
-      tryPlay();
+      startPlayback();
     } else {
       audio.muted = true;
       setMuted(true);
@@ -171,8 +149,8 @@ function BackgroundMusic() {
       <button
         onClick={toggleMute}
         data-testid="button-music-toggle"
-        aria-label={muted ? "Unmute background music" : "Mute background music"}
-        title={muted ? "Unmute background music" : "Mute background music"}
+        aria-label={muted ? "Play background music" : "Mute background music"}
+        title={muted ? "Play background music" : "Mute background music"}
         className="fixed bottom-5 right-5 z-50 w-10 h-10 rounded-full bg-background/80 border border-neon-blue/40 backdrop-blur-sm flex items-center justify-center text-neon-blue hover:bg-neon-blue/10 transition-colors shadow-lg"
       >
         {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
