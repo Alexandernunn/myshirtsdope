@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -8,24 +8,58 @@ import { CartProvider } from "@/lib/cart-context";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
 import Home from "@/pages/home";
-import Shop from "@/pages/shop";
-import ProductDetail from "@/pages/product-detail";
-import CartPage from "@/pages/cart";
-import About from "@/pages/about";
-import Contact from "@/pages/contact";
-import NotFound from "@/pages/not-found";
-import OrderConfirmation from "@/pages/order-confirmation";
 import { Volume2, VolumeX } from "lucide-react";
-import {
-  deferMarketingScriptsUntilInteraction,
-  queueGooglePageView,
-} from "@/lib/marketing-scripts";
+import { queueGooglePageView } from "@/lib/marketing-scripts";
 import { trackEvent } from "@/lib/meta-capi";
 
-function useDeferredMarketingScripts() {
-  useLayoutEffect(() => {
-    return deferMarketingScriptsUntilInteraction();
-  }, []);
+const loadShop = () => import("@/pages/shop");
+const loadProductDetail = () => import("@/pages/product-detail");
+const loadCart = () => import("@/pages/cart");
+const loadAbout = () => import("@/pages/about");
+const loadContact = () => import("@/pages/contact");
+const loadOrderConfirmation = () => import("@/pages/order-confirmation");
+const loadNotFound = () => import("@/pages/not-found");
+
+const Shop = lazy(loadShop);
+const ProductDetail = lazy(loadProductDetail);
+const CartPage = lazy(loadCart);
+const About = lazy(loadAbout);
+const Contact = lazy(loadContact);
+const OrderConfirmation = lazy(loadOrderConfirmation);
+const NotFound = lazy(loadNotFound);
+
+let initialPageViewPath: string | null = null;
+
+function normalizePathname(pathname: string): string {
+  return pathname.replace(/\/+$/, "") || "/";
+}
+
+export function trackInitialPageView(pathname: string): void {
+  if (initialPageViewPath !== null) return;
+
+  initialPageViewPath = normalizePathname(pathname);
+  queueGooglePageView(pathname);
+  trackEvent("PageView");
+}
+
+export async function preloadCurrentRoute(pathname: string): Promise<void> {
+  const normalizedPath = normalizePathname(pathname);
+
+  if (normalizedPath === "/shop") {
+    await loadShop();
+  } else if (normalizedPath.startsWith("/product/")) {
+    await loadProductDetail();
+  } else if (normalizedPath === "/cart") {
+    await loadCart();
+  } else if (normalizedPath === "/about") {
+    await loadAbout();
+  } else if (normalizedPath === "/contact") {
+    await loadContact();
+  } else if (normalizedPath === "/order-confirmation") {
+    await loadOrderConfirmation();
+  } else if (normalizedPath !== "/") {
+    await loadNotFound();
+  }
 }
 
 function ScrollToTop() {
@@ -42,6 +76,11 @@ function usePageTracking() {
   const [location] = useLocation();
 
   useLayoutEffect(() => {
+    if (initialPageViewPath === normalizePathname(location)) {
+      initialPageViewPath = null;
+      return;
+    }
+
     queueGooglePageView(location);
     trackEvent("PageView");
   }, [location]);
@@ -49,16 +88,24 @@ function usePageTracking() {
 
 function Router() {
   return (
-    <Switch>
-      <Route path="/" component={Home} />
-      <Route path="/shop" component={Shop} />
-      <Route path="/product/:id" component={ProductDetail} />
-      <Route path="/cart" component={CartPage} />
-      <Route path="/about" component={About} />
-      <Route path="/contact" component={Contact} />
-      <Route path="/order-confirmation" component={OrderConfirmation} />
-      <Route component={NotFound} />
-    </Switch>
+    <Suspense
+      fallback={
+        <div className="route-loading" role="status" aria-live="polite">
+          <span className="route-loading__label">LOADING...</span>
+        </div>
+      }
+    >
+      <Switch>
+        <Route path="/" component={Home} />
+        <Route path="/shop" component={Shop} />
+        <Route path="/product/:id" component={ProductDetail} />
+        <Route path="/cart" component={CartPage} />
+        <Route path="/about" component={About} />
+        <Route path="/contact" component={Contact} />
+        <Route path="/order-confirmation" component={OrderConfirmation} />
+        <Route component={NotFound} />
+      </Switch>
+    </Suspense>
   );
 }
 
@@ -127,7 +174,6 @@ function BackgroundMusic() {
 }
 
 function App() {
-  useDeferredMarketingScripts();
   usePageTracking();
 
   return (

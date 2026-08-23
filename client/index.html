@@ -14,9 +14,80 @@
     <meta name="twitter:image" content="https://myshirtsdope.com/favicon.png" />
     <meta name="twitter:title" content="MyShirtsDope - Culture You Can Wear" />
     <link rel="icon" type="image/png" href="/favicon.png" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@300;400;500;600;700&family=Permanent+Marker&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="preload"
+      href="https://fonts.gstatic.com/s/pressstart2p/v16/e3t4euO8T-267oIAQAu6jDQyK3nVivM.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="https://fonts.gstatic.com/s/permanentmarker/v16/Fh4uPib9Iyv2ucM6pGQMWimMp004La2Cfw.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <style>
+      @font-face {
+        font-family: "Inter";
+        font-style: normal;
+        font-weight: 300 700;
+        font-display: swap;
+        src: url("https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2") format("woff2");
+      }
+      @font-face {
+        font-family: "Press Start 2P";
+        font-style: normal;
+        font-weight: 400;
+        font-display: swap;
+        src: url("https://fonts.gstatic.com/s/pressstart2p/v16/e3t4euO8T-267oIAQAu6jDQyK3nVivM.woff2") format("woff2");
+      }
+      @font-face {
+        font-family: "Permanent Marker";
+        font-style: normal;
+        font-weight: 400;
+        font-display: swap;
+        src: url("https://fonts.gstatic.com/s/permanentmarker/v16/Fh4uPib9Iyv2ucM6pGQMWimMp004La2Cfw.woff2") format("woff2");
+      }
+      :root {
+        color-scheme: dark;
+        background: hsl(240 10% 5%);
+        color: hsl(50 10% 92%);
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+      html, body, #root {
+        min-height: 100%;
+        margin: 0;
+        background: hsl(240 10% 5%);
+        color: hsl(50 10% 92%);
+      }
+      body {
+        min-height: 100vh;
+      }
+      .font-pixel {
+        font-family: "Press Start 2P", ui-monospace, monospace;
+      }
+      .font-display {
+        font-family: "Permanent Marker", cursive;
+      }
+      .route-loading {
+        min-height: 50vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+      }
+      .route-loading__label {
+        font-family: "Press Start 2P", ui-monospace, monospace;
+        font-size: 0.625rem;
+        color: hsl(200 100% 55%);
+      }
+    </style>
   </head>
   <body class="dark">
     <div id="root"></div>
