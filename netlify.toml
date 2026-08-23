@@ -5,6 +5,9 @@
 
 [build.environment]
   NODE_VERSION = "20"
+  # SITE_URL is the intentionally public storefront origin used for CORS.
+  # It appears in canonical URLs, robots.txt, and generated sitemap output.
+  SECRETS_SCAN_OMIT_KEYS = "SITE_URL"
 
 [functions]
   node_bundler = "esbuild"

@@ -1,0 +1,154 @@
+7:43:13 PM: Netlify Build                                                 
+7:43:13 PM: ────────────────────────────────────────────────────────────────
+7:43:13 PM: ​
+7:43:13 PM: ❯ Version
+7:43:13 PM:   @netlify/build 36.4.1
+7:43:13 PM: ​
+7:43:13 PM: ❯ Flags
+7:43:13 PM:   accountId: 6913f57327cb922a7f69306a
+7:43:13 PM:   baseRelDir: true
+7:43:13 PM:   buildId: 6a8a4219ffd4a90008e57004
+7:43:13 PM:   deployId: 6a8a4219ffd4a90008e57006
+7:43:13 PM: ​
+7:43:13 PM: ❯ Current directory
+7:43:13 PM:   /opt/build/repo
+7:43:13 PM: ​
+7:43:13 PM: ❯ Config file
+7:43:13 PM:   /opt/build/repo/netlify.toml
+7:43:13 PM: ​
+7:43:13 PM: ❯ Context
+7:43:13 PM:   production
+7:43:13 PM: ​
+7:43:13 PM: build.command from netlify.toml                               
+7:43:13 PM: ────────────────────────────────────────────────────────────────
+7:43:13 PM: ​
+7:43:13 PM: $ npm run build:netlify
+7:43:14 PM: > rest-express@1.0.0 build:netlify
+7:43:14 PM: > vite build && npx tsx script/cache-products.ts
+7:43:14 PM: vite v7.3.1 building client environment for production...
+7:43:14 PM: transforming...
+7:43:14 PM: Browserslist: browsers data (caniuse-lite) is 6 months old. Please run:
+7:43:14 PM:   npx update-browserslist-db@latest
+7:43:14 PM:   Why you should do it regularly: https://github.com/browserslist/update-db#readme
+7:43:15 PM: A PostCSS plugin did not pass the `from` option to `postcss.parse`. This may cause imported assets to be incorrectly transformed. If you've recently added a PostCSS plugin that raised this warning, please contact the package author to fix the issue.
+7:43:17 PM: ✓ 1686 modules transformed.
+7:43:17 PM: rendering chunks...
+7:43:17 PM: computing gzip size...
+7:43:17 PM: ../dist/public/index.html                               3.68 kB │ gzip:  1.23 kB
+7:43:17 PM: ../dist/public/assets/index-DLGO0Fqk.css               80.49 kB │ gzip: 13.36 kB
+7:43:17 PM: ../dist/public/assets/arrow-left-BTvo_fo6.js            0.16 kB │ gzip:  0.16 kB
+7:43:17 PM: ../dist/public/assets/skeleton-Dg4uc_gW.js              0.17 kB │ gzip:  0.16 kB
+7:43:17 PM: ../dist/public/assets/input-ERlsJ3Ce.js                 0.58 kB │ gzip:  0.36 kB
+7:43:17 PM: ../dist/public/assets/not-found-LdRs36uD.js             0.83 kB │ gzip:  0.48 kB
+7:43:17 PM: ../dist/public/assets/order-confirmation-DK-0zqXn.js    2.03 kB │ gzip:  1.03 kB
+7:43:17 PM: ../dist/public/assets/product-grouping-DTR9fvnj.js      2.62 kB │ gzip:  1.23 kB
+7:43:17 PM: ../dist/public/assets/about-6sVCrgN_.js                 3.26 kB │ gzip:  1.21 kB
+7:43:17 PM: ../dist/public/assets/cart-17xhqF-g.js                  7.10 kB │ gzip:  2.50 kB
+7:43:17 PM: ../dist/public/assets/shop-DxiceMGS.js                  9.82 kB │ gzip:  3.78 kB
+7:43:17 PM: ../dist/public/assets/product-detail-DG0Js41u.js       10.07 kB │ gzip:  3.58 kB
+7:43:17 PM: ../dist/public/assets/contact-BwjI9gPu.js              95.15 kB │ gzip: 27.34 kB
+7:43:17 PM: ../dist/public/assets/index-BYLm8VHp.js               288.78 kB │ gzip: 95.20 kB
+7:43:17 PM: ✓ built in 3.17s
+7:43:18 PM: [Cache] Fetching products from Shopify...
+7:43:18 PM: [Shopify Admin] Requesting: ****admin/api/2026-07/products.json?limit=250&status=active
+7:43:25 PM: [Shopify Admin] Fetched 2742 products
+7:43:25 PM: [Prerender] Generated shop page and 2742 product pages
+7:43:25 PM: [Prerender] Canonical site URL: https://****
+7:43:25 PM: [Sitemap] Generated 2744 canonical URLs
+7:43:25 PM: [Cache] Cached 2742 products
+7:43:25 PM: [Cache] Full: 13025.9KB, Slim: 2582.5KB
+7:43:25 PM: [Cache] Chunked: Initial 200 products (194.5KB), Rest 2542 products (2388.0KB)
+7:43:25 PM: [Cache] Written to /opt/build/repo/dist/public/data
+7:43:26 PM: ​
+7:43:26 PM: (build.command completed in 12s)
+7:43:26 PM: ​
+7:43:26 PM: Functions bundling                                            
+7:43:26 PM: ────────────────────────────────────────────────────────────────
+7:43:26 PM: ​
+7:43:26 PM: Packaging Functions from netlify/functions directory:
+7:43:26 PM:  - api.ts
+7:43:26 PM:  - track.ts
+7:43:26 PM: ​
+7:43:26 PM: ​
+7:43:26 PM: (Functions bundling completed in 194ms)
+7:43:26 PM: ​
+7:43:26 PM: Scanning for secrets in code and build output.                
+7:43:26 PM: ────────────────────────────────────────────────────────────────
+7:43:26 PM: ​
+7:43:26 PM: ​
+7:43:26 PM: ❯ Scanning complete. 141 file(s) scanned. Secrets scanning found 1 instance(s) of secrets in build output or repo code.
+7:43:26 PM: ​
+7:43:26 PM: Secret env var "SITE_URL"'s value detected:
+7:43:26 PM:   found value at line 5 in attached_assets/Pasted-Here-are-targeted-highly-specific-questions-to-run-past_1787444172650.txt
+7:43:26 PM:   found value at line 10 in client/index.html
+7:43:26 PM:   found value at line 11 in client/index.html
+7:43:26 PM:   found value at line 14 in client/index.html
+7:43:26 PM:   found value at line 15 in client/public/robots.txt
+7:43:26 PM:   found value at line 5 in script/generate-sitemap.ts
+7:43:26 PM:   found value at line 6 in script/prerender-catalog.ts
+7:43:26 PM: ​
+7:43:26 PM: To prevent exposing secrets, the build will fail until these secret values are not found in build output or repo files.
+7:43:26 PM: ​
+7:43:26 PM: If these are expected, use SECRETS_SCAN_OMIT_PATHS, SECRETS_SCAN_OMIT_KEYS, or SECRETS_SCAN_ENABLED to prevent detecting.
+7:43:26 PM: ​
+7:43:26 PM: For more information on secrets scanning, see the Netlify Docs: https://ntl.fyi/configure-secrets-scanning
+7:43:26 PM: ​
+7:43:26 PM: Secrets scanning detected secrets in files during build.      
+7:43:26 PM: ────────────────────────────────────────────────────────────────
+7:43:26 PM: ​
+7:43:26 PM:   Error message
+7:43:26 PM:   Secrets scanning found secrets in build.
+7:43:26 PM: ​
+7:43:26 PM:   Resolved config
+7:43:26 PM:   build:
+7:43:26 PM:     command: npm run build:netlify
+7:43:26 PM:     commandOrigin: config
+7:43:26 PM:     environment:
+7:43:26 PM:       - META_ACCESS_TOKEN
+7:43:26 PM:       - SHOPIFY_ACCESS_TOKEN
+7:43:26 PM:       - SHOPIFY_STORE_DOMAIN
+7:43:26 PM:       - SITE_URL
+7:43:26 PM:       - NODE_VERSION
+7:43:26 PM:     publish: /opt/build/repo/dist/public
+7:43:26 PM:     publishOrigin: config
+7:43:26 PM:   functions:
+7:43:26 PM:     "*":
+7:43:26 PM:       node_bundler: esbuild
+7:43:26 PM:   functionsDirectory: /opt/build/repo/netlify/functions
+7:43:26 PM:   headers:
+7:43:26 PM:     - for: /*
+7:43:26 PM:       values:
+7:43:26 PM:           'unsafe-eval' https://www.googletagmanager.com
+7:43:26 PM:           https://www.google-analytics.com https://connect.facebook.net; style-src
+7:43:26 PM:           'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self'
+7:43:26 PM:           https: data: blob:; font-src 'self' https://fonts.gstatic.com https:
+7:43:26 PM:           data:; connect-src 'self' https://graph.facebook.com
+7:43:26 PM:           https://www.facebook.com https://www.google-analytics.com
+7:43:26 PM:           https://analytics.google.com https://stats.g.doubleclick.net
+7:43:26 PM:         Content-Security-Policy: "default-src 'self'; script-src 'self' 'unsafe-inline'
+7:43:26 PM:           https://*.netlify.app https:; frame-src 'self' https://www.facebook.com;
+7:43:26 PM:           frame-ancestors 'none'"
+7:43:26 PM:         Permissions-Policy: camera=(), microphone=(), geolocation=()
+7:43:26 PM:         Referrer-Policy: strict-origin-when-cross-origin
+7:43:26 PM:         X-Content-Type-Options: nosniff
+7:43:26 PM:         X-Frame-Options: DENY
+7:43:26 PM:     - for: /data/*.json
+7:43:26 PM:       values:
+7:43:26 PM:         Cache-Control: public, max-age=300, stale-while-revalidate=60
+7:43:26 PM:   headersOrigin: config
+7:43:26 PM:   redirects:
+7:43:26 PM:     - force: true
+7:43:26 PM:       from: /api/*
+7:43:26 PM:       status: 200
+7:43:26 PM:       to: /.netlify/functions/api
+7:43:26 PM:     - from: /product/*
+7:43:26 PM:       status: 404
+7:43:26 PM:       to: /index.html
+7:43:26 PM:     - from: /*
+7:43:26 PM:       status: 200
+7:43:26 PM:       to: /index.html
+7:43:26 PM:   redirectsOrigin: config
+7:43:27 PM: Failed during stage 'building site': Build script returned non-zero exit code: 2 (https://ntl.fyi/exit-code-2)
+7:43:27 PM: Build failed due to a user error: Build script returned non-zero exit code: 2
+7:43:27 PM: Failing build: Failed to build site
+7:43:27 PM: Finished processing build request in 20.92s
