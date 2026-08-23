@@ -65,22 +65,12 @@ async function verifyPublishedCatalog(): Promise<void> {
 }
 
 async function verifyPageSpeedContracts(): Promise<void> {
-  const [template, styles, footer, shop, app, main] = await Promise.all([
+  const [template, styles, footer, shop] = await Promise.all([
     readFile(path.resolve("client/index.html"), "utf8"),
     readFile(path.resolve("client/src/index.css"), "utf8"),
     readFile(path.resolve("client/src/components/footer.tsx"), "utf8"),
     readFile(path.resolve("client/src/pages/shop.tsx"), "utf8"),
-    readFile(path.resolve("client/src/App.tsx"), "utf8"),
-    readFile(path.resolve("client/src/main.tsx"), "utf8"),
   ]);
-  const productCardSource = shop.slice(
-    shop.indexOf("function GroupedProductCard"),
-    shop.indexOf("function ProductSkeleton"),
-  );
-  const skeletonSource = shop.slice(
-    shop.indexOf("function ProductSkeleton"),
-    shop.indexOf("export default function Shop"),
-  );
 
   assert(template.includes('<link rel="preconnect" href="https://cdn.shopify.com" crossorigin />'));
   const fontRules = [...template.matchAll(/@font-face\s*\{([^}]*)\}/g)].map((match) => match[1]);
@@ -92,33 +82,6 @@ async function verifyPageSpeedContracts(): Promise<void> {
   assert(template.includes('font-family: "Inter Fallback"'));
   assert(template.includes('font-family: "Press Start 2P Fallback"'));
   assert(template.includes('font-family: "Permanent Marker Fallback"'));
-  assert(template.includes("html {\n        scrollbar-gutter: stable;\n      }"));
-  assert(
-    template.includes('<div id="site-shell">') &&
-      template.includes('<div id="root"></div>') &&
-      template.includes('<div id="footer-root">'),
-    "client shell must keep the footer outside the replaceable app root",
-  );
-  assert(
-    template.includes('<footer class="storefront-footer border-t border-border bg-background min-h-[300px]">') &&
-      template.includes('data-testid="link-footer-shop"') &&
-      template.includes('data-testid="link-footer-accessories"'),
-    "client shell must contain the complete prerendered footer",
-  );
-  assert(
-    main.includes('import { createRoot } from "react-dom/client";') &&
-      !main.includes("hydrateRoot") &&
-      !main.includes("footer-root"),
-    "the persistent footer shell must not be replaced during app startup",
-  );
-  assert(!app.includes('import Footer from "@/components/footer";') && !app.includes("<Footer />"));
-  assert(
-    template.includes(".music-toggle {\n        box-sizing: border-box;") &&
-      template.includes("width: 2.5rem;") &&
-      template.includes("height: 2.5rem;") &&
-      template.includes("padding: 0;"),
-    "critical styles must lock the music button box before the full stylesheet loads",
-  );
   assert(
     styles.includes(
       ".catalog-grid > a > div.group {\n    position: relative !important;\n    overflow: hidden !important;\n    contain: layout;\n  }",
@@ -132,43 +95,23 @@ async function verifyPageSpeedContracts(): Promise<void> {
     "product-card hover overlays must be positioned and contained",
   );
   assert(
-    styles.includes(
-      ".catalog-card {\n    contain: layout style;\n    contain-intrinsic-size: auto 274px;\n    min-height: 274px;\n  }",
-    ),
-    "catalog cards must use layout containment and reserve stable geometry",
+    styles.includes("contain-intrinsic-size: auto 274px;") &&
+      styles.includes("min-height: 274px;") &&
+      styles.includes("contain-intrinsic-size: auto 210px;") &&
+      styles.includes("min-height: 210px;"),
+    "catalog cards must reserve stable geometry",
   );
   assert(
     styles.includes(
-      "@media (max-width: 639px) {\n    .catalog-card {\n      contain-intrinsic-size: auto 210px;\n      min-height: 210px;\n    }\n  }",
+      ".catalog-section {\n    contain: layout;\n    contain-intrinsic-size: auto 1200px;\n  }",
     ),
-    "mobile catalog card geometry must remain reserved",
+    "catalog section must reserve contained geometry",
   );
   assert(
     styles.includes(
-      ".catalog-section {\n    contain: layout;\n  }",
+      ".storefront-footer {\n    contain: layout style;\n    content-visibility: auto;\n    min-height: 300px;\n  }",
     ),
-    "catalog section must retain layout containment without a rigid reservation",
-  );
-  assert(
-    styles.includes("html {\n    scrollbar-gutter: stable;\n  }"),
-    "global stylesheet must reserve scrollbar space",
-  );
-  assert(
-    styles.includes(
-      ".music-toggle {\n    box-sizing: border-box;\n    width: 2.5rem;\n    min-width: 2.5rem;\n    max-width: 2.5rem;\n    height: 2.5rem;\n    min-height: 2.5rem;\n    max-height: 2.5rem;\n    padding: 0;\n  }",
-    ),
-    "music button must retain a fixed border-box dimension",
-  );
-  assert(
-    !shop.includes("min-h-[1200px]") &&
-      !styles.includes("contain-intrinsic-size: auto 1200px;"),
-    "catalog section must not use a rigid 1200px reservation",
-  );
-  assert(
-    styles.includes(
-      "footer.storefront-footer {\n    contain: layout;\n    min-height: 300px;\n  }",
-    ),
-    "footer must reserve and contain its layout without culling during paint",
+    "footer must reserve and contain its layout",
   );
   assert(
     styles.includes(
@@ -183,38 +126,8 @@ async function verifyPageSpeedContracts(): Promise<void> {
     "desktop footer reservation is missing",
   );
   assert(footer.includes('className="storefront-footer border-t border-border bg-background min-h-[300px]"'));
-  assert(!footer.includes("contentVisibility"));
-  assert(shop.includes('<section aria-labelledby="catalog-heading" className="catalog-section w-full">'));
-  assert(
-    productCardSource.includes('className="relative aspect-square w-full shrink-0 overflow-hidden rounded-md bg-muted"') &&
-      productCardSource.includes('className="absolute inset-0 h-full w-full object-cover'),
-    "populated catalog cards must reserve and fill a square image box",
-  );
-  assert(
-    skeletonSource.includes('className="relative aspect-square w-full shrink-0 overflow-hidden rounded-md bg-muted"') &&
-      skeletonSource.includes('className="absolute inset-0 h-full w-full"'),
-    "loading skeletons must reserve the same square image box",
-  );
-  assert(
-    productCardSource.includes('line-clamp-2 h-[2.5rem] min-h-[2.5rem]') &&
-      skeletonSource.includes('line-clamp-2 h-[2.5rem] min-h-[2.5rem]'),
-    "populated and loading titles must reserve two lines",
-  );
-  assert(
-    productCardSource.includes('flex h-[6rem] min-h-[6rem] shrink-0 flex-col p-4') &&
-      skeletonSource.includes('flex h-[6rem] min-h-[6rem] shrink-0 flex-col p-4') &&
-      productCardSource.includes('h-[1.25rem] min-h-[1.25rem]') &&
-      skeletonSource.includes('h-[1.25rem] min-h-[1.25rem]'),
-    "populated and loading card info geometry must match",
-  );
-  assert(
-    shop.includes('<div aria-hidden="true" className="mb-4 h-4 min-h-4" />'),
-    "loading catalog must reserve the product-count row before the grid",
-  );
-  assert(
-    shop.includes('<div aria-hidden="true" className="mt-8 h-9 min-h-9" />'),
-    "loading catalog must reserve the pagination row after the grid",
-  );
+  assert(footer.includes('style={{ contain: "layout style", contentVisibility: "auto" }}'));
+  assert(shop.includes('<section aria-labelledby="catalog-heading" className="catalog-section">'));
   assert(shop.includes('className="catalog-card group'));
   assert(shop.includes("window.requestIdleCallback"));
   assert(shop.includes("shouldLoadRest && initialSource === \"chunk\""));

@@ -139,27 +139,12 @@
 }
 
 @layer base {
-  html {
-    scrollbar-gutter: stable;
-  }
-
   * {
     @apply border-border;
   }
 
   body {
     @apply font-sans antialiased bg-background text-foreground;
-  }
-
-  .music-toggle {
-    box-sizing: border-box;
-    width: 2.5rem;
-    min-width: 2.5rem;
-    max-width: 2.5rem;
-    height: 2.5rem;
-    min-height: 2.5rem;
-    max-height: 2.5rem;
-    padding: 0;
   }
 }
 
@@ -252,23 +237,27 @@
 
   .catalog-section {
     contain: layout;
+    contain-intrinsic-size: auto 1200px;
   }
 
-  .catalog-card {
+  .catalog-grid > a > .catalog-card,
+  .catalog-grid > .catalog-card {
     contain: layout style;
     contain-intrinsic-size: auto 274px;
     min-height: 274px;
   }
 
   @media (max-width: 639px) {
-    .catalog-card {
+    .catalog-grid > a > .catalog-card,
+    .catalog-grid > .catalog-card {
       contain-intrinsic-size: auto 210px;
       min-height: 210px;
     }
   }
 
-  footer.storefront-footer {
-    contain: layout;
+  .storefront-footer {
+    contain: layout style;
+    content-visibility: auto;
     min-height: 300px;
   }
 

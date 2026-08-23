@@ -134,14 +134,14 @@ function GroupedProductCard({ group, index }: { group: ProductGroup; index: numb
   const [imgSrc, setImgSrc] = useState(pickedVariant ?? product.imageUrl);
   return (
     <Link href={`/product/${product.id}`} data-testid={`link-product-${product.id}`}>
-      <div className="catalog-card group flex flex-col bg-card border border-card-border rounded-md overflow-hidden hover-elevate active-elevate-2 transition-transform duration-200 cursor-pointer">
-        <div className="relative aspect-square w-full shrink-0 overflow-hidden rounded-md bg-muted">
+      <div className="catalog-card group bg-card border border-card-border rounded-md overflow-hidden hover-elevate active-elevate-2 transition-transform duration-200 cursor-pointer">
+        <div className="relative overflow-hidden rounded-t-md bg-muted" style={{ aspectRatio: "1", maxHeight: "220px" }}>
           <img
             {...shopifyImageProps(imgSrc, IMAGE_PRESETS.gridCard)}
             alt={product.name}
             width={400}
             height={400}
-            className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
             loading={index === 0 ? "eager" : "lazy"}
             {...(index === 0
               ? ({ fetchpriority: "high" } as Record<string, string>)
@@ -180,11 +180,9 @@ function GroupedProductCard({ group, index }: { group: ProductGroup; index: numb
           </div>
         </div>
 
-        <div className="flex h-[6rem] min-h-[6rem] shrink-0 flex-col p-4">
-          <h3 className="font-display text-xs text-card-foreground line-clamp-2 h-[2.5rem] min-h-[2.5rem]">{product.name}</h3>
-          <div className="mt-1 flex h-[1.25rem] min-h-[1.25rem] items-center">
-            <p className="font-pixel text-[9px] text-neon-yellow">${product.price.toFixed(2)}</p>
-          </div>
+        <div className="p-2.5">
+          <h3 className="font-display text-xs text-card-foreground mb-0.5 line-clamp-1">{product.name}</h3>
+          <p className="font-pixel text-[9px] text-neon-yellow">${product.price.toFixed(2)}</p>
         </div>
       </div>
     </Link>
@@ -193,17 +191,13 @@ function GroupedProductCard({ group, index }: { group: ProductGroup; index: numb
 
 function ProductSkeleton() {
   return (
-    <div className="catalog-card flex flex-col bg-card border border-card-border rounded-md overflow-hidden">
-      <div className="relative aspect-square w-full shrink-0 overflow-hidden rounded-md bg-muted">
-        <Skeleton className="absolute inset-0 h-full w-full" />
+    <div className="catalog-card bg-card border border-card-border rounded-md overflow-hidden">
+      <div style={{ aspectRatio: "1", maxHeight: "220px" }}>
+        <Skeleton className="w-full h-full" />
       </div>
-      <div className="flex h-[6rem] min-h-[6rem] shrink-0 flex-col p-4">
-        <div className="line-clamp-2 h-[2.5rem] min-h-[2.5rem]">
-          <Skeleton className="h-3 w-3/4" />
-        </div>
-        <div className="mt-1 flex h-[1.25rem] min-h-[1.25rem] items-center">
-          <Skeleton className="h-2.5 w-1/4" />
-        </div>
+      <div className="p-2.5 space-y-1.5">
+        <Skeleton className="h-3 w-3/4" />
+        <Skeleton className="h-2.5 w-1/4" />
       </div>
     </div>
   );
@@ -426,18 +420,14 @@ export default function Shop() {
           ))}
         </div>
 
-        <section aria-labelledby="catalog-heading" className="catalog-section w-full">
+        <section aria-labelledby="catalog-heading" className="catalog-section">
           <h2 id="catalog-heading" className="sr-only">Product catalog</h2>
           {isLoading ? (
-            <>
-              <div aria-hidden="true" className="mb-4 h-4 min-h-4" />
-              <div className="catalog-grid grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
-                {Array.from({ length: PRODUCTS_PER_PAGE }).map((_, i) => (
-                  <ProductSkeleton key={i} />
-                ))}
-              </div>
-              <div aria-hidden="true" className="mt-8 h-9 min-h-9" />
-            </>
+            <div className="catalog-grid grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
+              {Array.from({ length: PRODUCTS_PER_PAGE }).map((_, i) => (
+                <ProductSkeleton key={i} />
+              ))}
+            </div>
           ) : filtered.length === 0 ? (
             <div className="text-center py-20">
               <p className="font-pixel text-[10px] text-muted-foreground">NO ITEMS FOUND</p>
