@@ -54,11 +54,14 @@ async function verifyPublishedCatalog(): Promise<void> {
     )?.[1];
     assert(productPreload, `product ${productId} is missing its LCP image preload`);
     assert(productPreload.includes("width=640&amp;format=webp"), `product ${productId} preload is not the product-detail WebP rendition`);
+    assert(productPreload.includes("width=400&amp;format=webp"), `product ${productId} preload is missing the mobile 400px candidate`);
     assert(productPreload.includes("imagesrcset=") && productPreload.includes("imagesizes="));
     assert(productHero, `product ${productId} is missing an eager high-priority hero image`);
     assert(productHero.includes("srcset=") && productHero.includes("sizes="));
     assert(productData, `product ${productId} is missing its hydration data`);
-    assert.equal(String(JSON.parse(productData).id), productId, `product ${productId} hydration data mismatch`);
+    const hydrationData = JSON.parse(productData);
+    assert.equal(String(hydrationData.id), productId, `product ${productId} hydration data mismatch`);
+    assert(Array.isArray(hydrationData.availableFits) && hydrationData.availableFits.length > 0, `product ${productId} fit metadata is missing`);
     assert.equal(productSchema["@type"], "Product", `product ${productId} schema type mismatch`);
     assert(productSchema.name, `product ${productId} schema name is missing`);
     assert.equal(productSchema.sku, productId, `product ${productId} schema SKU mismatch`);
@@ -162,6 +165,9 @@ async function verifyPageSpeedContracts(): Promise<void> {
   assert(productDetail.includes("enabled: secondaryContentEnabled"));
   assert(productDetail.includes('loading="lazy"'));
   assert(productDetail.includes("min-h-[44px]"));
+  assert(productDetail.includes("availableFits"));
+  assert(productDetail.includes("min-h-[68px]"));
+  assert(productDetail.includes("isCatalogFetched"));
   const primaryProductQuery = productDetail.slice(
     productDetail.indexOf('queryKey: ["/api/products", id]'),
     productDetail.indexOf("useEffect(() => {", productDetail.indexOf('queryKey: ["/api/products", id]')),

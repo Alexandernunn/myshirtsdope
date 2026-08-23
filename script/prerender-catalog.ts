@@ -1,7 +1,7 @@
 import { mkdir, readFile, rm, writeFile } from "fs/promises";
 import path from "path";
 import type { Product, ProductSummary } from "../shared/schema";
-import { groupProducts, interleaveGroups } from "../client/src/lib/product-grouping";
+import { groupProducts, interleaveGroups, type FitType } from "../client/src/lib/product-grouping";
 import { pickVariantIndex } from "../shared/image-variants";
 import {
   IMAGE_PRESETS,
@@ -362,7 +362,7 @@ function renderShopPage(
   return injectPrerenderedRoot(html, renderShopContent(products, lcpImage));
 }
 
-function renderProductPage(template: string, product: Product): string {
+function renderProductPage(template: string, product: Product, availableFits: FitType[]): string {
   const canonicalUrl = `${SITE_URL}/product/${product.id}`;
   const html = applyPageMetadata(template, {
     title: `${product.name} | MyShirtsDope`,
@@ -382,7 +382,7 @@ function renderProductPage(template: string, product: Product): string {
   });
   const htmlWithProductData = html.replace(
     /<\/head>/i,
-    `    <script type="application/json" data-prerendered-product="true">${safeJsonLd(product)}</script>\n  </head>`,
+    `    <script type="application/json" data-prerendered-product="true">${safeJsonLd({ ...product, availableFits })}</script>\n  </head>`,
   );
   return injectPrerenderedRoot(htmlWithProductData, renderProductContent(product));
 }
@@ -404,6 +404,12 @@ export async function prerenderCatalog(
   const productOutputDir = path.join(OUTPUT_DIR, "product");
   const shopOutputDir = path.join(OUTPUT_DIR, "shop");
   const uniqueProducts = Array.from(new Map(products.map((product) => [product.id, product])).values());
+  const availableFitsByProductId = new Map<number, FitType[]>();
+  for (const group of groupProducts(uniqueProducts)) {
+    for (const product of [group.adult, group.youth, group.toddler]) {
+      if (product) availableFitsByProductId.set(product.id, group.fits);
+    }
+  }
 
   await Promise.all([
     rm(productOutputDir, { recursive: true, force: true }),
@@ -424,7 +430,7 @@ export async function prerenderCatalog(
         await mkdir(outputDir, { recursive: true });
         await writeFile(
           path.join(outputDir, "index.html"),
-          renderProductPage(template, product),
+          renderProductPage(template, product, availableFitsByProductId.get(product.id) ?? ["adult"]),
         );
       }),
     );

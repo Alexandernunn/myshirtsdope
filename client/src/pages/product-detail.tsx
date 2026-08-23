@@ -76,20 +76,21 @@ function getColorHex(colorName: string): string | null {
 
 const PDP_HERO_PRELOAD_ATTRIBUTE = "data-pdp-hero-preload";
 const PRERENDERED_PRODUCT_DATA_SELECTOR = 'script[data-prerendered-product="true"]';
+type PrerenderedProduct = Product & { availableFits?: FitType[] };
 
-function readPrerenderedProduct(root: ParentNode, expectedId: string | undefined): Product | undefined {
+function readPrerenderedProduct(root: ParentNode, expectedId: string | undefined): PrerenderedProduct | undefined {
   const serializedProduct = root.querySelector(PRERENDERED_PRODUCT_DATA_SELECTOR)?.textContent;
   if (!serializedProduct) return undefined;
 
   try {
-    const product = JSON.parse(serializedProduct) as Product;
+    const product = JSON.parse(serializedProduct) as PrerenderedProduct;
     return String(product.id) === String(expectedId) ? product : undefined;
   } catch {
     return undefined;
   }
 }
 
-async function fetchPrerenderedProduct(id: string | undefined): Promise<Product | undefined> {
+async function fetchPrerenderedProduct(id: string | undefined): Promise<PrerenderedProduct | undefined> {
   if (!id) return undefined;
 
   const response = await fetch(`/product/${id}`);
@@ -153,7 +154,7 @@ export default function ProductDetail() {
     ? undefined
     : readPrerenderedProduct(document, id);
 
-  const { data: product, isLoading } = useQuery<Product>({
+  const { data: product, isLoading } = useQuery<PrerenderedProduct>({
     queryKey: ["/api/products", id],
     initialData: prerenderedProduct,
     queryFn: async () => {
@@ -197,7 +198,7 @@ export default function ProductDetail() {
 
   const secondaryContentEnabled = secondaryProductId === product?.id;
 
-  const { data: allProducts = [] } = useQuery<Product[]>({
+  const { data: allProducts = [], isFetched: isCatalogFetched } = useQuery<Product[]>({
     queryKey: ["/api/products"],
     queryFn: async () => {
       if (!import.meta.env.DEV) {
@@ -270,6 +271,9 @@ export default function ProductDetail() {
 
   const group = product && allProducts.length > 0 ? findGroupForProduct(allProducts, Number(id)) : null;
   const hasMutipleFits = group ? group.fits.length > 1 : false;
+  const shouldReserveFitSpace = product?.availableFits
+    ? product.availableFits.length > 1
+    : !isCatalogFetched;
 
   const productFit: FitType | null = group && product
     ? group.youth?.id === product.id
@@ -460,27 +464,29 @@ export default function ProductDetail() {
               </p>
             </div>
 
-            {hasMutipleFits && group && (
-              <div>
-                <label className="font-pixel text-[8px] text-muted-foreground block mb-2">SELECT FIT</label>
-                <div className="flex flex-wrap gap-2">
-                  {group.fits.map((fit) => (
-                    <button
-                      key={fit}
-                      onClick={() => handleFitChange(fit)}
-                      data-testid={`button-fit-${fit}`}
-                      className={`font-display text-xs px-3 py-1.5 min-h-[44px] rounded-md border transition-all ${
-                        effectiveFit === fit
-                          ? "bg-neon-green/20 border-neon-green text-neon-green"
-                          : "border-border text-muted-foreground"
-                      }`}
-                    >
-                      {getFitLabel(fit)}
-                    </button>
-                  ))}
+            <div className={shouldReserveFitSpace ? "min-h-[68px]" : undefined}>
+              {hasMutipleFits && group && (
+                <div>
+                  <label className="font-pixel text-[8px] text-muted-foreground block mb-2">SELECT FIT</label>
+                  <div className="flex flex-wrap gap-2">
+                    {group.fits.map((fit) => (
+                      <button
+                        key={fit}
+                        onClick={() => handleFitChange(fit)}
+                        data-testid={`button-fit-${fit}`}
+                        className={`font-display text-xs px-3 py-1.5 min-h-[44px] rounded-md border transition-all ${
+                          effectiveFit === fit
+                            ? "bg-neon-green/20 border-neon-green text-neon-green"
+                            : "border-border text-muted-foreground"
+                        }`}
+                      >
+                        {getFitLabel(fit)}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
 
             <div className={`transition-opacity duration-150 ${transitioning ? "opacity-0" : "opacity-100"}`}>
               <div>
