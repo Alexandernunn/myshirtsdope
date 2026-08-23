@@ -38,6 +38,12 @@
   status = 404
 
 [[redirects]]
+  from = "/webhooks/shopify/catalog"
+  to = "/.netlify/functions/shopify-catalog-webhook"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200

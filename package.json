@@ -8,6 +8,7 @@
     "build": "npx tsx script/build.ts",
     "build:client": "vite build",
     "build:netlify": "vite build && npx tsx script/cache-products.ts",
+    "verify:catalog-seo": "npx tsx script/verify-catalog-seo.ts",
     "start": "NODE_ENV=production node dist/index.cjs",
     "check": "tsc"
   },
