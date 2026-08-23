@@ -11,3 +11,5 @@ Allow: /images/
 Disallow: /api/
 Disallow: /cart
 Disallow: /order-confirmation
+
+Sitemap: https://myshirtsdope.com/sitemap.xml

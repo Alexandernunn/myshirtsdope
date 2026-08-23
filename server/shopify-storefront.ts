@@ -93,6 +93,7 @@ async function storefrontQuery(query: string, variables?: Record<string, unknown
 
 interface AdminProduct {
   id: number;
+  updated_at: string;
   title: string;
   body_html: string;
   product_type: string;
@@ -107,20 +108,24 @@ interface AdminProduct {
     option3: string | null;
     image_id: number | null;
     inventory_quantity: number;
+    inventory_policy: string | null;
   }[];
   options: { name: string; position: number; values: string[] }[];
 }
+
+const SHOPIFY_ADMIN_API_VERSION =
+  process.env.SHOPIFY_ADMIN_API_VERSION || "2026-07";
 
 export async function fetchAllStorefrontProducts(): Promise<AdminProduct[]> {
   const { domain, token } = getAdminConfig();
   const allProducts: AdminProduct[] = [];
   let nextUrl: string | null =
-    `https://${domain}/admin/api/2024-01/products.json?limit=250&status=active`;
+    `https://${domain}/admin/api/${SHOPIFY_ADMIN_API_VERSION}/products.json?limit=250&status=active`;
 
   console.log(`[Shopify Admin] Requesting: ${nextUrl}`);
 
   while (nextUrl) {
-    const res = await fetch(nextUrl, {
+    const res: Response = await fetch(nextUrl, {
       headers: {
         "X-Shopify-Access-Token": token,
         "Content-Type": "application/json",
@@ -148,10 +153,11 @@ export async function fetchAllStorefrontProducts(): Promise<AdminProduct[]> {
     const data = await res.json();
     allProducts.push(...data.products);
 
-    const linkHeader = res.headers.get("link");
+    const linkHeader: string | null = res.headers.get("link");
     nextUrl = null;
     if (linkHeader) {
-      const nextMatch = linkHeader.match(/<([^>]+)>;\s*rel="next"/);
+      const nextMatch: RegExpMatchArray | null =
+        linkHeader.match(/<([^>]+)>;\s*rel="next"/);
       if (nextMatch) nextUrl = nextMatch[1];
     }
   }
@@ -220,6 +226,8 @@ export function mapStorefrontProduct(product: AdminProduct) {
       size,
       color,
       price: variant.price,
+      availableForSale:
+        variant.inventory_quantity > 0 || variant.inventory_policy === "continue",
     });
   }
 
@@ -234,6 +242,7 @@ export function mapStorefrontProduct(product: AdminProduct) {
 
   return {
     shopifyProductId: `gid://shopify/Product/${product.id}`,
+    updatedAt: product.updated_at,
     name: product.title,
     description: stripHtml(product.body_html) || `${product.title} from MyShirtsDope`,
     price: lowestPrice,

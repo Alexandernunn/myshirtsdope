@@ -40,6 +40,7 @@ function toWithProduct(item: StoredCartItem): CartItemWithProduct {
     product: {
       id: item.productId,
       shopifyProductId: null,
+      updatedAt: "",
       name: item.productName,
       price: item.productPrice,
       imageUrl: item.productImageUrl,

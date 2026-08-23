@@ -14,6 +14,7 @@ async function fetchAndCacheProducts(): Promise<Product[]> {
     return {
       id: sp.id,
       shopifyProductId: data.shopifyProductId,
+      updatedAt: data.updatedAt,
       name: data.name,
       description: data.description,
       price: data.price,

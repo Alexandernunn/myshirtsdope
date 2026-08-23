@@ -5,11 +5,13 @@ export interface ShopifyVariantMapping {
   size: string;
   color: string;
   price: string;
+  availableForSale: boolean;
 }
 
 export interface Product {
   id: number;
   shopifyProductId: string | null;
+  updatedAt: string;
   name: string;
   description: string;
   price: number;

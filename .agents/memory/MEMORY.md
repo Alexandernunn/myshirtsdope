@@ -1,3 +1,3 @@
-- [Catalog prerendering](catalog-prerendering.md) — generate bot-visible shop/product HTML during the Netlify catalog build, not through runtime SSR.
+- [Catalog prerendering](catalog-prerendering.md) — one Shopify build snapshot drives cached data, prerendered pages, Product schema, and sitemap; no runtime SSR.
 - [Critical stylesheet loading](critical-stylesheet-loading.md) — preload full CSS, activate it after load from the entry module, and retain critical/no-JS fallbacks.
 - [Marketing script deferral](marketing-script-deferral.md) — queue browser analytics immediately, load vendors after interaction, and keep Meta CAPI immediate.

@@ -3,6 +3,7 @@ import type { Product } from "../shared/schema";
 import { mkdir, writeFile } from "fs/promises";
 import path from "path";
 import { prerenderCatalog } from "./prerender-catalog";
+import { generateSitemap } from "./generate-sitemap";
 
 const NEUTRAL_COLORS = new Set([
   "white", "off white", "off-white", "natural", "ash", "cornsilk", "ivory",
@@ -35,6 +36,7 @@ async function cacheProducts() {
     return {
       id: sp.id,
       shopifyProductId: data.shopifyProductId,
+      updatedAt: data.updatedAt,
       name: data.name,
       description: data.description,
       price: data.price,
@@ -79,6 +81,7 @@ async function cacheProducts() {
   await writeFile(path.join(outDir, "products-slim-1.json"), JSON.stringify(slimInitial));
   await writeFile(path.join(outDir, "products-slim-rest.json"), JSON.stringify(slimRest));
   await prerenderCatalog(products);
+  await generateSitemap(products);
 
   const fullSize = Buffer.byteLength(JSON.stringify(products)) / 1024;
   const slimSize = Buffer.byteLength(JSON.stringify(slim)) / 1024;

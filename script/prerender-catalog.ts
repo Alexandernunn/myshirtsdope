@@ -207,6 +207,35 @@ function renderProductContent(product: Product): string {
 }
 
 function productJsonLd(product: Product, canonicalUrl: string) {
+  const variants = product.shopifyVariants ?? [];
+  const prices = variants
+    .map((variant) => Number.parseFloat(variant.price))
+    .filter((price) => Number.isFinite(price));
+  const normalizedPrices = prices.length > 0 ? prices : [product.price];
+  const lowPrice = Math.min(...normalizedPrices);
+  const highPrice = Math.max(...normalizedPrices);
+  const availability = variants.some((variant) => variant.availableForSale)
+    ? "http://schema.org/InStock"
+    : "http://schema.org/OutOfStock";
+  const uniquePrices = new Set(normalizedPrices.map((price) => price.toFixed(2)));
+  const offers = uniquePrices.size === 1
+    ? {
+        "@type": "Offer",
+        url: canonicalUrl,
+        priceCurrency: "USD",
+        price: lowPrice.toFixed(2),
+        availability,
+      }
+    : {
+        "@type": "AggregateOffer",
+        url: canonicalUrl,
+        lowPrice: lowPrice.toFixed(2),
+        highPrice: highPrice.toFixed(2),
+        priceCurrency: "USD",
+        offerCount: variants.length,
+        availability,
+      };
+
   return {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -219,12 +248,7 @@ function productJsonLd(product: Product, canonicalUrl: string) {
       "@type": "Brand",
       name: "MyShirtsDope",
     },
-    offers: {
-      "@type": "Offer",
-      url: canonicalUrl,
-      priceCurrency: "USD",
-      price: product.price.toFixed(2),
-    },
+    offers,
   };
 }
 
