@@ -65,13 +65,15 @@ export default function Home() {
 
         <div className="homepage-hero-content relative z-10 text-center px-4 max-w-4xl mx-auto">
           <div className="animate-pixel-fade-in">
-            <p className="font-pixel text-[9px] sm:text-[10px] text-neon-green neon-text-green mb-4 tracking-widest">
-              WELCOME TO
-            </p>
+            <div className="hero-text-wrapper">
+              <p className="font-pixel text-[9px] sm:text-[10px] text-neon-green neon-text-green mb-4 tracking-widest">
+                WELCOME TO
+              </p>
 
-            <h1 className="font-pixel text-2xl sm:text-4xl md:text-5xl text-neon-blue neon-text-blue mb-6 leading-relaxed animate-float">
-              MyShirtsDope
-            </h1>
+              <h1 className="font-pixel text-2xl sm:text-4xl md:text-5xl text-neon-blue neon-text-blue mb-6 leading-relaxed animate-float">
+                MyShirtsDope
+              </h1>
+            </div>
 
             <div className="max-w-2xl mx-auto mb-10">
               <p className="font-display text-lg sm:text-xl text-foreground/90 leading-relaxed min-h-[56px]">
