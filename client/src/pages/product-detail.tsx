@@ -76,7 +76,10 @@ function getColorHex(colorName: string): string | null {
 
 const PDP_HERO_PRELOAD_ATTRIBUTE = "data-pdp-hero-preload";
 const PRERENDERED_PRODUCT_DATA_SELECTOR = 'script[data-prerendered-product="true"]';
-type PrerenderedProduct = Product & { availableFits?: FitType[] };
+type PrerenderedProduct = Product & {
+  availableFits?: FitType[];
+  selectedFit?: FitType;
+};
 
 function readPrerenderedProduct(root: ParentNode, expectedId: string | undefined): PrerenderedProduct | undefined {
   const serializedProduct = root.querySelector(PRERENDERED_PRODUCT_DATA_SELECTOR)?.textContent;
@@ -281,7 +284,7 @@ export default function ProductDetail() {
       : group.toddler?.id === product.id
         ? "toddler"
         : "adult"
-    : null;
+    : product?.selectedFit ?? null;
   const selectedFit = fitProductId === product?.id ? activeFit : null;
   const effectiveFit = selectedFit ?? productFit ?? "adult";
   const activeProduct = (group ? getProductForFit(group, effectiveFit) : product) as Product | undefined;

@@ -261,42 +261,144 @@ function renderShopContent(products: Product[], lcpImage: ShopLcpImage): string 
       </main>`;
 }
 
-function renderProductContent(product: Product): string {
+const PDP_PRERENDER_CRITICAL_CSS = `
+    [data-prerendered-pdp-shell] { min-height: 100vh; display: flex; flex-direction: column; background: hsl(240 10% 5%); color: hsl(50 10% 92%); }
+    [data-prerendered-pdp-navbar] { position: sticky; top: 0; z-index: 50; min-height: 64px; border-bottom: 1px solid hsl(240 8% 16%); background: hsl(240 10% 5% / .9); }
+    [data-prerendered-pdp-navbar] > div { max-width: 1280px; min-height: 64px; margin: 0 auto; padding: 0 1rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+    [data-prerendered-pdp-nav-links] { display: none; }
+    [data-prerendered-pdp-main] { flex: 1; }
+    [data-prerendered-pdp-content] { width: 100%; max-width: 1400px; margin: 0 auto; padding: 2.5rem 1.5rem; }
+    [data-prerendered-pdp-shell] .retro-divider { height: 4px; }
+    [data-prerendered-pdp-back] { display: inline-flex; align-items: center; gap: .5rem; min-height: 32px; margin-bottom: 1.5rem; padding: 0 .75rem; border: 1px solid transparent; border-radius: .375rem; font-size: .875rem; line-height: 1.25rem; }
+    [data-prerendered-pdp-layout] { display: flex; flex-direction: column; align-items: flex-start; gap: 1.5rem; }
+    [data-prerendered-pdp-hero-wrap] { width: 100%; flex-shrink: 0; }
+    [data-prerendered-pdp-hero] { position: relative; width: 100%; aspect-ratio: 1; overflow: hidden; border: 1px solid hsl(240 8% 14%); border-radius: .375rem; background: hsl(240 10% 8%); }
+    [data-prerendered-pdp-hero] img { display: block; width: 100%; height: 100%; object-fit: contain; }
+    [data-prerendered-pdp-info] { width: 100%; display: flex; flex: 1; flex-direction: column; gap: 1.25rem; }
+    [data-prerendered-pdp-title] { margin: 0 0 .375rem; font-size: 1.5rem; line-height: 2rem; }
+    [data-prerendered-pdp-price] { display: flex; align-items: center; min-height: 44px; }
+    [data-prerendered-pdp-description] { display: none; margin: 0; font-size: .875rem; line-height: 1.625; }
+    [data-prerendered-pdp-fit-slot] { min-height: 68px; }
+    [data-prerendered-pdp-label] { display: block; margin-bottom: .5rem; font-size: 8px; line-height: 1rem; }
+    [data-prerendered-pdp-control-row] { display: flex; flex-wrap: wrap; gap: .375rem; min-height: 44px; }
+    [data-prerendered-pdp-fit-slot] [data-prerendered-pdp-control-row] { gap: .5rem; }
+    [data-prerendered-pdp-option] { display: inline-flex; align-items: center; min-height: 44px; padding: .375rem .75rem; border: 1px solid hsl(240 8% 16%); border-radius: .375rem; font-size: .75rem; line-height: 1rem; }
+    [data-prerendered-pdp-details] { display: block; min-height: 44px; overflow: hidden; border: 1px solid hsl(240 8% 14%); border-radius: .375rem; }
+    [data-prerendered-pdp-details] summary { min-height: 44px; padding: .75rem 1rem; }
+    [data-prerendered-pdp-divider] { height: 4px; margin: .25rem 0; }
+    [data-prerendered-pdp-add] { display: inline-flex; width: 100%; min-height: 44px; align-items: center; justify-content: center; gap: .75rem; padding: 1.25rem 1rem; border: 1px solid hsl(200 100% 55%); border-radius: .375rem; }
+    @media (min-width: 640px) { [data-prerendered-pdp-content] { padding-left: 2rem; padding-right: 2rem; } }
+    @media (min-width: 768px) {
+      [data-prerendered-pdp-nav-links] { display: flex; gap: 1.5rem; }
+      [data-prerendered-pdp-layout] { flex-direction: row; gap: 2.5rem; }
+      [data-prerendered-pdp-hero-wrap] { max-width: 320px; }
+      [data-prerendered-pdp-description] { display: block; }
+      [data-prerendered-pdp-details] { display: none; }
+    }
+    @media (min-width: 640px) { [data-prerendered-pdp-title] { font-size: 1.875rem; line-height: 2.25rem; } }
+`;
+
+function getFitLabel(fit: FitType): string {
+  if (fit === "youth") return "YOUTH / KIDS";
+  if (fit === "toddler") return "TODDLER / BABY";
+  return "ADULT";
+}
+
+function renderPrerenderedNavbar(): string {
+  return `
+      <nav data-prerendered-pdp-navbar class="sticky top-0 z-50 border-b border-border bg-background/90 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-4 flex items-center justify-between gap-4 h-16">
+          <a href="/" class="font-pixel text-xs sm:text-sm text-neon-blue neon-text-blue tracking-wider">MyShirtsDope</a>
+          <div data-prerendered-pdp-nav-links class="hidden md:flex items-center gap-6">
+            <a href="/" class="font-display text-sm tracking-wide text-muted-foreground">HOME</a>
+            <a href="/shop" class="font-display text-sm tracking-wide text-neon-yellow neon-text-yellow">SHOP</a>
+            <a href="/about" class="font-display text-sm tracking-wide text-muted-foreground">STORY</a>
+            <a href="/contact" class="font-display text-sm tracking-wide text-muted-foreground">CONTACT</a>
+          </div>
+          <div class="flex items-center gap-2">
+            <a href="/cart" aria-label="Shopping cart, 0 items" class="inline-flex h-9 w-9 items-center justify-center border border-transparent rounded-md" aria-hidden="true"></a>
+            <button type="button" class="inline-flex h-9 w-9 items-center justify-center border border-transparent rounded-md md:hidden" aria-label="Open navigation menu" aria-hidden="true"></button>
+          </div>
+        </div>
+      </nav>`;
+}
+
+function renderProductContent(product: Product, availableFits: FitType[], selectedFit: FitType): string {
   const imageProps = product.imageUrl
     ? shopifyImageProps(product.imageUrl, IMAGE_PRESETS.productDetail)
     : null;
   const responsiveAttrs = imageProps?.srcSet && imageProps.sizes
     ? ` srcset="${escapeHtml(imageProps.srcSet)}" sizes="${escapeHtml(imageProps.sizes)}"`
     : "";
-  // Keep the schema.org microdata image pointing at the full-quality original
-  // via <link itemprop>, while the visible tag uses the transformed rendition
-  // inside a box with reserved dimensions (no layout shift when it paints).
   const image = product.imageUrl && imageProps
     ? `<link itemprop="image" href="${escapeHtml(product.imageUrl)}" />
-          <div style="width: 100%; max-width: 320px; aspect-ratio: 1;">
-            <img src="${escapeHtml(imageProps.src)}"${responsiveAttrs} alt="${escapeHtml(product.name)}" loading="eager" fetchpriority="high" width="320" height="320" style="width: 100%; height: 100%; object-fit: contain;" />
+          <div data-prerendered-pdp-hero-wrap class="w-full md:max-w-[320px] flex-shrink-0">
+            <div data-prerendered-pdp-hero class="relative aspect-square bg-card border border-card-border rounded-md overflow-hidden">
+              <img src="${escapeHtml(imageProps.src)}"${responsiveAttrs} alt="${escapeHtml(product.name)}" loading="eager" fetchpriority="high" width="320" height="320" />
+              <div class="scanline-overlay opacity-30"></div>
+            </div>
           </div>`
     : "";
+  const fitControls = availableFits.length > 1
+    ? `<div data-prerendered-pdp-fit-slot class="min-h-[68px]">
+          <label data-prerendered-pdp-label class="font-pixel text-[8px] text-muted-foreground block mb-2">SELECT FIT</label>
+          <div data-prerendered-pdp-control-row class="flex flex-wrap gap-2">
+            ${availableFits.map((fit) => `<span data-prerendered-pdp-option class="inline-flex items-center font-display text-xs px-3 py-1.5 min-h-[44px] rounded-md border ${fit === selectedFit ? "bg-neon-green/20 border-neon-green text-neon-green" : "border-border text-muted-foreground"}">${getFitLabel(fit)}</span>`).join("")}
+          </div>
+        </div>`
+    : "";
   const sizes = product.sizes.length > 0
-    ? `<p><strong>Available sizes:</strong> ${escapeHtml(product.sizes.join(", "))}</p>`
+    ? `<div>
+          <label data-prerendered-pdp-label class="font-pixel text-[8px] text-muted-foreground block mb-2">SELECT SIZE</label>
+          <div data-prerendered-pdp-control-row class="min-h-[44px] flex flex-wrap gap-1.5">
+            ${product.sizes.map((size) => `<span data-prerendered-pdp-option class="inline-flex items-center font-display text-xs px-3 py-1.5 min-h-[44px] rounded-md border border-border text-muted-foreground">${escapeHtml(size)}</span>`).join("")}
+          </div>
+        </div>`
     : "";
   const colors = product.colors.length > 0
-    ? `<p><strong>Available colors:</strong> ${escapeHtml(product.colors.join(", "))}</p>`
+    ? `<div class="mt-4">
+          <label data-prerendered-pdp-label class="font-pixel text-[8px] text-muted-foreground block mb-2">SELECT COLOR</label>
+          <div data-prerendered-pdp-control-row class="min-h-[44px] flex flex-wrap gap-1.5">
+            ${product.colors.map((color) => `<span data-prerendered-pdp-option class="inline-flex items-center gap-1.5 font-display text-xs px-3 py-1.5 min-h-[44px] rounded-md border border-border text-muted-foreground"><span class="inline-block w-3 h-3 rounded-full border border-white/20"></span>${escapeHtml(color)}</span>`).join("")}
+          </div>
+        </div>`
     : "";
 
   return `
-      <main data-prerendered-page="product" style="max-width: 1000px; margin: 0 auto; padding: 2rem 1.5rem;">
-        <nav aria-label="Breadcrumb"><a href="/shop">Back to shop</a></nav>
-        <article itemscope itemtype="https://schema.org/Product">
-          ${image}
-          <h1 itemprop="name">${escapeHtml(product.name)}</h1>
-          <p><strong>Price:</strong> <span itemprop="offers" itemscope itemtype="https://schema.org/Offer"><meta itemprop="priceCurrency" content="USD" /><data itemprop="price" value="${product.price.toFixed(2)}">$${product.price.toFixed(2)}</data></span></p>
-          <p itemprop="description">${escapeHtml(product.description)}</p>
-          <p><strong>Category:</strong> ${escapeHtml(product.category)}</p>
-          ${sizes}
-          ${colors}
-        </article>
-      </main>`;
+      <div data-prerendered-pdp-shell class="min-h-screen flex flex-col bg-background pixel-grid-bg">
+        ${renderPrerenderedNavbar()}
+        <main data-prerendered-pdp-main class="flex-1">
+          <div class="min-h-screen">
+            <div class="retro-divider"></div>
+            <div data-prerendered-pdp-content class="max-w-[1400px] mx-auto px-6 sm:px-8 py-10">
+              <a data-prerendered-pdp-back href="/shop" class="inline-flex items-center gap-2 mb-6 min-h-8 rounded-md px-3 border border-transparent font-display text-sm">← Back to Shop</a>
+              <article data-prerendered-pdp-layout class="flex flex-col md:flex-row items-start gap-6 md:gap-10" itemscope itemtype="https://schema.org/Product">
+                ${image}
+                <div data-prerendered-pdp-info class="flex-1 flex flex-col gap-5">
+                  <div>
+                    <h1 data-prerendered-pdp-title itemprop="name" class="font-display text-2xl sm:text-3xl text-foreground mb-1.5">${escapeHtml(product.name)}</h1>
+                    <div data-prerendered-pdp-price class="min-h-[44px] flex items-center">
+                      <span itemprop="offers" itemscope itemtype="https://schema.org/Offer"><meta itemprop="priceCurrency" content="USD" /><data itemprop="price" class="font-pixel text-sm text-neon-yellow neon-text-yellow" value="${product.price.toFixed(2)}">$${product.price.toFixed(2)}</data></span>
+                    </div>
+                  </div>
+                  <p data-prerendered-pdp-description class="hidden md:block text-sm text-muted-foreground leading-relaxed" itemprop="description">${escapeHtml(product.description)}</p>
+                  ${fitControls}
+                  <div>
+                    ${sizes}
+                    ${colors}
+                  </div>
+                  <details data-prerendered-pdp-details class="md:hidden border border-card-border rounded-md overflow-hidden">
+                    <summary class="font-pixel text-[9px] text-neon-blue px-4 py-3 cursor-pointer select-none">DETAILS</summary>
+                    <p class="text-sm text-muted-foreground leading-relaxed px-4 pb-4">${escapeHtml(product.description)}</p>
+                  </details>
+                  <div data-prerendered-pdp-divider class="retro-divider my-1"></div>
+                  <button data-prerendered-pdp-add type="button" class="inline-flex items-center justify-center gap-3 min-h-[44px] py-5 rounded-md border bg-neon-blue border-neon-blue text-white font-pixel text-[10px]">ADD TO CART</button>
+                </div>
+              </article>
+            </div>
+          </div>
+        </main>
+      </div>`;
 }
 
 function productJsonLd(product: Product, canonicalUrl: string) {
@@ -362,7 +464,12 @@ function renderShopPage(
   return injectPrerenderedRoot(html, renderShopContent(products, lcpImage));
 }
 
-function renderProductPage(template: string, product: Product, availableFits: FitType[]): string {
+function renderProductPage(
+  template: string,
+  product: Product,
+  availableFits: FitType[],
+  selectedFit: FitType,
+): string {
   const canonicalUrl = `${SITE_URL}/product/${product.id}`;
   const html = applyPageMetadata(template, {
     title: `${product.name} | MyShirtsDope`,
@@ -382,9 +489,9 @@ function renderProductPage(template: string, product: Product, availableFits: Fi
   });
   const htmlWithProductData = html.replace(
     /<\/head>/i,
-    `    <script type="application/json" data-prerendered-product="true">${safeJsonLd({ ...product, availableFits })}</script>\n  </head>`,
+    `    <style data-prerendered-pdp-critical="true">${PDP_PRERENDER_CRITICAL_CSS}</style>\n    <script type="application/json" data-prerendered-product="true">${safeJsonLd({ ...product, availableFits, selectedFit })}</script>\n  </head>`,
   );
-  return injectPrerenderedRoot(htmlWithProductData, renderProductContent(product));
+  return injectPrerenderedRoot(htmlWithProductData, renderProductContent(product, availableFits, selectedFit));
 }
 
 export async function prerenderCatalog(
@@ -405,9 +512,17 @@ export async function prerenderCatalog(
   const shopOutputDir = path.join(OUTPUT_DIR, "shop");
   const uniqueProducts = Array.from(new Map(products.map((product) => [product.id, product])).values());
   const availableFitsByProductId = new Map<number, FitType[]>();
+  const selectedFitByProductId = new Map<number, FitType>();
   for (const group of groupProducts(uniqueProducts)) {
-    for (const product of [group.adult, group.youth, group.toddler]) {
-      if (product) availableFitsByProductId.set(product.id, group.fits);
+    for (const [fit, product] of [
+      ["adult", group.adult],
+      ["youth", group.youth],
+      ["toddler", group.toddler],
+    ] as const) {
+      if (product) {
+        availableFitsByProductId.set(product.id, group.fits);
+        selectedFitByProductId.set(product.id, fit);
+      }
     }
   }
 
@@ -430,7 +545,12 @@ export async function prerenderCatalog(
         await mkdir(outputDir, { recursive: true });
         await writeFile(
           path.join(outputDir, "index.html"),
-          renderProductPage(template, product, availableFitsByProductId.get(product.id) ?? ["adult"]),
+          renderProductPage(
+            template,
+            product,
+            availableFitsByProductId.get(product.id) ?? ["adult"],
+            selectedFitByProductId.get(product.id) ?? "adult",
+          ),
         );
       }),
     );

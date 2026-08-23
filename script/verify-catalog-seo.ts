@@ -62,6 +62,9 @@ async function verifyPublishedCatalog(): Promise<void> {
     const hydrationData = JSON.parse(productData);
     assert.equal(String(hydrationData.id), productId, `product ${productId} hydration data mismatch`);
     assert(Array.isArray(hydrationData.availableFits) && hydrationData.availableFits.length > 0, `product ${productId} fit metadata is missing`);
+    assert(["adult", "youth", "toddler"].includes(hydrationData.selectedFit), `product ${productId} selected fit is missing`);
+    assert(productHtml.includes('data-prerendered-pdp-shell'), `product ${productId} is missing its stable PDP shell`);
+    assert(productHtml.includes('data-prerendered-pdp-critical="true"'), `product ${productId} is missing critical PDP geometry`);
     assert.equal(productSchema["@type"], "Product", `product ${productId} schema type mismatch`);
     assert(productSchema.name, `product ${productId} schema name is missing`);
     assert.equal(productSchema.sku, productId, `product ${productId} schema SKU mismatch`);
@@ -89,12 +92,13 @@ async function verifyPublishedCatalog(): Promise<void> {
 }
 
 async function verifyPageSpeedContracts(): Promise<void> {
-  const [template, styles, footer, shop, productDetail] = await Promise.all([
+  const [template, styles, footer, shop, productDetail, app] = await Promise.all([
     readFile(path.resolve("client/index.html"), "utf8"),
     readFile(path.resolve("client/src/index.css"), "utf8"),
     readFile(path.resolve("client/src/components/footer.tsx"), "utf8"),
     readFile(path.resolve("client/src/pages/shop.tsx"), "utf8"),
     readFile(path.resolve("client/src/pages/product-detail.tsx"), "utf8"),
+    readFile(path.resolve("client/src/App.tsx"), "utf8"),
   ]);
 
   assert(template.includes('<link rel="preconnect" href="https://cdn.shopify.com" crossorigin />'));
@@ -166,8 +170,14 @@ async function verifyPageSpeedContracts(): Promise<void> {
   assert(productDetail.includes('loading="lazy"'));
   assert(productDetail.includes("min-h-[44px]"));
   assert(productDetail.includes("availableFits"));
+  assert(productDetail.includes("selectedFit"));
   assert(productDetail.includes("min-h-[68px]"));
   assert(productDetail.includes("isCatalogFetched"));
+  assert(app.includes('const loadHome = () => import("@/pages/home")'));
+  assert(app.includes("const Home = lazy(loadHome)"));
+  assert(app.includes('const loadToaster = () => import("@/components/ui/toaster")'));
+  assert(app.includes("function DeferredToaster()"));
+  assert(!app.includes("TooltipProvider"), "the unused global tooltip provider must stay out of the PDP entry path");
   const primaryProductQuery = productDetail.slice(
     productDetail.indexOf('queryKey: ["/api/products", id]'),
     productDetail.indexOf("useEffect(() => {", productDetail.indexOf('queryKey: ["/api/products", id]')),
