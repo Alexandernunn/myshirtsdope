@@ -219,14 +219,40 @@
     inset: -1px;
   }
 
-  .grid > a > div.group {
+  .catalog-grid > a > div.group {
+    position: relative !important;
+    overflow: hidden !important;
     contain: layout;
   }
 
-  .grid > a > div.group::after {
-    position: absolute;
-    inset: 0;
-    contain: layout size;
+  .catalog-grid > a > div.group::after {
+    content: "" !important;
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    pointer-events: none !important;
+    contain: strict !important;
+  }
+
+  .catalog-section {
+    contain: layout;
+    contain-intrinsic-size: auto 1200px;
+  }
+
+  .catalog-grid > a > .catalog-card,
+  .catalog-grid > .catalog-card {
+    contain: layout style;
+    contain-intrinsic-size: auto 274px;
+    min-height: 274px;
+  }
+
+  @media (max-width: 639px) {
+    .catalog-grid > a > .catalog-card,
+    .catalog-grid > .catalog-card {
+      contain-intrinsic-size: auto 210px;
+      min-height: 210px;
+    }
   }
 
   .storefront-footer {

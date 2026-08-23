@@ -134,7 +134,7 @@ function GroupedProductCard({ group, index }: { group: ProductGroup; index: numb
   const [imgSrc, setImgSrc] = useState(pickedVariant ?? product.imageUrl);
   return (
     <Link href={`/product/${product.id}`} data-testid={`link-product-${product.id}`}>
-      <div className="group bg-card border border-card-border rounded-md overflow-visible hover-elevate active-elevate-2 transition-transform duration-200 cursor-pointer">
+      <div className="catalog-card group bg-card border border-card-border rounded-md overflow-hidden hover-elevate active-elevate-2 transition-transform duration-200 cursor-pointer">
         <div className="relative overflow-hidden rounded-t-md bg-muted" style={{ aspectRatio: "1", maxHeight: "220px" }}>
           <img
             {...shopifyImageProps(imgSrc, IMAGE_PRESETS.gridCard)}
@@ -191,7 +191,7 @@ function GroupedProductCard({ group, index }: { group: ProductGroup; index: numb
 
 function ProductSkeleton() {
   return (
-    <div className="bg-card border border-card-border rounded-md overflow-hidden">
+    <div className="catalog-card bg-card border border-card-border rounded-md overflow-hidden">
       <div style={{ aspectRatio: "1", maxHeight: "220px" }}>
         <Skeleton className="w-full h-full" />
       </div>
@@ -420,80 +420,83 @@ export default function Shop() {
           ))}
         </div>
 
-        {isLoading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
-            {Array.from({ length: PRODUCTS_PER_PAGE }).map((_, i) => (
-              <ProductSkeleton key={i} />
-            ))}
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="text-center py-20">
-            <p className="font-pixel text-[10px] text-muted-foreground">NO ITEMS FOUND</p>
-            <p className="font-display text-sm text-muted-foreground mt-2">Check back soon for new drops.</p>
-          </div>
-        ) : (
-          <>
-            <p className="font-display text-xs text-muted-foreground text-center mb-4" data-testid="text-product-count">
-              Showing {(currentPage - 1) * PRODUCTS_PER_PAGE + 1}-{Math.min(currentPage * PRODUCTS_PER_PAGE, displayGroups.length)} of {loadingRest && needsRest ? `${displayGroups.length}+` : displayGroups.length} items
-            </p>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
-              {paginatedGroups.map((group, i) => (
-                <GroupedProductCard
-                  key={group.adult.id}
-                  group={group}
-                  index={(currentPage - 1) * PRODUCTS_PER_PAGE + i}
-                />
+        <section aria-labelledby="catalog-heading" className="catalog-section">
+          <h2 id="catalog-heading" className="sr-only">Product catalog</h2>
+          {isLoading ? (
+            <div className="catalog-grid grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
+              {Array.from({ length: PRODUCTS_PER_PAGE }).map((_, i) => (
+                <ProductSkeleton key={i} />
               ))}
             </div>
+          ) : filtered.length === 0 ? (
+            <div className="text-center py-20">
+              <p className="font-pixel text-[10px] text-muted-foreground">NO ITEMS FOUND</p>
+              <p className="font-display text-sm text-muted-foreground mt-2">Check back soon for new drops.</p>
+            </div>
+          ) : (
+            <>
+              <p className="font-display text-xs text-muted-foreground text-center mb-4" data-testid="text-product-count">
+                Showing {(currentPage - 1) * PRODUCTS_PER_PAGE + 1}-{Math.min(currentPage * PRODUCTS_PER_PAGE, displayGroups.length)} of {loadingRest && needsRest ? `${displayGroups.length}+` : displayGroups.length} items
+              </p>
 
-            {totalPages > 1 && (
-              <div className="flex flex-wrap items-center justify-center gap-2 mt-8" data-testid="pagination-controls">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => goToPage(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  aria-label="Previous page"
-                  data-testid="button-page-prev"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </Button>
-
-                {getPageNumbers().map((page, idx) =>
-                  page === "..." ? (
-                    <span key={`ellipsis-${idx}`} className="font-display text-sm text-muted-foreground px-1">
-                      ...
-                    </span>
-                  ) : (
-                    <Button
-                      key={page}
-                      variant={currentPage === page ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => goToPage(page as number)}
-                      aria-label={`Go to page ${page}`}
-                      aria-current={currentPage === page ? "page" : undefined}
-                      data-testid={`button-page-${page}`}
-                    >
-                      <span className="font-display text-sm">{page}</span>
-                    </Button>
-                  )
-                )}
-
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => goToPage(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                  aria-label="Next page"
-                  data-testid="button-page-next"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
+              <div className="catalog-grid grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
+                {paginatedGroups.map((group, i) => (
+                  <GroupedProductCard
+                    key={group.adult.id}
+                    group={group}
+                    index={(currentPage - 1) * PRODUCTS_PER_PAGE + i}
+                  />
+                ))}
               </div>
-            )}
-          </>
-        )}
+
+              {totalPages > 1 && (
+                <div className="flex flex-wrap items-center justify-center gap-2 mt-8" data-testid="pagination-controls">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => goToPage(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    aria-label="Previous page"
+                    data-testid="button-page-prev"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </Button>
+
+                  {getPageNumbers().map((page, idx) =>
+                    page === "..." ? (
+                      <span key={`ellipsis-${idx}`} className="font-display text-sm text-muted-foreground px-1">
+                        ...
+                      </span>
+                    ) : (
+                      <Button
+                        key={page}
+                        variant={currentPage === page ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => goToPage(page as number)}
+                        aria-label={`Go to page ${page}`}
+                        aria-current={currentPage === page ? "page" : undefined}
+                        data-testid={`button-page-${page}`}
+                      >
+                        <span className="font-display text-sm">{page}</span>
+                      </Button>
+                    )
+                  )}
+
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => goToPage(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    aria-label="Next page"
+                    data-testid="button-page-next"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
+        </section>
       </div>
     </div>
   );

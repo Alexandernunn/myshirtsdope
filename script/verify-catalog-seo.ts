@@ -84,9 +84,28 @@ async function verifyPageSpeedContracts(): Promise<void> {
   assert(template.includes('font-family: "Permanent Marker Fallback"'));
   assert(
     styles.includes(
-      ".grid > a > div.group::after {\n    position: absolute;\n    inset: 0;\n    contain: layout size;\n  }",
+      ".catalog-grid > a > div.group {\n    position: relative !important;\n    overflow: hidden !important;\n    contain: layout;\n  }",
+    ),
+    "product-card wrappers must be positioned and clipped",
+  );
+  assert(
+    styles.includes(
+      ".catalog-grid > a > div.group::after {\n    content: \"\" !important;\n    position: absolute !important;\n    inset: 0 !important;\n    width: 100% !important;\n    height: 100% !important;\n    pointer-events: none !important;\n    contain: strict !important;\n  }",
     ),
     "product-card hover overlays must be positioned and contained",
+  );
+  assert(
+    styles.includes("contain-intrinsic-size: auto 274px;") &&
+      styles.includes("min-height: 274px;") &&
+      styles.includes("contain-intrinsic-size: auto 210px;") &&
+      styles.includes("min-height: 210px;"),
+    "catalog cards must reserve stable geometry",
+  );
+  assert(
+    styles.includes(
+      ".catalog-section {\n    contain: layout;\n    contain-intrinsic-size: auto 1200px;\n  }",
+    ),
+    "catalog section must reserve contained geometry",
   );
   assert(
     styles.includes(
@@ -106,7 +125,10 @@ async function verifyPageSpeedContracts(): Promise<void> {
     ),
     "desktop footer reservation is missing",
   );
-  assert(footer.includes('className="storefront-footer border-t border-border bg-background"'));
+  assert(footer.includes('className="storefront-footer border-t border-border bg-background min-h-[300px]"'));
+  assert(footer.includes('style={{ contain: "layout style", contentVisibility: "auto" }}'));
+  assert(shop.includes('<section aria-labelledby="catalog-heading" className="catalog-section">'));
+  assert(shop.includes('className="catalog-card group'));
   assert(shop.includes("window.requestIdleCallback"));
   assert(shop.includes("shouldLoadRest && initialSource === \"chunk\""));
   assert(shop.includes('window.addEventListener("scroll", loadAfterFirstPaint'));
