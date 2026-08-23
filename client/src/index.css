@@ -266,11 +266,6 @@
       line-height: 1.35;
       min-height: 560px;
     }
-
-    .hero-text-wrapper {
-      min-height: 180px !important;
-      contain: layout size;
-    }
   }
 
   @media (max-width: 639px) {
