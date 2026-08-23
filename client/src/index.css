@@ -261,6 +261,13 @@
     min-height: 300px;
   }
 
+  @media (max-width: 640px) {
+    .homepage-hero-content {
+      line-height: 1.35;
+      min-height: 560px;
+    }
+  }
+
   @media (max-width: 639px) {
     .storefront-footer {
       min-height: 640px;

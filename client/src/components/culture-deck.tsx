@@ -15,6 +15,7 @@ const CARD_H = 190;
 const TAP_MAX_DIST = 8;
 const TAP_MAX_TIME = 300;
 const DRAG_DEAD_ZONE = 5;
+const PRIMARY_HERO_PRODUCT_NAME = "A Milli youth shirt";
 
 export default function CultureDeck() {
   const { data: products = [] } = useQuery<(Product | ProductSummary)[]>({
@@ -63,11 +64,16 @@ export default function CultureDeck() {
   const shuffledProducts = useMemo(() => {
     if (products.length === 0) return [];
     const copy = [...products];
+    const primaryIndex = copy.findIndex((product) => product.name === PRIMARY_HERO_PRODUCT_NAME);
+    const primaryProduct = primaryIndex >= 0 ? copy[primaryIndex] : null;
+    if (primaryIndex >= 0) copy.splice(primaryIndex, 1);
+
     for (let i = copy.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [copy[i], copy[j]] = [copy[j], copy[i]];
     }
-    return copy.slice(0, CARD_COUNT);
+
+    return (primaryProduct ? [primaryProduct, ...copy] : copy).slice(0, CARD_COUNT);
   }, [products]);
 
   const cardCount = shuffledProducts.length;
@@ -256,7 +262,8 @@ export default function CultureDeck() {
                       width={CARD_W}
                       height={CARD_H}
                       className="w-full h-full object-cover pointer-events-none"
-                      loading="lazy"
+                      loading={i === 0 ? "eager" : "lazy"}
+                      {...(i === 0 ? { fetchpriority: "high" } : {})}
                       draggable={false}
                       style={{ backfaceVisibility: "hidden" }}
                       onError={(e) => {

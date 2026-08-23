@@ -63,7 +63,7 @@ export default function Home() {
         <Starfield />
         <div className="scanline-overlay" />
 
-        <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
+        <div className="homepage-hero-content relative z-10 text-center px-4 max-w-4xl mx-auto">
           <div className="animate-pixel-fade-in">
             <p className="font-pixel text-[9px] sm:text-[10px] text-neon-green neon-text-green mb-4 tracking-widest">
               WELCOME TO
