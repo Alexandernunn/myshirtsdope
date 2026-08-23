@@ -213,6 +213,7 @@ export default function Shop() {
   const { placeholder: typingPlaceholder, setFocused, setHasInput } = useTypingPlaceholder();
 
   const [initialSource, setInitialSource] = useState<"chunk" | "full">("chunk");
+  const [shouldLoadRest, setShouldLoadRest] = useState(false);
 
   const { data: initialProducts = [], isLoading } = useQuery<(Product | ProductSummary)[]>({
     queryKey: ["/api/products/listing-initial"],
@@ -241,7 +242,32 @@ export default function Shop() {
     },
   });
 
-  const needsRest = initialSource === "chunk" && initialProducts.length > 0;
+  const loadRestCatalog = useCallback(() => {
+    setShouldLoadRest(true);
+  }, []);
+
+  useEffect(() => {
+    if (initialSource !== "chunk" || initialProducts.length === 0) return;
+
+    let idleId: number | undefined;
+    let timeoutId: number | undefined;
+    const loadAfterFirstPaint = () => loadRestCatalog();
+
+    if (window.requestIdleCallback) {
+      idleId = window.requestIdleCallback(loadAfterFirstPaint, { timeout: 2000 });
+    } else {
+      timeoutId = window.setTimeout(loadAfterFirstPaint, 2000);
+    }
+
+    window.addEventListener("scroll", loadAfterFirstPaint, { once: true, passive: true });
+    return () => {
+      if (idleId !== undefined) window.cancelIdleCallback?.(idleId);
+      if (timeoutId !== undefined) window.clearTimeout(timeoutId);
+      window.removeEventListener("scroll", loadAfterFirstPaint);
+    };
+  }, [initialSource, initialProducts.length, loadRestCatalog]);
+
+  const needsRest = shouldLoadRest && initialSource === "chunk" && initialProducts.length > 0;
 
   const { data: restProducts = [], isLoading: loadingRest } = useQuery<(Product | ProductSummary)[]>({
     queryKey: ["/api/products/listing-rest"],
@@ -320,6 +346,7 @@ export default function Shop() {
   };
 
   const goToPage = (page: number) => {
+    loadRestCatalog();
     setCurrentPage(page);
     scrollToTop();
   };
@@ -361,6 +388,7 @@ export default function Shop() {
             placeholder={searchQuery ? "" : typingPlaceholder}
             value={searchQuery}
             onChange={(e) => {
+                loadRestCatalog();
               setSearchQuery(e.target.value);
               setHasInput(e.target.value.length > 0);
             }}

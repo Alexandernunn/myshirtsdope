@@ -55,9 +55,40 @@ async function verifyPublishedCatalog(): Promise<void> {
   const primaryImage = shopHtml.match(/<img [^>]*loading="eager"[^>]*fetchpriority="high"[^>]*>/)?.[0];
   assert(preload, "Shop LCP preload is missing");
   assert(primaryImage, "Shop LCP image is missing");
+  assert(shopHtml.includes('<link rel="preconnect" href="https://cdn.shopify.com" crossorigin />'));
+  assert(preload.includes("width=480&amp;format=webp"), "Mobile LCP preload must use the 480px WebP rendition");
+  assert(preload.includes("imagesrcset=") && preload.includes("imagesizes="));
+  assert(preload.includes("calc((100vw - 3.75rem) / 2)"), "LCP preload sizes must match the mobile grid slot");
   assert(preload.includes('fetchpriority="high"'));
   assert(primaryImage.includes('loading="eager"'));
   assert(primaryImage.includes("srcset=") && primaryImage.includes("sizes="));
+}
+
+async function verifyPageSpeedContracts(): Promise<void> {
+  const [template, styles, footer, shop] = await Promise.all([
+    readFile(path.resolve("client/index.html"), "utf8"),
+    readFile(path.resolve("client/src/index.css"), "utf8"),
+    readFile(path.resolve("client/src/components/footer.tsx"), "utf8"),
+    readFile(path.resolve("client/src/pages/shop.tsx"), "utf8"),
+  ]);
+
+  assert(template.includes('<link rel="preconnect" href="https://cdn.shopify.com" crossorigin />'));
+  for (const font of ["Inter", "Press Start 2P", "Permanent Marker"]) {
+    assert.match(
+      template,
+      new RegExp(`font-family: "${font}";[\\s\\S]*?font-display: swap;`),
+      `${font} must use font-display: swap`,
+    );
+  }
+  assert(template.includes('font-family: "Inter Fallback"'));
+  assert(template.includes('font-family: "Press Start 2P Fallback"'));
+  assert(template.includes('font-family: "Permanent Marker Fallback"'));
+  assert(styles.includes(".grid > a > div.group::after"));
+  assert(styles.includes("contain: layout size;"));
+  assert(footer.includes("min-h-[640px] sm:min-h-[336px]"));
+  assert(shop.includes("window.requestIdleCallback"));
+  assert(shop.includes("shouldLoadRest && initialSource === \"chunk\""));
+  assert(shop.includes('window.addEventListener("scroll", loadAfterFirstPaint'));
 }
 
 async function verifyWebhookSecurityAndDeliveryDedupe(): Promise<void> {
@@ -165,6 +196,7 @@ async function verifyWebhookHttpContract(): Promise<void> {
 }
 
 await verifyPublishedCatalog();
+await verifyPageSpeedContracts();
 await verifyWebhookSecurityAndDeliveryDedupe();
 await verifyWebhookHttpContract();
 console.log("[Verify] Catalog sitemap, prerender, schema, webhook security, and delivery checks passed");

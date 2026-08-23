@@ -198,6 +198,7 @@
     inset: 0px;
     border-radius: inherit;
     z-index: 999;
+    contain: layout size;
   }
 
   .hover-elevate:hover:not(.no-default-hover-elevate)::after,
@@ -216,6 +217,14 @@
   .border.active-elevate-2:not(.no-active-interaction-elevate)::after,
   .border.hover-elevate:not(.no-hover-interaction-elevate)::after {
     inset: -1px;
+  }
+
+  .grid > a > div.group {
+    contain: layout;
+  }
+
+  .grid > a > div.group::after {
+    contain: layout size;
   }
 }
 

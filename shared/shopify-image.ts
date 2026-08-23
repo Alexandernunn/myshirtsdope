@@ -38,11 +38,11 @@ export interface ShopifyImagePreset {
  * surface (grid columns, fixed card widths, thumbnail boxes).
  */
 export const IMAGE_PRESETS = {
-  /** Shop grid card: 2 cols on mobile, up to 5 cols (~254px) on xl. */
+  /** Shop grid card: exact responsive slot widths for the product grid. */
   gridCard: {
     widths: [160, 320, 480, 640],
     fallbackWidth: 480,
-    sizes: "(max-width: 639px) 46vw, (max-width: 767px) 31vw, (max-width: 1279px) 23vw, 254px",
+    sizes: "(max-width: 639px) calc((100vw - 3.75rem) / 2), (max-width: 767px) calc((100vw - 6rem) / 3), (max-width: 1279px) calc((100vw - 7rem) / 4), 254px",
   },
   /** Product detail main image: full width on mobile, capped at 320px on md+. */
   productDetail: {
