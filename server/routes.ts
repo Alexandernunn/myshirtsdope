@@ -83,11 +83,11 @@ function rateLimit(maxRequests: number, windowMs: number) {
 
 setInterval(() => {
   const now = Date.now();
-  for (const [key, entry] of requestCounts) {
+  requestCounts.forEach((entry, key) => {
     if (now >= entry.resetAt) {
       requestCounts.delete(key);
     }
-  }
+  });
 }, 60_000);
 
 export function registerRoutes(httpServer: Server, app: Express): void {
@@ -186,7 +186,7 @@ export function registerRoutes(httpServer: Server, app: Express): void {
 
   app.get("/api/products/:id", productLimiter, async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id);
       if (isNaN(id)) return res.status(400).json({ error: "Invalid product ID" });
 
       await loadProducts();
@@ -200,7 +200,7 @@ export function registerRoutes(httpServer: Server, app: Express): void {
 
   app.get("/api/products/:id/color-images", productLimiter, async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id);
       if (isNaN(id)) return res.status(400).json({ error: "Invalid product ID" });
 
       await loadProducts();

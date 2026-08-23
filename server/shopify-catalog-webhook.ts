@@ -2,29 +2,24 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import express, { type Express, type Request, type Response } from "express";
 import serverless from "serverless-http";
 
-const BUILD_COALESCE_WINDOW_MS = 2 * 60 * 1000;
 const DELIVERY_DEDUPE_WINDOW_MS = 24 * 60 * 60 * 1000;
 const MAX_REMEMBERED_DELIVERIES = 5000;
 
 export type RebuildResult = {
   triggered: boolean;
-  reason: "triggered" | "duplicate" | "coalesced";
+  reason: "triggered" | "duplicate";
 };
 
 /**
- * Keeps duplicate Shopify deliveries and short bursts from triggering a
- * build for every event. This state is intentionally bounded; Netlify
- * reuses warm function instances, while the webhook's delivery ID protects
- * against normal Shopify retries.
+ * Keeps repeated Shopify deliveries from triggering duplicate builds. Every
+ * distinct catalog event requests a build so a later inventory or product
+ * change cannot be dropped while an earlier build is snapshotting the catalog.
  */
 export class CatalogRebuildCoalescer {
   private readonly recentDeliveries = new Map<string, number>();
-  private buildWindowUntil = 0;
+  private readonly inFlightDeliveries = new Map<string, Promise<void>>();
 
-  constructor(
-    private readonly coalesceWindowMs = BUILD_COALESCE_WINDOW_MS,
-    private readonly deliveryWindowMs = DELIVERY_DEDUPE_WINDOW_MS,
-  ) {}
+  constructor(private readonly deliveryWindowMs = DELIVERY_DEDUPE_WINDOW_MS) {}
 
   async request(
     deliveryId: string | undefined,
@@ -37,21 +32,25 @@ export class CatalogRebuildCoalescer {
       return { triggered: false, reason: "duplicate" };
     }
 
-    if (this.buildWindowUntil > now) {
-      this.rememberDelivery(deliveryId, now);
-      return { triggered: false, reason: "coalesced" };
+    const inFlight = deliveryId ? this.inFlightDeliveries.get(deliveryId) : undefined;
+    if (inFlight) {
+      await inFlight;
+      return { triggered: false, reason: "duplicate" };
     }
 
-    // Reserve the window before awaiting fetch(), so concurrent invocations
-    // in the same warm instance cannot both trigger a build.
-    this.buildWindowUntil = now + this.coalesceWindowMs;
+    const buildRequest = trigger();
+    if (deliveryId) {
+      this.inFlightDeliveries.set(deliveryId, buildRequest);
+    }
+
     try {
-      await trigger();
+      await buildRequest;
       this.rememberDelivery(deliveryId, now);
       return { triggered: true, reason: "triggered" };
-    } catch (error) {
-      this.buildWindowUntil = 0;
-      throw error;
+    } finally {
+      if (deliveryId && this.inFlightDeliveries.get(deliveryId) === buildRequest) {
+        this.inFlightDeliveries.delete(deliveryId);
+      }
     }
   }
 

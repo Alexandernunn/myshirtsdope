@@ -38,11 +38,11 @@ Use Shopify's current stable webhook API version and save each subscription.
 3. Confirm the build log fetches the active Shopify catalog and reports generated product pages and sitemap URLs.
 4. After deployment, check the corresponding `/product/<id>` HTML, `/sitemap.xml`, and `robots.txt`.
 
-## Security and coalescing behavior
+## Security and delivery behavior
 
 The function verifies Shopify's HMAC against the raw request body before inspecting the event or contacting Netlify. Invalid signatures return `401`, missing deployment configuration returns `503`, and no build hook is contacted in either case.
 
-Shopify retry IDs are remembered for 24 hours on a warm function instance. Product and inventory events received within the same two-minute window share one build request, preventing duplicate deliveries and normal event bursts from creating a build storm. Netlify functions are stateless across cold starts, so the webhook's delivery IDs and the build provider remain the final retry/build boundary.
+Shopify retry IDs are remembered for 24 hours on a warm function instance, so repeated deliveries of the same event do not request another build. Each distinct product or inventory change requests a build. This intentionally favors catalog freshness: suppressing a later event while an earlier Netlify build is taking its Shopify snapshot could otherwise leave the static catalog stale.
 
 ## Availability update note
 

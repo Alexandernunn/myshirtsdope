@@ -217,16 +217,18 @@ export default function Shop() {
   const { data: initialProducts = [], isLoading } = useQuery<(Product | ProductSummary)[]>({
     queryKey: ["/api/products/listing-initial"],
     queryFn: async () => {
-      try {
-        const staticRes = await fetch("/data/products-slim-1.json");
-        if (staticRes.ok) {
-          const data = await staticRes.json();
-          if (Array.isArray(data) && data.length > 0) {
-            setInitialSource("chunk");
-            return data;
+      if (!import.meta.env.DEV) {
+        try {
+          const staticRes = await fetch("/data/products-slim-1.json");
+          if (staticRes.ok) {
+            const data = await staticRes.json();
+            if (Array.isArray(data) && data.length > 0) {
+              setInitialSource("chunk");
+              return data;
+            }
           }
-        }
-      } catch {}
+        } catch {}
+      }
       setInitialSource("full");
       const res = await fetch("/api/products/slim", {
         headers: {
@@ -245,13 +247,15 @@ export default function Shop() {
     queryKey: ["/api/products/listing-rest"],
     enabled: needsRest,
     queryFn: async () => {
-      try {
-        const staticRes = await fetch("/data/products-slim-rest.json");
-        if (staticRes.ok) {
-          const data = await staticRes.json();
-          if (Array.isArray(data) && data.length > 0) return data;
-        }
-      } catch {}
+      if (!import.meta.env.DEV) {
+        try {
+          const staticRes = await fetch("/data/products-slim-rest.json");
+          if (staticRes.ok) {
+            const data = await staticRes.json();
+            if (Array.isArray(data) && data.length > 0) return data;
+          }
+        } catch {}
+      }
       const res = await fetch("/api/products/slim", {
         headers: {
           "X-Requested-With": "XMLHttpRequest",

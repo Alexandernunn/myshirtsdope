@@ -60,7 +60,7 @@ async function verifyPublishedCatalog(): Promise<void> {
   assert(primaryImage.includes("srcset=") && primaryImage.includes("sizes="));
 }
 
-async function verifyWebhookSecurityAndCoalescing(): Promise<void> {
+async function verifyWebhookSecurityAndDeliveryDedupe(): Promise<void> {
   const body = Buffer.from(JSON.stringify({ id: 42, updated_at: "2026-08-23T00:00:00Z" }));
   const secret = "test-shopify-secret";
   const signature = createHmac("sha256", secret).update(body).digest("base64");
@@ -68,7 +68,7 @@ async function verifyWebhookSecurityAndCoalescing(): Promise<void> {
   assert(!verifyShopifyWebhookSignature(body, "invalid", secret));
   assert(!verifyShopifyWebhookSignature(Buffer.from("{}"), signature, secret));
 
-  const coalescer = new CatalogRebuildCoalescer(120_000, 86_400_000);
+  const coalescer = new CatalogRebuildCoalescer(86_400_000);
   let builds = 0;
   const trigger = async () => {
     builds++;
@@ -82,15 +82,30 @@ async function verifyWebhookSecurityAndCoalescing(): Promise<void> {
     reason: "duplicate",
   });
   assert.deepEqual(await coalescer.request("delivery-2", trigger, 1_002), {
-    triggered: false,
-    reason: "coalesced",
-  });
-  assert.equal(builds, 1);
-  assert.deepEqual(await coalescer.request("delivery-3", trigger, 121_001), {
     triggered: true,
     reason: "triggered",
   });
   assert.equal(builds, 2);
+  assert.deepEqual(await coalescer.request("delivery-3", trigger, 1_003), {
+    triggered: true,
+    reason: "triggered",
+  });
+  assert.equal(builds, 3);
+
+  const concurrentDelivery = new CatalogRebuildCoalescer(86_400_000);
+  let concurrentBuilds = 0;
+  let finishBuild: (() => void) | undefined;
+  const deferredTrigger = () => new Promise<void>((resolve) => {
+    concurrentBuilds++;
+    finishBuild = resolve;
+  });
+  const firstRequest = concurrentDelivery.request("same-delivery", deferredTrigger, 2_000);
+  const duplicateRequest = concurrentDelivery.request("same-delivery", deferredTrigger, 2_000);
+  assert.equal(concurrentBuilds, 1, "concurrent retries must share one build request");
+  assert(finishBuild, "deferred build did not start");
+  finishBuild();
+  assert.deepEqual(await firstRequest, { triggered: true, reason: "triggered" });
+  assert.deepEqual(await duplicateRequest, { triggered: false, reason: "duplicate" });
 }
 
 async function verifyWebhookHttpContract(): Promise<void> {
@@ -137,8 +152,8 @@ async function verifyWebhookHttpContract(): Promise<void> {
     assert.equal(buildRequests, 0);
     assert.equal((await send(signature, "delivery-1")).status, 202);
     assert.equal((await send(signature, "delivery-1")).status, 200);
-    assert.equal((await send(signature, "delivery-2")).status, 200);
-    assert.equal(buildRequests, 1);
+    assert.equal((await send(signature, "delivery-2")).status, 202);
+    assert.equal(buildRequests, 2);
   } finally {
     await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
     globalThis.fetch = originalFetch;
@@ -150,6 +165,6 @@ async function verifyWebhookHttpContract(): Promise<void> {
 }
 
 await verifyPublishedCatalog();
-await verifyWebhookSecurityAndCoalescing();
+await verifyWebhookSecurityAndDeliveryDedupe();
 await verifyWebhookHttpContract();
-console.log("[Verify] Catalog sitemap, prerender, schema, webhook security, and coalescing checks passed");
+console.log("[Verify] Catalog sitemap, prerender, schema, webhook security, and delivery checks passed");

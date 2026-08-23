@@ -1,0 +1,1 @@
+export { handler } from "../../server/shopify-catalog-webhook";

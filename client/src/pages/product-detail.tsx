@@ -89,14 +89,16 @@ export default function ProductDetail() {
   const { data: product, isLoading } = useQuery<Product>({
     queryKey: ["/api/products", id],
     queryFn: async () => {
-      try {
-        const staticRes = await fetch("/data/products.json");
-        if (staticRes.ok) {
-          const data: Product[] = await staticRes.json();
-          const found = data.find((p) => String(p.id) === String(id));
-          if (found) return found;
-        }
-      } catch {}
+      if (!import.meta.env.DEV) {
+        try {
+          const staticRes = await fetch("/data/products.json");
+          if (staticRes.ok) {
+            const data: Product[] = await staticRes.json();
+            const found = data.find((p) => String(p.id) === String(id));
+            if (found) return found;
+          }
+        } catch {}
+      }
       const headers: Record<string, string> = {
         "X-Requested-With": "XMLHttpRequest",
         "X-App-Token": import.meta.env.VITE_APP_TOKEN || "msd-storefront-v1",
@@ -110,13 +112,15 @@ export default function ProductDetail() {
   const { data: allProducts = [] } = useQuery<Product[]>({
     queryKey: ["/api/products"],
     queryFn: async () => {
-      try {
-        const staticRes = await fetch("/data/products.json");
-        if (staticRes.ok) {
-          const data = await staticRes.json();
-          if (Array.isArray(data) && data.length > 0) return data;
-        }
-      } catch {}
+      if (!import.meta.env.DEV) {
+        try {
+          const staticRes = await fetch("/data/products.json");
+          if (staticRes.ok) {
+            const data = await staticRes.json();
+            if (Array.isArray(data) && data.length > 0) return data;
+          }
+        } catch {}
+      }
       const headers: Record<string, string> = {
         "X-Requested-With": "XMLHttpRequest",
         "X-App-Token": import.meta.env.VITE_APP_TOKEN || "msd-storefront-v1",
@@ -135,6 +139,45 @@ export default function ProductDetail() {
   });
 
   usePageTitle(product?.name || "Product");
+
+  useEffect(() => {
+    if (!product?.id) return;
+
+    const canonicalHref = `https://myshirtsdope.com/product/${product.id}`;
+    let canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+    const previousHref = canonical?.getAttribute("href");
+    if (!canonical) {
+      canonical = document.createElement("link");
+      canonical.rel = "canonical";
+      document.head.appendChild(canonical);
+    }
+    canonical.href = canonicalHref;
+
+    return () => {
+      if (!canonical) return;
+      if (previousHref) canonical.href = previousHref;
+      else canonical.remove();
+    };
+  }, [product?.id]);
+
+  useEffect(() => {
+    if (isLoading || product) return;
+
+    let robots = document.querySelector<HTMLMetaElement>('meta[name="robots"]');
+    const previousContent = robots?.getAttribute("content");
+    if (!robots) {
+      robots = document.createElement("meta");
+      robots.name = "robots";
+      document.head.appendChild(robots);
+    }
+    robots.content = "noindex, nofollow";
+
+    return () => {
+      if (!robots) return;
+      if (previousContent) robots.content = previousContent;
+      else robots.remove();
+    };
+  }, [isLoading, product]);
 
   const group = product ? findGroupForProduct(allProducts, Number(id)) : null;
   const hasMutipleFits = group ? group.fits.length > 1 : false;
