@@ -1,0 +1,36 @@
+Here are targeted, highly specific questions to run past your codebase (or AI coding assistant) to verify that each planned technical fix is executed to its maximum SEO potential.
+
+**Indexing & Search Crawler Visibility**
+
+* **Robots.txt & Sitemap:** "Does `robots.txt` properly point to `[https://myshirtsdope.com/sitemap.xml](https://myshirtsdope.com/sitemap.xml)`, and do our disallow rules allow public access to critical CSS, JS, and product image assets?"
+
+
+* **Rendering Strategy (CSR vs SSR/Prerender):** "When a user-agent like `Googlebot` or `curl` fetches our product pages without JavaScript enabled, does the initial raw HTML response contain fully rendered `<h1>` tags, product descriptions, prices, and schema markup rather than a bare `<div id="root"></div>`?"
+
+
+
+**Mobile UX & Social Sharing**
+
+* **Viewport Settings:** "Does our viewport `<meta>` tag in the `<head>` allow scaling by omitting `user-scalable=no` and `maximum-scale=1.0` to pass Google's Mobile-Friendly accessibility criteria?"
+
+
+* **Structured Meta Tags:** "Do our product and collection pages dynamically generate complete `og:title`, `og:description`, `og:image` (using absolute URLs), and `twitter:card` tags on the server side so social crawlers display previews correctly?"
+
+
+
+**Performance & Core Web Vitals**
+
+* **Third-Party Script Loading:** "Are non-critical scripts (Google Tag Manager, Facebook Pixel) loaded asynchronously, deferred, or offloaded so they do not block the main thread during initial page load?"
+
+
+* **Render-Blocking Assets:** "Are critical fonts preloaded with `rel="preload"`, critical CSS inlined or split properly, and non-essential JS chunks loaded with `defer` or `async` to maximize our First Contentful Paint (FCP) and Largest Contentful Paint (LCP) scores?"
+
+
+
+**Accessibility & Semantic HTML**
+
+* **Icon & Nav Labeling:** "Do all icon-only buttons (such as cart, menu toggles, and search) have explicit `aria-label` attributes, and do all internal navigation links contain clear descriptive text instead of generic text or empty anchors?"
+
+
+
+Is there a specific framework (e.g., Next.js, Remix, React SPA) your codebase is built on so we can tailor these technical checks further?
