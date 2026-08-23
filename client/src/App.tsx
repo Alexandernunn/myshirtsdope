@@ -7,7 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { CartProvider } from "@/lib/cart-context";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
-import Home from "@/pages/home";
+import Home, { Start } from "@/pages/home";
 import { Volume2, VolumeX } from "lucide-react";
 import { queueGooglePageView } from "@/lib/marketing-scripts";
 import { trackEvent } from "@/lib/meta-capi";
@@ -97,6 +97,7 @@ function Router() {
     >
       <Switch>
         <Route path="/" component={Home} />
+        <Route path="/start" component={Start} />
         <Route path="/shop" component={Shop} />
         <Route path="/product/:id" component={ProductDetail} />
         <Route path="/cart" component={CartPage} />

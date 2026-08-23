@@ -1,4 +1,4 @@
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { ChevronRight } from "lucide-react";
 import Starfield from "@/components/starfield";
@@ -11,45 +11,51 @@ const marqueeItems = [
   "HIP HOP", "R&B", "SOUL", "POP", "CULTURE", "LOVE", "OLD SCHOOL", "NEW VIBES",
 ];
 
+export function Start() {
+  usePageTitle("Start");
+  const [, navigate] = useLocation();
+
+  const handleStart = () => {
+    navigate("/");
+  };
+
+  return (
+    <div
+      className="min-h-screen flex flex-col items-center justify-center bg-background pixel-grid-bg relative overflow-hidden cursor-pointer"
+      onClick={handleStart}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") handleStart();
+      }}
+      role="button"
+      tabIndex={0}
+      data-testid="button-start-game"
+    >
+      <Starfield />
+      <div className="relative z-10 text-center animate-pixel-fade-in">
+        <p className="font-pixel text-xs sm:text-sm text-neon-green neon-text-green mb-6">PLAYER 1</p>
+        <h1 className="font-pixel text-lg sm:text-2xl text-neon-yellow neon-text-yellow animate-neon-pulse">
+          SELECT
+        </h1>
+        <div className="mt-8">
+          <span className="font-pixel text-[10px] text-muted-foreground animate-blink">PRESS ANYWHERE TO START</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Home() {
   usePageTitle("Culture You Can Wear");
-  const [showContent, setShowContent] = useState(false);
   const [typedText, setTypedText] = useState("");
   const tagline = "Shirts, hoodies, onesies, and accessories for all ages inspired by music, culture and love.";
 
   useEffect(() => {
-    if (!showContent) return;
     if (typedText.length >= tagline.length) return;
     const timer = setTimeout(() => {
       setTypedText(tagline.slice(0, typedText.length + 1));
     }, 18);
     return () => clearTimeout(timer);
-  }, [showContent, typedText]);
-
-  const handleStart = () => {
-    setShowContent(true);
-  };
-
-  if (!showContent) {
-    return (
-      <div
-        className="min-h-screen flex flex-col items-center justify-center bg-background pixel-grid-bg relative overflow-hidden cursor-pointer"
-        onClick={handleStart}
-        data-testid="button-start-game"
-      >
-        <Starfield />
-        <div className="relative z-10 text-center animate-pixel-fade-in">
-          <p className="font-pixel text-xs sm:text-sm text-neon-green neon-text-green mb-6">PLAYER 1</p>
-          <h1 className="font-pixel text-lg sm:text-2xl text-neon-yellow neon-text-yellow animate-neon-pulse">
-            SELECT
-          </h1>
-          <div className="mt-8">
-            <span className="font-pixel text-[10px] text-muted-foreground animate-blink">PRESS ANYWHERE TO START</span>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  }, [typedText]);
 
   return (
     <div className="min-h-screen">
