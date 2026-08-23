@@ -42,9 +42,9 @@
   --chart-3: 120 80% 45%;
   --chart-4: 25 95% 55%;
   --chart-5: 270 80% 60%;
-  --font-sans: Inter, sans-serif;
+  --font-sans: Inter, 'Inter Fallback', sans-serif;
   --font-serif: Georgia, serif;
-  --font-mono: 'Press Start 2P', monospace;
+  --font-mono: 'Press Start 2P', 'Press Start 2P Fallback', monospace;
   --radius: .5rem;
   --shadow-2xs: 0px 2px 0px 0px hsl(200 100% 50% / 0.00);
   --shadow-xs: 0px 2px 0px 0px hsl(200 100% 50% / 0.00);
@@ -260,11 +260,11 @@
 }
 
 .font-pixel {
-  font-family: 'Press Start 2P', monospace;
+  font-family: 'Press Start 2P', 'Press Start 2P Fallback', monospace;
 }
 
 .font-display {
-  font-family: 'Permanent Marker', cursive;
+  font-family: 'Permanent Marker', 'Permanent Marker Fallback', cursive;
 }
 
 .neon-text-blue {

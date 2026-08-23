@@ -109,14 +109,24 @@ function Router() {
   );
 }
 
+const BACKGROUND_MUSIC_SRC = "/bg-music.m4a";
+
 function BackgroundMusic() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [muted, setMuted] = useState(false);
   const startedRef = useRef(false);
 
+  // The audio file is NOT downloaded on page load: the <audio> element starts
+  // with no src and preload="none". The src is attached on the user's first
+  // interaction (the same moment playback could actually begin under browser
+  // autoplay policies), mirroring the marketing-script deferral pattern.
   const tryPlay = () => {
     const audio = audioRef.current;
     if (!audio || startedRef.current) return;
+    if (!audio.getAttribute("src")) {
+      audio.setAttribute("src", BACKGROUND_MUSIC_SRC);
+      audio.load();
+    }
     audio.play().then(() => {
       startedRef.current = true;
     }).catch(() => {});
@@ -125,8 +135,6 @@ function BackgroundMusic() {
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
-
-    tryPlay();
 
     const onInteraction = () => {
       tryPlay();
@@ -159,7 +167,7 @@ function BackgroundMusic() {
 
   return (
     <>
-      <audio ref={audioRef} src="/bg-music.m4a" loop preload="auto" />
+      <audio ref={audioRef} loop preload="none" />
       <button
         onClick={toggleMute}
         data-testid="button-music-toggle"

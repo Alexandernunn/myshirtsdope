@@ -1,0 +1,20 @@
+# MyShirtsDope
+
+> MyShirtsDope is an independent online apparel store selling shirts, hoodies, onesies, mugs, and accessories inspired by music, culture, and love — old school hip hop, R&B, soul, and pop culture designs for adults, youth, and toddlers. Checkout is powered by Shopify.
+
+## Core pages
+
+- [Home](https://myshirtsdope.com/): Brand landing page with the latest drops.
+- [Shop](https://myshirtsdope.com/shop): Full product catalog with search and category filters (Shirts, Hoodies, Onesies, Accessories).
+- Product pages: https://myshirtsdope.com/product/{id} — each product page includes name, price, description, sizes, colors, and Product structured data (JSON-LD).
+
+## Key links
+
+- [Sitemap](https://myshirtsdope.com/sitemap.xml): Every product page with last-modified timestamps.
+- [About](https://myshirtsdope.com/about): The story behind the brand.
+- [Contact](https://myshirtsdope.com/contact): Get in touch with the MyShirtsDope team.
+
+## Notes for agents
+
+- The catalog spans thousands of products across adult, youth, and toddler fits; the sitemap is the authoritative index.
+- Prices are in USD. Availability and pricing come from Shopify and are reflected in each product page's structured data.

@@ -92,8 +92,8 @@ export default {
         sans: ["var(--font-sans)"],
         serif: ["var(--font-serif)"],
         mono: ["var(--font-mono)"],
-        pixel: ["'Press Start 2P'", "monospace"],
-        display: ["'Permanent Marker'", "cursive"],
+        pixel: ["'Press Start 2P'", "'Press Start 2P Fallback'", "monospace"],
+        display: ["'Permanent Marker'", "'Permanent Marker Fallback'", "cursive"],
       },
       keyframes: {
         "accordion-down": {

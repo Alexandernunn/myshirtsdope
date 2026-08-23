@@ -1,6 +1,13 @@
 import { mkdir, readFile, rm, writeFile } from "fs/promises";
 import path from "path";
-import type { Product } from "../shared/schema";
+import type { Product, ProductSummary } from "../shared/schema";
+import { groupProducts, interleaveGroups } from "../client/src/lib/product-grouping";
+import { pickVariantIndex } from "../shared/image-variants";
+import {
+  IMAGE_PRESETS,
+  shopifyImageProps,
+  type ShopifyImagePreset,
+} from "../shared/shopify-image";
 
 const OUTPUT_DIR = path.resolve("dist/public");
 const SITE_URL = (process.env.PUBLIC_SITE_URL || "https://myshirtsdope.com").replace(/\/+$/, "");
@@ -36,6 +43,45 @@ function replaceHeadTag(html: string, matcher: RegExp, replacement: string): str
   return html.replace(/<\/head>/i, `    ${replacement}\n  </head>`);
 }
 
+/**
+ * Build a high-priority LCP image preload tag. When the target image tag uses
+ * srcset/sizes, the preload carries matching imagesrcset/imagesizes so the
+ * browser preloads exactly the rendition it will render.
+ */
+function imagePreloadTag(url: string, preset: ShopifyImagePreset): string {
+  const props = shopifyImageProps(url, preset);
+  let tag = `<link rel="preload" as="image" href="${escapeHtml(props.src)}"`;
+  if (props.srcSet && props.sizes) {
+    tag += ` imagesrcset="${escapeHtml(props.srcSet)}" imagesizes="${escapeHtml(props.sizes)}"`;
+  }
+  tag += ` fetchpriority="high" />`;
+  return tag;
+}
+
+/**
+ * Reproduce the exact image URL the client renders in the first shop grid
+ * card: group + interleave the initial slim chunk (the client's initial data
+ * source), then apply the same deterministic variant pick for card index 0.
+ */
+export function computeShopLcpImageUrl(slimInitial: ProductSummary[]): string | null {
+  const groups = interleaveGroups(groupProducts(slimInitial));
+  const first = groups[0];
+  if (!first) return null;
+  const product = first.adult;
+  const variants =
+    "colorImageVariants" in product &&
+    Array.isArray(product.colorImageVariants) &&
+    product.colorImageVariants.length > 0
+      ? product.colorImageVariants
+      : null;
+  // Mirrors the client exactly, including its fallback when the hash lands on
+  // a negative/out-of-range index (variants[i] === undefined -> imageUrl).
+  const pickedVariant = variants
+    ? variants[pickVariantIndex(product.id, 0, variants.length)]
+    : null;
+  return pickedVariant ?? product.imageUrl;
+}
+
 function applyPageMetadata(
   template: string,
   metadata: {
@@ -46,6 +92,7 @@ function applyPageMetadata(
     imageUrl?: string;
     price?: number;
     jsonLd?: unknown;
+    preloadImage?: { url: string; preset: ShopifyImagePreset };
   },
 ): string {
   const title = escapeHtml(metadata.title);
@@ -131,6 +178,13 @@ function applyPageMetadata(
     html = replaceHeadTag(html, matcher, replacement);
   }
 
+  if (metadata.preloadImage) {
+    html = html.replace(
+      /<\/head>/i,
+      `    ${imagePreloadTag(metadata.preloadImage.url, metadata.preloadImage.preset)}\n  </head>`,
+    );
+  }
+
   if (metadata.jsonLd) {
     html = html.replace(
       /<\/head>/i,
@@ -181,8 +235,20 @@ function renderShopContent(products: Product[]): string {
 }
 
 function renderProductContent(product: Product): string {
-  const image = product.imageUrl
-    ? `<img src="${escapeHtml(product.imageUrl)}" alt="${escapeHtml(product.name)}" itemprop="image" style="max-width: 100%; height: auto;" />`
+  const imageProps = product.imageUrl
+    ? shopifyImageProps(product.imageUrl, IMAGE_PRESETS.productDetail)
+    : null;
+  const responsiveAttrs = imageProps?.srcSet && imageProps.sizes
+    ? ` srcset="${escapeHtml(imageProps.srcSet)}" sizes="${escapeHtml(imageProps.sizes)}"`
+    : "";
+  // Keep the schema.org microdata image pointing at the full-quality original
+  // via <link itemprop>, while the visible tag uses the transformed rendition
+  // inside a box with reserved dimensions (no layout shift when it paints).
+  const image = product.imageUrl && imageProps
+    ? `<link itemprop="image" href="${escapeHtml(product.imageUrl)}" />
+          <div style="width: 100%; max-width: 320px; height: 320px;">
+            <img src="${escapeHtml(imageProps.src)}"${responsiveAttrs} alt="${escapeHtml(product.name)}" fetchpriority="high" width="320" height="320" style="width: 100%; height: 100%; object-fit: contain;" />
+          </div>`
     : "";
   const sizes = product.sizes.length > 0
     ? `<p><strong>Available sizes:</strong> ${escapeHtml(product.sizes.join(", "))}</p>`
@@ -252,7 +318,11 @@ function productJsonLd(product: Product, canonicalUrl: string) {
   };
 }
 
-function renderShopPage(template: string, products: Product[]): string {
+function renderShopPage(
+  template: string,
+  products: Product[],
+  lcpImageUrl: string | null,
+): string {
   const canonicalUrl = `${SITE_URL}/shop`;
   const html = applyPageMetadata(template, {
     title: "Shop | MyShirtsDope",
@@ -260,6 +330,9 @@ function renderShopPage(template: string, products: Product[]): string {
     canonicalUrl,
     ogType: "website",
     imageUrl: `${SITE_URL}/favicon.png`,
+    preloadImage: lcpImageUrl
+      ? { url: lcpImageUrl, preset: IMAGE_PRESETS.gridCard }
+      : undefined,
   });
   return injectPrerenderedRoot(html, renderShopContent(products));
 }
@@ -274,13 +347,24 @@ function renderProductPage(template: string, product: Product): string {
     imageUrl: product.imageUrl || `${SITE_URL}/favicon.png`,
     price: product.price,
     jsonLd: productJsonLd(product, canonicalUrl),
+    preloadImage: product.imageUrl
+      ? { url: product.imageUrl, preset: IMAGE_PRESETS.productDetail }
+      : undefined,
   });
   return injectPrerenderedRoot(html, renderProductContent(product));
 }
 
-export async function prerenderCatalog(products: Product[]): Promise<void> {
+export async function prerenderCatalog(
+  products: Product[],
+  slimInitial: ProductSummary[],
+): Promise<void> {
   if (products.length === 0) {
     throw new Error("Cannot prerender an empty product catalog");
+  }
+
+  const shopLcpImageUrl = computeShopLcpImageUrl(slimInitial);
+  if (!shopLcpImageUrl) {
+    throw new Error("Could not determine the shop page LCP image for preloading");
   }
 
   const template = await readFile(path.join(OUTPUT_DIR, "index.html"), "utf-8");
@@ -296,7 +380,7 @@ export async function prerenderCatalog(products: Product[]): Promise<void> {
   await mkdir(shopOutputDir, { recursive: true });
   await writeFile(
     path.join(shopOutputDir, "index.html"),
-    renderShopPage(template, uniqueProducts),
+    renderShopPage(template, uniqueProducts, shopLcpImageUrl),
   );
 
   for (let index = 0; index < uniqueProducts.length; index += PRODUCT_BATCH_SIZE) {

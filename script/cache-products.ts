@@ -1,25 +1,10 @@
 import { fetchAllStorefrontProducts, mapStorefrontProduct } from "../server/shopify-storefront";
-import type { Product } from "../shared/schema";
+import type { Product, ProductSummary } from "../shared/schema";
+import { getColorImageVariants } from "../shared/image-variants";
 import { mkdir, writeFile } from "fs/promises";
 import path from "path";
 import { prerenderCatalog } from "./prerender-catalog";
 import { generateSitemap } from "./generate-sitemap";
-
-const NEUTRAL_COLORS = new Set([
-  "white", "off white", "off-white", "natural", "ash", "cornsilk", "ivory",
-  "cream", "snow", "grey", "gray", "heather", "athletic heather", "sport grey",
-  "ice grey", "silver", "slate", "dark heather", "charcoal", "light grey",
-  "light gray", "sand", "oatmeal",
-]);
-
-function getColorImageVariants(colorImages: Record<string, string> | null): string[] {
-  if (!colorImages) return [];
-  const entries = Object.entries(colorImages);
-  if (entries.length === 0) return [];
-  const colorful = entries.filter(([color]) => !NEUTRAL_COLORS.has(color.toLowerCase().trim()));
-  const source = colorful.length > 0 ? colorful : entries;
-  return source.map(([, url]) => url);
-}
 
 if (!process.env.SHOPIFY_ACCESS_TOKEN || !process.env.SHOPIFY_STORE_DOMAIN) {
   console.error("[Cache] Build failed: missing SHOPIFY_ACCESS_TOKEN or SHOPIFY_STORE_DOMAIN");
@@ -52,7 +37,7 @@ async function cacheProducts() {
     };
   });
 
-  const slim = products.map((p) => {
+  const slim: ProductSummary[] = products.map((p) => {
     const variants = getColorImageVariants(p.colorImages ?? null);
     return {
       id: p.id,
@@ -80,7 +65,7 @@ async function cacheProducts() {
   await writeFile(path.join(outDir, "products-slim.json"), JSON.stringify(slim));
   await writeFile(path.join(outDir, "products-slim-1.json"), JSON.stringify(slimInitial));
   await writeFile(path.join(outDir, "products-slim-rest.json"), JSON.stringify(slimRest));
-  await prerenderCatalog(products);
+  await prerenderCatalog(products, slimInitial);
   await generateSitemap(products);
 
   const fullSize = Buffer.byteLength(JSON.stringify(products)) / 1024;

@@ -9,6 +9,7 @@ import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { findGroupForProduct, groupProducts, getProductForFit, getFitLabel, type FitType } from "@/lib/product-grouping";
+import { IMAGE_PRESETS, shopifyImageProps, shopifyImageUrl } from "@shared/shopify-image";
 import { trackEvent } from "@/lib/meta-capi";
 import type { Product } from "@shared/schema";
 
@@ -276,9 +277,11 @@ export default function ProductDetail() {
           <div className="w-full md:max-w-[320px] flex-shrink-0">
             <div className="relative bg-card border border-card-border rounded-md overflow-hidden h-[240px] md:h-[320px]">
               <img
-                src={displayImage || activeProduct.imageUrl}
+                {...shopifyImageProps(displayImage || activeProduct.imageUrl, IMAGE_PRESETS.productDetail)}
                 alt={activeProduct.name}
                 className={`w-full h-full object-contain transition-opacity duration-150 ${imageFading ? "opacity-0" : "opacity-100"}`}
+                loading="eager"
+                {...({ fetchpriority: "high" } as Record<string, string>)}
               />
               {activeProduct.isNewDrop && (
                 <div className="absolute top-3 left-3">
@@ -373,7 +376,7 @@ export default function ProductDetail() {
                         {previewImg ? (
                           <span
                             className="inline-block w-4 h-4 rounded-full flex-shrink-0 border border-white/20 bg-cover bg-center"
-                            style={{ backgroundImage: `url(${previewImg})` }}
+                            style={{ backgroundImage: `url(${shopifyImageUrl(previewImg, 64)})` }}
                           />
                         ) : hex ? (
                           <span
@@ -427,8 +430,10 @@ export default function ProductDetail() {
                   <div className="bg-card border border-card-border rounded-md overflow-hidden hover-elevate cursor-pointer flex-shrink-0" style={{ width: "180px" }}>
                     <div className="overflow-hidden" style={{ height: "180px" }}>
                       <img
-                        src={g.adult.imageUrl}
+                        {...shopifyImageProps(g.adult.imageUrl, IMAGE_PRESETS.relatedCard)}
                         alt={g.adult.name}
+                        width={180}
+                        height={180}
                         className="w-full h-full object-cover"
                         loading="lazy"
                       />

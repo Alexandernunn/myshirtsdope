@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { groupProducts, interleaveGroups, getFitBadgeLabel, type ProductGroup } from "@/lib/product-grouping";
+import { pickVariantIndex } from "@shared/image-variants";
+import { IMAGE_PRESETS, shopifyImageProps } from "@shared/shopify-image";
 import type { Product, ProductSummary } from "@shared/schema";
 
 const PRODUCTS_PER_PAGE = 15;
@@ -121,13 +123,11 @@ const badgeColors: Record<string, string> = {
   "Pop": "bg-purple-500/20 text-purple-400",
 };
 
-function pickVariantIndex(productId: number, cardIndex: number, count: number): number {
-  let h = (productId * 2654435761 + cardIndex * 40503) >>> 0;
-  h ^= h >>> 16;
-  h = Math.imul(h, 0x45d9f3b);
-  h ^= h >>> 16;
-  return h % count;
-}
+// The first grid row is above the fold: load those images eagerly, and give
+// the first two (both visible in the 2-column mobile grid, where one is the
+// LCP candidate) high fetch priority. Everything below stays lazy.
+const EAGER_CARD_COUNT = 4;
+const HIGH_PRIORITY_CARD_COUNT = 2;
 
 function GroupedProductCard({ group, index }: { group: ProductGroup; index: number }) {
   const product = group.adult;
@@ -143,10 +143,13 @@ function GroupedProductCard({ group, index }: { group: ProductGroup; index: numb
       <div className="group bg-card border border-card-border rounded-md overflow-visible hover-elevate active-elevate-2 transition-transform duration-200 cursor-pointer">
         <div className="relative overflow-hidden rounded-t-md bg-muted" style={{ aspectRatio: "1", maxHeight: "220px" }}>
           <img
-            src={imgSrc}
+            {...shopifyImageProps(imgSrc, IMAGE_PRESETS.gridCard)}
             alt={product.name}
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-            loading="lazy"
+            loading={index < EAGER_CARD_COUNT ? "eager" : "lazy"}
+            {...(index < HIGH_PRIORITY_CARD_COUNT
+              ? ({ fetchpriority: "high" } as Record<string, string>)
+              : {})}
             onError={() => { if (imgSrc !== product.imageUrl) setImgSrc(product.imageUrl); }}
           />
 

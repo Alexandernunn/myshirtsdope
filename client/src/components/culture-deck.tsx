@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
+import { IMAGE_PRESETS, shopifyImageProps } from "@shared/shopify-image";
 import type { Product, ProductSummary } from "@shared/schema";
 
 const CARD_COUNT = 8;
@@ -248,8 +249,10 @@ export default function CultureDeck() {
                     data-testid={`culture-card-${product.id}`}
                   >
                     <img
-                      src={cardImageUrl}
+                      {...shopifyImageProps(cardImageUrl, IMAGE_PRESETS.cultureCard)}
                       alt={product.name}
+                      width={CARD_W}
+                      height={CARD_H}
                       className="w-full h-full object-cover pointer-events-none"
                       loading="lazy"
                       draggable={false}
@@ -257,6 +260,7 @@ export default function CultureDeck() {
                       onError={(e) => {
                         const target = e.currentTarget;
                         target.onerror = null;
+                        target.srcset = "";
                         target.src = product.imageUrl;
                       }}
                     />

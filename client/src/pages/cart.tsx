@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { IMAGE_PRESETS, shopifyImageProps } from "@shared/shopify-image";
 import { trackEvent } from "@/lib/meta-capi";
 
 export default function Cart() {
@@ -117,8 +118,13 @@ export default function Cart() {
                   <Link href={`/product/${item.productId}`}>
                     <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-md overflow-hidden bg-muted flex-shrink-0 cursor-pointer">
                       <img
-                        src={item.product.colorImages?.[item.color] || item.product.imageUrl}
+                        {...shopifyImageProps(
+                          item.product.colorImages?.[item.color] || item.product.imageUrl,
+                          IMAGE_PRESETS.cartThumb,
+                        )}
                         alt={item.product.name}
+                        width={80}
+                        height={80}
                         className="w-full h-full object-cover"
                       />
                     </div>
