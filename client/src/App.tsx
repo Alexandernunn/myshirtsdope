@@ -2,8 +2,6 @@ import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from "re
 import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { Toaster } from "@/components/ui/toaster";
-import { TooltipProvider } from "@/components/ui/tooltip";
 import { CartProvider } from "@/lib/cart-context";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
@@ -27,6 +25,9 @@ const About = lazy(loadAbout);
 const Contact = lazy(loadContact);
 const OrderConfirmation = lazy(loadOrderConfirmation);
 const NotFound = lazy(loadNotFound);
+const DeferredToaster = lazy(() =>
+  import("@/components/ui/toaster").then(({ Toaster }) => ({ default: Toaster })),
+);
 
 let initialPageViewPath: string | null = null;
 
@@ -160,25 +161,59 @@ function BackgroundMusic() {
   );
 }
 
+function AppToaster() {
+  const [enabled, setEnabled] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    const enable = () => {
+      if (!active) return;
+      active = false;
+      interactionEvents.forEach((eventName) => {
+        document.removeEventListener(eventName, enable, true);
+      });
+      setEnabled(true);
+    };
+    const interactionEvents = ["pointerdown", "touchstart", "keydown", "click"] as const;
+
+    interactionEvents.forEach((eventName) => {
+      document.addEventListener(eventName, enable, { capture: true, once: true, passive: true });
+    });
+
+    return () => {
+      active = false;
+      interactionEvents.forEach((eventName) => {
+        document.removeEventListener(eventName, enable, true);
+      });
+    };
+  }, []);
+
+  if (!enabled) return null;
+
+  return (
+    <Suspense fallback={null}>
+      <DeferredToaster />
+    </Suspense>
+  );
+}
+
 function App() {
   usePageTracking();
 
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <CartProvider>
-          <div className="min-h-screen flex flex-col bg-background pixel-grid-bg">
-            <ScrollToTop />
-            <Navbar />
-            <main className="flex-1">
-              <Router />
-            </main>
-            <Footer />
-          </div>
-          <BackgroundMusic />
-        </CartProvider>
-        <Toaster />
-      </TooltipProvider>
+      <CartProvider>
+        <div className="min-h-screen flex flex-col bg-background pixel-grid-bg">
+          <ScrollToTop />
+          <Navbar />
+          <main className="flex-1">
+            <Router />
+          </main>
+          <Footer />
+        </div>
+        <BackgroundMusic />
+        <AppToaster />
+      </CartProvider>
     </QueryClientProvider>
   );
 }
