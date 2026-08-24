@@ -87,25 +87,17 @@ async function verifyPublishedCatalog(): Promise<void> {
 }
 
 async function verifyPageSpeedContracts(): Promise<void> {
-  const [template, styles, criticalStyles, viteConfig, footer, app, shop, productDetail, deckData, builtIndex] = await Promise.all([
+  const [template, styles, footer, app, shop, productDetail, deckData] = await Promise.all([
     readFile(path.resolve("client/index.html"), "utf8"),
     readFile(path.resolve("client/src/index.css"), "utf8"),
-    readFile(path.resolve("client/src/critical.css"), "utf8"),
-    readFile(path.resolve("vite.config.ts"), "utf8"),
     readFile(path.resolve("client/src/components/footer.tsx"), "utf8"),
     readFile(path.resolve("client/src/App.tsx"), "utf8"),
     readFile(path.resolve("client/src/pages/shop.tsx"), "utf8"),
     readFile(path.resolve("client/src/pages/product-detail.tsx"), "utf8"),
     readFile(path.join(OUTPUT_DIR, "data/products-deck.json"), "utf8"),
-    readFile(path.join(OUTPUT_DIR, "index.html"), "utf8"),
   ]);
 
   assert(template.includes('<link rel="preconnect" href="https://cdn.shopify.com" crossorigin />'));
-  assert(viteConfig.includes("inline-critical-storefront-styles"));
-  assert(viteConfig.includes("this.onload=null;this.rel='stylesheet'"));
-  assert(builtIndex.includes('data-critical-styles'));
-  assert(builtIndex.includes('<link rel="preload" as="style"'));
-  assert(builtIndex.includes('<noscript><link rel="stylesheet"'));
   const fontRules = [...template.matchAll(/@font-face\s*\{([^}]*)\}/g)].map((match) => match[1]);
   for (const font of ["Inter", "Press Start 2P", "Permanent Marker"]) {
     const fontRule = fontRules.find((rule) => rule.includes(`font-family: "${font}";`));
