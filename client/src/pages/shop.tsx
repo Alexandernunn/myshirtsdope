@@ -11,6 +11,10 @@ import { groupProducts, interleaveGroups, getFitBadgeLabel, type ProductGroup } 
 import { pickVariantIndex } from "@shared/image-variants";
 import { IMAGE_PRESETS, shopifyImageProps } from "@shared/shopify-image";
 import type { Product, ProductSummary } from "@shared/schema";
+import {
+  PRERENDERED_SHOP_DATA_SELECTOR,
+  readPrerenderedJson,
+} from "@/lib/prerendered-data";
 
 const PRODUCTS_PER_PAGE = 15;
 
@@ -214,9 +218,14 @@ export default function Shop() {
 
   const [initialSource, setInitialSource] = useState<"chunk" | "full">("chunk");
   const [shouldLoadRest, setShouldLoadRest] = useState(false);
+  const prerenderedInitialProducts = readPrerenderedJson<(Product | ProductSummary)[]>(
+    PRERENDERED_SHOP_DATA_SELECTOR,
+  );
 
   const { data: initialProducts = [], isLoading } = useQuery<(Product | ProductSummary)[]>({
     queryKey: ["/api/products/listing-initial"],
+    initialData: prerenderedInitialProducts,
+    staleTime: prerenderedInitialProducts ? Infinity : 0,
     queryFn: async () => {
       if (!import.meta.env.DEV) {
         try {

@@ -78,7 +78,7 @@ async function cacheProducts() {
   await writeFile(path.join(outDir, "products-slim-1.json"), JSON.stringify(slimInitial));
   await writeFile(path.join(outDir, "products-slim-rest.json"), JSON.stringify(slimRest));
   await writeFile(path.join(outDir, "products-deck.json"), JSON.stringify(deckProducts));
-  await prerenderCatalog(products, slimInitial);
+  await prerenderCatalog(products, slimInitial, deckProducts);
   await generateSitemap(products);
 
   const fullSize = Buffer.byteLength(JSON.stringify(products)) / 1024;

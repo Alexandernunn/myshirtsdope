@@ -5,6 +5,7 @@ import Starfield from "@/components/starfield";
 import CultureDeck from "@/components/culture-deck";
 import { useEffect, useState } from "react";
 import { usePageTitle } from "@/hooks/use-page-title";
+import { isPrerenderedDocument } from "@/lib/prerendered-data";
 
 const marqueeItems = [
   "HIP HOP", "R&B", "SOUL", "POP", "CULTURE", "LOVE", "OLD SCHOOL", "NEW VIBES",
@@ -46,8 +47,8 @@ export function Start() {
 
 export default function Home() {
   usePageTitle("Culture You Can Wear");
-  const [typedText, setTypedText] = useState("");
   const tagline = "Shirts, hoodies, onesies, and accessories for all ages inspired by music, culture and love.";
+  const [typedText, setTypedText] = useState(() => isPrerenderedDocument() ? tagline : "");
 
   useEffect(() => {
     if (typedText.length >= tagline.length) return;

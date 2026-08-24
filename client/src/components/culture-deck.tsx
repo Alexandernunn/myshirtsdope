@@ -3,6 +3,11 @@ import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { IMAGE_PRESETS, shopifyImageProps } from "@shared/shopify-image";
 import type { Product, ProductSummary } from "@shared/schema";
+import {
+  isPrerenderedDocument,
+  PRERENDERED_DECK_DATA_SELECTOR,
+  readPrerenderedJson,
+} from "@/lib/prerendered-data";
 
 const CARD_COUNT = 8;
 const RADIUS = 320;
@@ -18,8 +23,13 @@ const DRAG_DEAD_ZONE = 5;
 const PRIMARY_HERO_PRODUCT_NAME = "A Milli youth shirt";
 
 export default function CultureDeck() {
+  const prerenderedDeck = readPrerenderedJson<(Product | ProductSummary)[]>(
+    PRERENDERED_DECK_DATA_SELECTOR,
+  );
   const { data: products = [] } = useQuery<(Product | ProductSummary)[]>({
     queryKey: ["/api/products/deck"],
+    initialData: prerenderedDeck,
+    staleTime: prerenderedDeck ? Infinity : 0,
     queryFn: async () => {
       if (!import.meta.env.DEV) {
         try {
@@ -64,6 +74,8 @@ export default function CultureDeck() {
   const shuffledProducts = useMemo(() => {
     if (products.length === 0) return [];
     const copy = [...products];
+    if (isPrerenderedDocument()) return copy.slice(0, CARD_COUNT);
+
     const primaryIndex = copy.findIndex((product) => product.name === PRIMARY_HERO_PRODUCT_NAME);
     const primaryProduct = primaryIndex >= 0 ? copy[primaryIndex] : null;
     if (primaryIndex >= 0) copy.splice(primaryIndex, 1);

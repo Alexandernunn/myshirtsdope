@@ -2,3 +2,4 @@
 - [Critical stylesheet loading](critical-stylesheet-loading.md) — prerendered pages need a normal stylesheet unless inline CSS fully covers their visible shell.
 - [Marketing script deferral](marketing-script-deferral.md) — queue browser analytics immediately, load vendors after interaction, and keep Meta CAPI immediate.
 - [Shopify image transforms](shopify-image-transforms.md) — width/format=webp CDN params (Accept-negotiated), LCP preload must mirror the client's negative-index variant fallback.
+- [Static-first storefront activation](static-first-storefront.md) — build-time branded routes remain visible until the matching interactive route commits atomically.

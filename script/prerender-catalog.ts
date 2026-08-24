@@ -1,7 +1,12 @@
 import { mkdir, readFile, rm, writeFile } from "fs/promises";
 import path from "path";
 import type { Product, ProductSummary } from "../shared/schema";
-import { groupProducts, interleaveGroups } from "../client/src/lib/product-grouping";
+import {
+  getFitBadgeLabel,
+  groupProducts,
+  interleaveGroups,
+  type ProductGroup,
+} from "../client/src/lib/product-grouping";
 import { pickVariantIndex } from "../shared/image-variants";
 import {
   IMAGE_PRESETS,
@@ -225,78 +230,223 @@ function injectPrerenderedRoot(template: string, content: string): string {
   );
 }
 
-function renderShopContent(products: Product[], lcpImage: ShopLcpImage): string {
-  const imageProps = shopifyImageProps(lcpImage.url, IMAGE_PRESETS.gridCard);
-  const responsiveAttrs = imageProps.srcSet && imageProps.sizes
-    ? ` srcset="${escapeHtml(imageProps.srcSet)}" sizes="${escapeHtml(imageProps.sizes)}"`
+function injectPrerenderedData(template: string, attribute: string, data: unknown): string {
+  return template.replace(
+    /<\/head>/i,
+    `    <script type="application/json" ${attribute}>${safeJsonLd(data)}</script>\n  </head>`,
+  );
+}
+
+function listingVariants(product: Product | ProductSummary): string[] {
+  return "colorImageVariants" in product && Array.isArray(product.colorImageVariants)
+    ? product.colorImageVariants
+    : [];
+}
+
+function responsiveImageAttributes(url: string, preset: ShopifyImagePreset): string {
+  const props = shopifyImageProps(url, preset);
+  const srcSet = props.srcSet && props.sizes
+    ? ` srcset="${escapeHtml(props.srcSet)}" sizes="${escapeHtml(props.sizes)}"`
     : "";
-  const productLinks = products
-    .map(
-      (product) => `
-          <li>
-            <a href="/product/${product.id}">
-              <strong>${escapeHtml(product.name)}</strong>
-              <span> — $${product.price.toFixed(2)}</span>
-            </a>
-          </li>`,
-    )
+  return `src="${escapeHtml(props.src)}"${srcSet}`;
+}
+
+function renderStorefrontNav(activePath: string): string {
+  const links = [
+    ["/", "HOME"],
+    ["/shop", "SHOP"],
+    ["/about", "STORY"],
+    ["/contact", "CONTACT"],
+  ] as const;
+  const navigation = links
+    .map(([href, label]) => `
+          <a href="${href}">
+            <span class="font-display text-sm tracking-wide transition-colors ${activePath === href ? "text-neon-yellow neon-text-yellow" : "text-muted-foreground"}">${label}</span>
+          </a>`)
     .join("");
 
   return `
-      <main data-prerendered-page="shop" style="max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem;">
-        <header>
-          <h1>Shop MyShirtsDope</h1>
-          <p>Browse shirts, hoodies, onesies, and accessories inspired by music, culture, and love.</p>
-        </header>
-        <section aria-label="Featured product">
-          <a href="/product/${lcpImage.productId}" style="display: block; width: min(46vw, 254px); aspect-ratio: 1; margin: 1.5rem 0; overflow: hidden;">
-            <img src="${escapeHtml(imageProps.src)}"${responsiveAttrs} alt="${escapeHtml(lcpImage.productName)}" width="400" height="400" loading="eager" fetchpriority="high" style="display: block; width: 100%; height: 100%; object-fit: cover;" />
+    <nav class="sticky top-0 z-50 border-b border-border bg-background/90 backdrop-blur-md">
+      <div class="max-w-7xl mx-auto px-4 flex items-center justify-between gap-4 h-16">
+        <a href="/"><span class="font-pixel text-xs sm:text-sm text-neon-blue neon-text-blue tracking-wider">MyShirtsDope</span></a>
+        <div class="hidden md:flex items-center gap-6">${navigation}
+        </div>
+        <div class="flex items-center gap-2">
+          <a href="/cart" aria-label="Shopping cart, 0 items" class="relative inline-flex h-9 w-9 items-center justify-center rounded-md text-foreground">
+            <svg viewBox="0 0 24 24" aria-hidden="true" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="20" r="1"/><circle cx="20" cy="20" r="1"/><path d="m1 1 4 4 2.7 9.4a2 2 0 0 0 2 1.6h7.8a2 2 0 0 0 1.9-1.4L22 6H6"/></svg>
           </a>
-        </section>
-        <section aria-labelledby="catalog-heading">
-          <h2 id="catalog-heading">Product catalog</h2>
-          <ul>${productLinks}
-          </ul>
-        </section>
-      </main>`;
+          <span class="md:hidden inline-flex h-9 w-9 items-center justify-center rounded-md text-foreground" aria-hidden="true">&#9776;</span>
+        </div>
+      </div>
+    </nav>`;
+}
+
+function renderStorefrontFooter(): string {
+  return `
+    <footer class="storefront-footer border-t border-border bg-background min-h-[300px]" style="contain:layout style;content-visibility:auto">
+      <div class="retro-divider"></div>
+      <div class="max-w-7xl mx-auto px-4 py-10">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-8">
+          <div>
+            <h3 class="font-pixel text-[10px] text-neon-blue neon-text-blue mb-4">MyShirtsDope</h3>
+            <p class="font-display text-base text-muted-foreground leading-relaxed">Shirts, hoodies, onesies, and accessories for all ages inspired by music, culture and love.</p>
+          </div>
+          <div>
+            <h4 class="font-pixel text-[9px] text-neon-yellow mb-4">NAVIGATE</h4>
+            <div class="flex flex-col gap-2"><a href="/shop" class="font-display text-base text-muted-foreground">Shop</a><a href="/about" class="font-display text-base text-muted-foreground">Our Story</a><a href="/contact" class="font-display text-base text-muted-foreground">Contact</a></div>
+          </div>
+          <div>
+            <h4 class="font-pixel text-[9px] text-neon-green mb-4">CATEGORIES</h4>
+            <div class="flex flex-col gap-2"><a href="/shop?category=Shirts" class="font-display text-base text-muted-foreground">Shirts</a><a href="/shop?category=Hoodies" class="font-display text-base text-muted-foreground">Hoodies</a><a href="/shop?category=Onesies" class="font-display text-base text-muted-foreground">Onesies</a><a href="/shop?category=Accessories" class="font-display text-base text-muted-foreground">Accessories</a></div>
+          </div>
+        </div>
+        <div class="mt-10 pt-6 border-t border-border/50 text-center"><p class="font-pixel text-[8px] text-muted-foreground animate-neon-pulse">MyShirtsDope.com &mdash; CULTURE NEVER DIES</p></div>
+      </div>
+    </footer>`;
+}
+
+function renderStorefrontShell(content: string, activePath: string): string {
+  return `
+      <div class="min-h-screen flex flex-col bg-background pixel-grid-bg">
+        ${renderStorefrontNav(activePath)}
+        <main class="flex-1">${content}</main>
+        ${renderStorefrontFooter()}
+      </div>
+      <button type="button" aria-label="Play background music" class="fixed bottom-5 right-5 z-50 w-10 h-10 rounded-full bg-background/80 border border-neon-blue/40 backdrop-blur-sm flex items-center justify-center text-neon-blue shadow-lg" aria-hidden="true">&#9835;</button>`;
+}
+
+function renderStaticCultureDeck(products: ProductSummary[]): string {
+  const cards = products.slice(0, 8).map((product, index) => {
+    const angle = index * 45;
+    const isBehind = angle > 90 && angle < 270;
+    const depth = (Math.cos((angle * Math.PI) / 180) + 1) / 2;
+    const variants = listingVariants(product);
+    const imageUrl = variants[index % variants.length] || product.imageUrl;
+    const imageAttributes = responsiveImageAttributes(imageUrl, IMAGE_PRESETS.cultureCard);
+    return `
+            <div class="absolute" style="transform-style:preserve-3d;transform:rotateY(${angle}deg) translateZ(320px);z-index:${Math.round(depth * 100)}">
+              <div class="absolute" style="width:140px;height:190px;left:-70px;top:-95px;transform-style:preserve-3d;transform:rotateY(${-angle}deg) scale(${(0.75 + 0.25 * depth).toFixed(3)});filter:brightness(${(0.3 + 0.7 * depth).toFixed(3)});visibility:${isBehind ? "hidden" : "visible"}">
+                <a href="/product/${product.id}" class="block w-full h-full rounded-md overflow-hidden bg-[#0a0a0a] border border-white/15 shadow-[0_4px_24px_rgba(0,0,0,0.7)] cursor-pointer relative">
+                  <img ${imageAttributes} alt="${escapeHtml(product.name)}" width="140" height="190" class="w-full h-full object-cover pointer-events-none" loading="${index === 0 ? "eager" : "lazy"}"${index === 0 ? ' fetchpriority="high"' : ""} />
+                  <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/60 to-transparent p-2 pt-8"><p class="font-display text-[10px] text-white/90 line-clamp-2 leading-tight">${escapeHtml(product.name)}</p></div>
+                </a>
+              </div>
+            </div>`;
+  }).join("");
+
+  return `
+          <div class="flex flex-col items-center mt-12 mb-12">
+            <p class="font-pixel text-[9px] sm:text-[10px] text-neon-yellow neon-text-yellow mb-6 tracking-widest">&#9654; LATEST DROPS</p>
+            <div class="relative select-none w-[340px] h-[260px] sm:w-[700px] sm:h-[300px]" style="perspective:900px">
+              <div class="absolute inset-0 flex items-center justify-center" style="transform-style:preserve-3d;transform:rotateY(0deg)">${cards}
+              </div>
+            </div>
+            <p class="text-white/30 text-[10px] mt-3 font-body">Tap a card to view &bull; Drag to spin</p>
+          </div>`;
+}
+
+function renderHomeContent(deckProducts: ProductSummary[]): string {
+  return `
+          <div class="min-h-screen" data-prerendered-page="home">
+            <section class="relative min-h-[70vh] flex flex-col items-center justify-center overflow-hidden pixel-grid-bg">
+              <div class="scanline-overlay"></div>
+              <div class="homepage-hero-content relative z-10 text-center px-4 max-w-4xl mx-auto">
+                <div class="animate-pixel-fade-in">
+                  <p class="font-pixel text-[9px] sm:text-[10px] text-neon-green neon-text-green mb-4 tracking-widest">WELCOME TO</p>
+                  <h1 class="font-pixel text-2xl sm:text-4xl md:text-5xl text-neon-blue neon-text-blue mb-6 leading-relaxed animate-float">MyShirtsDope</h1>
+                  <div class="max-w-2xl mx-auto mb-10"><p class="font-display text-lg sm:text-xl text-foreground/90 leading-relaxed min-h-[56px]">Shirts, hoodies, onesies, and accessories for all ages inspired by music, culture and love.<span class="animate-blink text-neon-yellow">|</span></p></div>
+                  <a href="/shop" class="inline-flex items-center justify-center gap-3 font-pixel text-[10px] sm:text-xs bg-neon-blue border-neon-blue text-white px-8 py-6 rounded-md">ENTER THE STORE <span aria-hidden="true">&#8250;</span></a>
+                </div>
+                ${renderStaticCultureDeck(deckProducts)}
+              </div>
+            </section>
+            <div class="border-y border-border bg-card/50 overflow-hidden"><div class="flex animate-marquee whitespace-nowrap py-3"><span class="font-display text-sm mx-6 text-muted-foreground">HIP HOP <span class="text-neon-blue mx-4">&middot;</span> R&amp;B <span class="text-neon-blue mx-4">&middot;</span> SOUL <span class="text-neon-blue mx-4">&middot;</span> POP <span class="text-neon-blue mx-4">&middot;</span> CULTURE <span class="text-neon-blue mx-4">&middot;</span> LOVE</span></div></div>
+            <section class="py-20 px-4">
+              <div class="max-w-6xl mx-auto">
+                <h2 class="font-pixel text-sm sm:text-base text-center text-neon-yellow neon-text-yellow mb-12">WHAT WE REP</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                  <div class="bg-card border border-card-border rounded-md p-6 text-center"><h3 class="font-pixel text-[10px] text-neon-blue neon-text-blue mb-3">HIP HOP</h3><p class="font-display text-base text-muted-foreground leading-relaxed">Old school beats, fresh threads. Rep the culture that started it all.</p></div>
+                  <div class="bg-card border border-card-border rounded-md p-6 text-center"><h3 class="font-pixel text-[10px] text-neon-yellow neon-text-yellow mb-3">R&amp;B / SOUL</h3><p class="font-display text-base text-muted-foreground leading-relaxed">Smooth vibes, timeless style. Wear the feeling of every classic track.</p></div>
+                  <div class="bg-card border border-card-border rounded-md p-6 text-center"><h3 class="font-pixel text-[10px] text-neon-green neon-text-green mb-3">LOVE</h3><p class="font-display text-base text-muted-foreground leading-relaxed">Spread love through wearable art. Because culture starts with heart.</p></div>
+                  <div class="bg-card border border-card-border rounded-md p-6 text-center"><h3 class="font-pixel text-[10px] text-neon-orange neon-text-orange mb-3">CULTURE</h3><p class="font-display text-base text-muted-foreground leading-relaxed">Represent a time, feeling, event, place, song, or artist you love.</p></div>
+                </div>
+              </div>
+            </section>
+            <div class="retro-divider"></div>
+            <section class="py-20 px-4 text-center"><h2 class="font-pixel text-sm sm:text-base text-neon-green neon-text-green mb-4">READY TO PLAY?</h2><p class="font-display text-lg text-muted-foreground mb-8 max-w-md mx-auto">Browse our collection of unique merch inspired by the music and moments that shaped culture.</p><a href="/shop" class="inline-flex items-center justify-center font-pixel text-[10px] bg-neon-yellow border-neon-yellow text-black px-8 py-5 rounded-md">BROWSE COLLECTION</a></section>
+          </div>`;
+}
+
+function renderStaticProductCard(group: ProductGroup, index: number): string {
+  const product = group.adult;
+  const variants = listingVariants(product);
+  const imageUrl = variants[pickVariantIndex(product.id, index, variants.length)] || product.imageUrl;
+  const imageAttributes = responsiveImageAttributes(imageUrl, IMAGE_PRESETS.gridCard);
+  const fitBadge = getFitBadgeLabel(group.fits);
+  return `
+              <a href="/product/${product.id}">
+                <div class="catalog-card group bg-card border border-card-border rounded-md overflow-hidden transition-transform duration-200 cursor-pointer">
+                  <div class="relative overflow-hidden rounded-t-md bg-muted" style="aspect-ratio:1;max-height:220px">
+                    <img ${imageAttributes} alt="${escapeHtml(product.name)}" width="400" height="400" class="w-full h-full object-cover"${index === 0 ? ' loading="eager" fetchpriority="high"' : ' loading="lazy"'} />
+                    ${product.isNewDrop ? '<div class="absolute top-1.5 left-1.5"><span class="font-pixel text-[6px] bg-neon-green text-black border-transparent px-1.5 py-0.5 rounded-md">NEW DROP</span></div>' : ""}
+                    ${fitBadge ? `<div class="absolute bottom-1.5 left-1.5"><span class="font-pixel text-[5px] bg-neon-blue/30 text-neon-blue border-transparent px-1.5 py-0.5 rounded-md">${escapeHtml(fitBadge)}</span></div>` : ""}
+                  </div>
+                  <div class="p-2.5"><h3 class="font-display text-xs text-card-foreground mb-0.5 line-clamp-1">${escapeHtml(product.name)}</h3><p class="font-pixel text-[9px] text-neon-yellow">$${product.price.toFixed(2)}</p></div>
+                </div>
+              </a>`;
+}
+
+function renderShopContent(slimInitial: ProductSummary[]): string {
+  const groups = interleaveGroups(groupProducts(slimInitial));
+  const visibleGroups = groups.slice(0, 15);
+  const cards = visibleGroups.map((group, index) => renderStaticProductCard(group, index)).join("");
+  const categoryLinks = ["All", "Shirts", "Hoodies", "Onesies", "Accessories"].map((category) => `
+              <a href="${category === "All" ? "/shop" : `/shop?category=${category}`}"><span class="font-display text-xs px-3 py-1.5 rounded-md border ${category === "All" ? "bg-secondary border-border text-foreground" : "border-transparent text-muted-foreground"}">${category.toUpperCase()}</span></a>`).join("");
+
+  return `
+          <div class="min-h-screen" data-prerendered-page="shop">
+            <div class="retro-divider"></div>
+            <div class="max-w-[1400px] mx-auto px-6 sm:px-8 py-10">
+              <div class="text-center mb-8"><h1 class="font-pixel text-base sm:text-lg text-neon-blue neon-text-blue mb-2">THE SHOP</h1><p class="font-display text-base text-muted-foreground">Culture you can wear. Browse our collection.</p></div>
+              <div class="relative max-w-sm mx-auto mb-6"><span class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true">&#128269;</span><input type="text" placeholder="Search..." class="pl-10 bg-card border border-card-border font-display text-sm rounded-md w-full h-10" aria-label="Search the shop" /></div>
+              <div class="flex flex-wrap items-center justify-center gap-2 mb-8">${categoryLinks}</div>
+              <section aria-labelledby="catalog-heading" class="catalog-section"><h2 id="catalog-heading" class="sr-only">Product catalog</h2><p class="font-display text-xs text-muted-foreground text-center mb-4">Showing 1-${visibleGroups.length} of ${groups.length} items</p><div class="catalog-grid grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">${cards}</div>
+              ${groups.length > 15 ? '<div class="flex flex-wrap items-center justify-center gap-2 mt-8"><button type="button" disabled aria-label="Previous page" class="inline-flex h-9 w-9 items-center justify-center rounded-md border border-input opacity-50">&#8249;</button><button type="button" class="inline-flex h-9 min-w-9 items-center justify-center rounded-md bg-primary text-primary-foreground font-display text-sm">1</button><button type="button" class="inline-flex h-9 min-w-9 items-center justify-center rounded-md border border-input font-display text-sm">2</button><button type="button" aria-label="Next page" class="inline-flex h-9 w-9 items-center justify-center rounded-md border border-input">&#8250;</button></div>' : ""}
+              </section>
+            </div>
+          </div>`;
 }
 
 function renderProductContent(product: Product): string {
-  const imageProps = product.imageUrl
-    ? shopifyImageProps(product.imageUrl, IMAGE_PRESETS.productDetail)
-    : null;
-  const responsiveAttrs = imageProps?.srcSet && imageProps.sizes
-    ? ` srcset="${escapeHtml(imageProps.srcSet)}" sizes="${escapeHtml(imageProps.sizes)}"`
-    : "";
-  // Keep the schema.org microdata image pointing at the full-quality original
-  // via <link itemprop>, while the visible tag uses the transformed rendition
-  // inside a box with reserved dimensions (no layout shift when it paints).
-  const image = product.imageUrl && imageProps
+  const image = product.imageUrl
     ? `<link itemprop="image" href="${escapeHtml(product.imageUrl)}" />
-          <div style="width: 100%; max-width: 320px; aspect-ratio: 1;">
-            <img src="${escapeHtml(imageProps.src)}"${responsiveAttrs} alt="${escapeHtml(product.name)}" loading="eager" fetchpriority="high" width="320" height="320" style="width: 100%; height: 100%; object-fit: contain;" />
-          </div>`
+        <img ${responsiveImageAttributes(product.imageUrl, IMAGE_PRESETS.productDetail)} alt="${escapeHtml(product.name)}" loading="eager" fetchpriority="high" width="640" height="640" class="w-full h-full object-contain" />`
     : "";
-  const sizes = product.sizes.length > 0
-    ? `<p><strong>Available sizes:</strong> ${escapeHtml(product.sizes.join(", "))}</p>`
-    : "";
-  const colors = product.colors.length > 0
-    ? `<p><strong>Available colors:</strong> ${escapeHtml(product.colors.join(", "))}</p>`
-    : "";
+  const sizeOptions = product.sizes.map((size, index) => `
+                <button type="button" class="min-w-10 h-10 px-3 rounded-md border font-display text-sm ${index === 0 ? "border-neon-blue bg-neon-blue/10 text-neon-blue" : "border-card-border text-muted-foreground"}">${escapeHtml(size)}</button>`).join("");
+  const colorOptions = product.colors.map((color, index) => `
+                <button type="button" class="h-10 px-3 rounded-md border font-display text-xs ${index === 0 ? "border-neon-blue bg-neon-blue/10 text-neon-blue" : "border-card-border text-muted-foreground"}">${escapeHtml(color)}</button>`).join("");
 
   return `
-      <main data-prerendered-page="product" style="max-width: 1000px; margin: 0 auto; padding: 2rem 1.5rem;">
-        <nav aria-label="Breadcrumb"><a href="/shop">Back to shop</a></nav>
-        <article itemscope itemtype="https://schema.org/Product">
-          ${image}
-          <h1 itemprop="name">${escapeHtml(product.name)}</h1>
-          <p><strong>Price:</strong> <span itemprop="offers" itemscope itemtype="https://schema.org/Offer"><meta itemprop="priceCurrency" content="USD" /><data itemprop="price" value="${product.price.toFixed(2)}">$${product.price.toFixed(2)}</data></span></p>
-          <p itemprop="description">${escapeHtml(product.description)}</p>
-          <p><strong>Category:</strong> ${escapeHtml(product.category)}</p>
-          ${sizes}
-          ${colors}
-        </article>
-      </main>`;
+          <div class="min-h-screen" data-prerendered-page="product">
+            <div class="retro-divider"></div>
+            <div class="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+              <a href="/shop" class="inline-flex items-center gap-2 font-display text-sm text-muted-foreground hover:text-neon-blue mb-6">&#8592; Back to Shop</a>
+              <article itemscope itemtype="https://schema.org/Product" class="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
+                <div class="relative aspect-square max-w-xl mx-auto w-full rounded-md overflow-hidden bg-card border border-card-border">${image}</div>
+                <div class="max-w-xl">
+                  <p class="font-pixel text-[9px] text-neon-green mb-3 tracking-widest">${escapeHtml(product.category.toUpperCase())}</p>
+                  <h1 itemprop="name" class="font-pixel text-xl sm:text-2xl text-neon-blue neon-text-blue leading-relaxed mb-4">${escapeHtml(product.name)}</h1>
+                  <div itemprop="offers" itemscope itemtype="https://schema.org/Offer" class="mb-6"><meta itemprop="priceCurrency" content="USD" /><data itemprop="price" value="${product.price.toFixed(2)}" class="font-pixel text-base text-neon-yellow">$${product.price.toFixed(2)}</data></div>
+                  <p itemprop="description" class="font-display text-base text-muted-foreground leading-relaxed mb-8">${escapeHtml(product.description)}</p>
+                  ${sizeOptions ? `<section class="mb-6"><h2 class="font-pixel text-[9px] text-foreground mb-3">SELECT SIZE</h2><div class="flex flex-wrap gap-2">${sizeOptions}</div></section>` : ""}
+                  ${colorOptions ? `<section class="mb-8"><h2 class="font-pixel text-[9px] text-foreground mb-3">SELECT COLOR</h2><div class="flex flex-wrap gap-2">${colorOptions}</div></section>` : ""}
+                  <button type="button" class="w-full font-pixel text-[10px] bg-neon-blue border-neon-blue text-white py-6 rounded-md">ADD TO CART</button>
+                  <p class="font-display text-xs text-muted-foreground text-center mt-4">Secure checkout powered by Shopify</p>
+                </div>
+              </article>
+            </div>
+          </div>`;
 }
 
 function productJsonLd(product: Product, canonicalUrl: string) {
@@ -347,7 +497,7 @@ function productJsonLd(product: Product, canonicalUrl: string) {
 
 function renderShopPage(
   template: string,
-  products: Product[],
+  products: ProductSummary[],
   lcpImage: ShopLcpImage,
 ): string {
   const canonicalUrl = `${SITE_URL}/shop`;
@@ -359,7 +509,11 @@ function renderShopPage(
     imageUrl: `${SITE_URL}/favicon.png`,
     preloadImage: { url: lcpImage.url, preset: IMAGE_PRESETS.gridCard },
   });
-  return injectPrerenderedRoot(html, renderShopContent(products, lcpImage));
+  const withListingData = injectPrerenderedData(html, 'data-prerendered-shop="true"', products);
+  return injectPrerenderedRoot(
+    withListingData,
+    renderStorefrontShell(renderShopContent(products), "/shop"),
+  );
 }
 
 function renderProductPage(template: string, product: Product): string {
@@ -380,16 +534,25 @@ function renderProductPage(template: string, product: Product): string {
         }
       : undefined,
   });
-  const htmlWithProductData = html.replace(
-    /<\/head>/i,
-    `    <script type="application/json" data-prerendered-product="true">${safeJsonLd(product)}</script>\n  </head>`,
+  const htmlWithProductData = injectPrerenderedData(html, 'data-prerendered-product="true"', product);
+  return injectPrerenderedRoot(
+    htmlWithProductData,
+    renderStorefrontShell(renderProductContent(product), ""),
   );
-  return injectPrerenderedRoot(htmlWithProductData, renderProductContent(product));
+}
+
+function renderHomePage(template: string, deckProducts: ProductSummary[]): string {
+  const withDeckData = injectPrerenderedData(template, 'data-prerendered-deck="true"', deckProducts);
+  return injectPrerenderedRoot(
+    withDeckData,
+    renderStorefrontShell(renderHomeContent(deckProducts), "/"),
+  );
 }
 
 export async function prerenderCatalog(
   products: Product[],
   slimInitial: ProductSummary[],
+  deckProducts: ProductSummary[],
 ): Promise<void> {
   if (products.length === 0) {
     throw new Error("Cannot prerender an empty product catalog");
@@ -411,9 +574,10 @@ export async function prerenderCatalog(
   ]);
 
   await mkdir(shopOutputDir, { recursive: true });
+  await writeFile(path.join(OUTPUT_DIR, "index.html"), renderHomePage(template, deckProducts));
   await writeFile(
     path.join(shopOutputDir, "index.html"),
-    renderShopPage(template, uniqueProducts, shopLcpImage),
+    renderShopPage(template, slimInitial, shopLcpImage),
   );
 
   for (let index = 0; index < uniqueProducts.length; index += PRODUCT_BATCH_SIZE) {
@@ -430,6 +594,6 @@ export async function prerenderCatalog(
     );
   }
 
-  console.log(`[Prerender] Generated shop page and ${uniqueProducts.length} product pages`);
+  console.log(`[Prerender] Generated branded home, shop, and ${uniqueProducts.length} product pages`);
   console.log(`[Prerender] Canonical site URL: ${SITE_URL}`);
 }

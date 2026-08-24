@@ -87,13 +87,16 @@ async function verifyPublishedCatalog(): Promise<void> {
 }
 
 async function verifyPageSpeedContracts(): Promise<void> {
-  const [template, styles, footer, app, shop, productDetail, deckData] = await Promise.all([
+  const [template, styles, footer, app, main, home, shop, productDetail, prerenderCatalog, deckData] = await Promise.all([
     readFile(path.resolve("client/index.html"), "utf8"),
     readFile(path.resolve("client/src/index.css"), "utf8"),
     readFile(path.resolve("client/src/components/footer.tsx"), "utf8"),
     readFile(path.resolve("client/src/App.tsx"), "utf8"),
+    readFile(path.resolve("client/src/main.tsx"), "utf8"),
+    readFile(path.resolve("client/src/pages/home.tsx"), "utf8"),
     readFile(path.resolve("client/src/pages/shop.tsx"), "utf8"),
     readFile(path.resolve("client/src/pages/product-detail.tsx"), "utf8"),
+    readFile(path.resolve("script/prerender-catalog.ts"), "utf8"),
     readFile(path.join(OUTPUT_DIR, "data/products-deck.json"), "utf8"),
   ]);
 
@@ -152,6 +155,12 @@ async function verifyPageSpeedContracts(): Promise<void> {
   );
   assert(footer.includes('className="storefront-footer border-t border-border bg-background min-h-[300px]"'));
   assert(footer.includes('style={{ contain: "layout style", contentVisibility: "auto" }}'));
+  assert(!main.includes("replaceChildren"), "prerendered content must not be cleared before React commits");
+  assert(main.includes("flushSync"), "the interactive storefront must commit in one synchronous paint");
+  assert(home.includes("isPrerenderedDocument() ? tagline : \"\""));
+  assert(shop.includes("PRERENDERED_SHOP_DATA_SELECTOR"));
+  assert(prerenderCatalog.includes('data-prerendered-deck="true"'));
+  assert(prerenderCatalog.includes('data-prerendered-shop="true"'));
   assert(shop.includes('<section aria-labelledby="catalog-heading" className="catalog-section">'));
   assert(shop.includes('className="catalog-card group'));
   assert(shop.includes("shouldLoadRest && initialSource === \"chunk\""));
@@ -181,6 +190,22 @@ async function verifyPageSpeedContracts(): Promise<void> {
   assert(primaryProductQuery.includes("initialData: prerenderedProduct"));
   assert(primaryProductQuery.includes("fetchPrerenderedProduct(id)"));
   assert(!primaryProductQuery.includes("/data/products.json"), "the primary PDP query must not load the full catalog");
+
+  const [homeHtml, shopHtml, firstProduct] = await Promise.all([
+    readFile(path.join(OUTPUT_DIR, "index.html"), "utf8"),
+    readFile(path.join(OUTPUT_DIR, "shop/index.html"), "utf8"),
+    readFile(path.join(OUTPUT_DIR, "product", (await readdir(path.join(OUTPUT_DIR, "product")))[0], "index.html"), "utf8"),
+  ]);
+  for (const [name, html] of [["home", homeHtml], ["shop", shopHtml], ["product", firstProduct]] as const) {
+    assert(html.includes('<div id="root" data-prerendered="true">'), `${name} must retain a static-first root`);
+    assert(html.includes("MyShirtsDope"), `${name} must render branded storefront content before JavaScript`);
+  }
+  assert(homeHtml.includes('data-prerendered-deck="true"'));
+  assert(homeHtml.includes("LATEST DROPS"));
+  assert(shopHtml.includes('data-prerendered-shop="true"'));
+  assert(shopHtml.includes("catalog-grid"));
+  assert(firstProduct.includes('data-prerendered-product="true"'));
+  assert(firstProduct.includes("ADD TO CART"));
 }
 
 async function verifyWebhookSecurityAndDeliveryDedupe(): Promise<void> {
