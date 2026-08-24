@@ -7,9 +7,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Send, MessageSquare } from "lucide-react";
+
+const FORMSPREE_ENDPOINT = "https://formspree.io/f/mvkpnyae";
 
 const contactSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -30,7 +31,25 @@ export default function Contact() {
 
   const mutation = useMutation({
     mutationFn: async (data: ContactForm) => {
-      await apiRequest("POST", "/api/contact", data);
+      const response = await fetch(FORMSPREE_ENDPOINT, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...data,
+          _replyto: data.email,
+          _subject: data.subject,
+        }),
+      });
+
+      const result = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new Error(result?.error || "Formspree submission failed");
+      }
+
+      return result;
     },
     onSuccess: () => {
       toast({ title: "MESSAGE SENT", description: "We'll get back to you soon!" });
