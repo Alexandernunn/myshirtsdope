@@ -1,0 +1,27 @@
+1. Multiple Un-bundled Font Requests
+
+You have at least three to four separate .woff2 font files being loaded individually (e3t4eu08..., Fh4uPib9..., and UcC73Fwr...).
+
+If custom retro/pixel fonts are being imported for individual headings or elements, each .woff2 file forces a separate render-blocking network request. If a font stalls (notice UcC73Fwr... is stuck in pending), the text remains invisible or blocks the First Contentful Paint (FCP).
+
+Fix: Combine fonts into a single variable font file if possible, or ensure you are using font-display: swap; in your @font-face CSS declarations so fallback system text displays instantly.
+
+2. Script Chaining & Secondary Bundles
+
+Notice how BSzF9B3i.js initiates two additional scripts (Bt8tJzzK.js and B3o8tEdc.js).
+
+This is a "waterfall" network dependency. The browser can't start downloading Bt8tJzzK.js until it finishes fetching and parsing BSzF9B3i.js. As your codebase grows and you add more feature modules, these nested imports compound into Total Blocking Time (TBT) on mobile devices.
+
+Fix: If you are using a bundler like Vite or Webpack, review your dynamic import() statements to ensure you aren't over-splitting small scripts into tiny chained requests.
+
+3. Unhandled Analytics / Tracking Requests Blocking Network
+
+The track request (initiated by index-C266E_k7.js) is stuck on (pending).
+
+When a tracking pixel or fetch request hangs, Lighthouse/PageSpeed Insights penalizes your score because it considers the network thread "busy."
+
+Fix: Wrap third-party telemetry/analytics calls in a requestIdleCallback() or trigger them only after the primary page interactive state (window.onload) has resolved.
+
+4. AVIF Format Mismatch
+
+Your product image youth-staple-tee-red-front...jpg ends with &format=webp, but the browser network panel lists its Type as avif. Ensure your image CDN or image pipeline isn't performing double-conversions or serving mismatched MIME headers, which adds extra processing overhead for the browser image decoder.
