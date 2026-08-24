@@ -46,7 +46,7 @@ export const IMAGE_PRESETS = {
   },
   /** Product detail main image: full width on mobile, capped at 320px on md+. */
   productDetail: {
-    widths: [320, 400, 480, 640, 960],
+    widths: [320, 480, 640, 960],
     fallbackWidth: 640,
     sizes: "(max-width: 767px) calc(100vw - 3rem), 320px",
   },

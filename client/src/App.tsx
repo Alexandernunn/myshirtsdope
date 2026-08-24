@@ -2,15 +2,16 @@ import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from "re
 import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
+import { Toaster } from "@/components/ui/toaster";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { CartProvider } from "@/lib/cart-context";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
+import Home, { Start } from "@/pages/home";
 import { Volume2, VolumeX } from "lucide-react";
 import { queueGooglePageView } from "@/lib/marketing-scripts";
 import { trackEvent } from "@/lib/meta-capi";
 
-const loadHome = () => import("@/pages/home");
-const loadToaster = () => import("@/components/ui/toaster");
 const loadShop = () => import("@/pages/shop");
 const loadProductDetail = () => import("@/pages/product-detail");
 const loadCart = () => import("@/pages/cart");
@@ -19,9 +20,6 @@ const loadContact = () => import("@/pages/contact");
 const loadOrderConfirmation = () => import("@/pages/order-confirmation");
 const loadNotFound = () => import("@/pages/not-found");
 
-const Home = lazy(loadHome);
-const Start = lazy(async () => ({ default: (await loadHome()).Start }));
-const Toaster = lazy(async () => ({ default: (await loadToaster()).Toaster }));
 const Shop = lazy(loadShop);
 const ProductDetail = lazy(loadProductDetail);
 const CartPage = lazy(loadCart);
@@ -47,9 +45,7 @@ export function trackInitialPageView(pathname: string): void {
 export async function preloadCurrentRoute(pathname: string): Promise<void> {
   const normalizedPath = normalizePathname(pathname);
 
-  if (normalizedPath === "/" || normalizedPath === "/start") {
-    await loadHome();
-  } else if (normalizedPath === "/shop") {
+  if (normalizedPath === "/shop") {
     await loadShop();
   } else if (normalizedPath.startsWith("/product/")) {
     await loadProductDetail();
@@ -88,34 +84,6 @@ function usePageTracking() {
     queueGooglePageView(location);
     trackEvent("PageView");
   }, [location]);
-}
-
-function DeferredToaster() {
-  const [isReady, setIsReady] = useState(false);
-
-  useEffect(() => {
-    const enable = () => setIsReady(true);
-    const browserWindow = window as Window & {
-      requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number;
-      cancelIdleCallback?: (handle: number) => void;
-    };
-    const idleHandle = browserWindow.requestIdleCallback?.(enable, { timeout: 3000 });
-    const events: (keyof WindowEventMap)[] = ["pointerdown", "keydown", "touchstart"];
-    events.forEach((event) => window.addEventListener(event, enable, { once: true, passive: true }));
-
-    return () => {
-      if (idleHandle !== undefined) browserWindow.cancelIdleCallback?.(idleHandle);
-      events.forEach((event) => window.removeEventListener(event, enable));
-    };
-  }, []);
-
-  if (!isReady) return null;
-
-  return (
-    <Suspense fallback={null}>
-      <Toaster />
-    </Suspense>
-  );
 }
 
 function Router() {
@@ -197,18 +165,20 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <CartProvider>
-        <div className="min-h-screen flex flex-col bg-background pixel-grid-bg">
-          <ScrollToTop />
-          <Navbar />
-          <main className="flex-1">
-            <Router />
-          </main>
-          <Footer />
-        </div>
-        <BackgroundMusic />
-        <DeferredToaster />
-      </CartProvider>
+      <TooltipProvider>
+        <CartProvider>
+          <div className="min-h-screen flex flex-col bg-background pixel-grid-bg">
+            <ScrollToTop />
+            <Navbar />
+            <main className="flex-1">
+              <Router />
+            </main>
+            <Footer />
+          </div>
+          <BackgroundMusic />
+        </CartProvider>
+        <Toaster />
+      </TooltipProvider>
     </QueryClientProvider>
   );
 }
