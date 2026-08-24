@@ -2,7 +2,25 @@ import type { Config } from "tailwindcss";
 
 export default {
   darkMode: ["class"],
-  content: ["./client/index.html", "./client/src/**/*.{js,jsx,ts,tsx}"],
+  content: [
+    "./client/index.html",
+    "./client/src/App.tsx",
+    "./client/src/main.tsx",
+    "./client/src/components/culture-deck.tsx",
+    "./client/src/components/footer.tsx",
+    "./client/src/components/navbar.tsx",
+    "./client/src/components/starfield.tsx",
+    "./client/src/pages/**/*.{js,jsx,ts,tsx}",
+    "./client/src/components/ui/badge.tsx",
+    "./client/src/components/ui/button.tsx",
+    "./client/src/components/ui/form.tsx",
+    "./client/src/components/ui/input.tsx",
+    "./client/src/components/ui/label.tsx",
+    "./client/src/components/ui/skeleton.tsx",
+    "./client/src/components/ui/textarea.tsx",
+    "./client/src/components/ui/toast.tsx",
+    "./client/src/components/ui/toaster.tsx",
+  ],
   theme: {
     extend: {
       borderRadius: {

@@ -8,6 +8,7 @@ import {
   createShopifyCatalogWebhookApp,
   verifyShopifyWebhookSignature,
 } from "../server/shopify-catalog-webhook";
+import type { ProductSummary } from "../shared/schema";
 
 const OUTPUT_DIR = path.resolve("dist/public");
 
@@ -86,12 +87,14 @@ async function verifyPublishedCatalog(): Promise<void> {
 }
 
 async function verifyPageSpeedContracts(): Promise<void> {
-  const [template, styles, footer, shop, productDetail] = await Promise.all([
+  const [template, styles, footer, app, shop, productDetail, deckData] = await Promise.all([
     readFile(path.resolve("client/index.html"), "utf8"),
     readFile(path.resolve("client/src/index.css"), "utf8"),
     readFile(path.resolve("client/src/components/footer.tsx"), "utf8"),
+    readFile(path.resolve("client/src/App.tsx"), "utf8"),
     readFile(path.resolve("client/src/pages/shop.tsx"), "utf8"),
     readFile(path.resolve("client/src/pages/product-detail.tsx"), "utf8"),
+    readFile(path.join(OUTPUT_DIR, "data/products-deck.json"), "utf8"),
   ]);
 
   assert(template.includes('<link rel="preconnect" href="https://cdn.shopify.com" crossorigin />'));
@@ -151,13 +154,22 @@ async function verifyPageSpeedContracts(): Promise<void> {
   assert(footer.includes('style={{ contain: "layout style", contentVisibility: "auto" }}'));
   assert(shop.includes('<section aria-labelledby="catalog-heading" className="catalog-section">'));
   assert(shop.includes('className="catalog-card group'));
-  assert(shop.includes("window.requestIdleCallback"));
   assert(shop.includes("shouldLoadRest && initialSource === \"chunk\""));
-  assert(shop.includes('window.addEventListener("scroll", loadAfterFirstPaint'));
+  assert(shop.includes('window.addEventListener("scroll", loadOnScroll'));
+  assert(!shop.includes("requestIdleCallback(loadAfterFirstPaint"));
+  const deckProducts = JSON.parse(deckData);
+  assert(Array.isArray(deckProducts) && deckProducts.length === 8, "culture deck payload must contain eight products");
+  assert(deckProducts.some((product: ProductSummary) => product.name === "A Milli youth shirt"), "culture deck payload must include the primary hero product");
   assert(productDetail.includes('data-testid="product-hero-image-container"'));
   assert(productDetail.includes("aspect-square"));
   assert(productDetail.includes('loading="eager"'));
   assert(productDetail.includes('fetchpriority: "high"'));
+  assert(
+    app.includes("function ResolvedProductDetailRoute()") &&
+      app.includes("return ProductDetailComponent ? <ProductDetailComponent /> : <ProductDetail />;") &&
+      app.includes('<Route path="/product/:id" component={ResolvedProductDetailRoute} />'),
+    "preloaded product pages must retain Wouter's matching route context",
+  );
   assert(productDetail.includes("requestIdleCallback"));
   assert(productDetail.includes("enabled: secondaryContentEnabled"));
   assert(productDetail.includes('loading="lazy"'));

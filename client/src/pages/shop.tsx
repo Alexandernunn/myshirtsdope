@@ -249,25 +249,18 @@ export default function Shop() {
   useEffect(() => {
     if (initialSource !== "chunk" || initialProducts.length === 0) return;
 
-    let idleId: number | undefined;
-    let timeoutId: number | undefined;
-    const loadAfterFirstPaint = () => loadRestCatalog();
-
-    if (window.requestIdleCallback) {
-      idleId = window.requestIdleCallback(loadAfterFirstPaint, { timeout: 2000 });
-    } else {
-      timeoutId = window.setTimeout(loadAfterFirstPaint, 2000);
-    }
-
-    window.addEventListener("scroll", loadAfterFirstPaint, { once: true, passive: true });
+    const loadOnScroll = () => loadRestCatalog();
+    window.addEventListener("scroll", loadOnScroll, { once: true, passive: true });
     return () => {
-      if (idleId !== undefined) window.cancelIdleCallback?.(idleId);
-      if (timeoutId !== undefined) window.clearTimeout(timeoutId);
-      window.removeEventListener("scroll", loadAfterFirstPaint);
+      window.removeEventListener("scroll", loadOnScroll);
     };
   }, [initialSource, initialProducts.length, loadRestCatalog]);
 
   const needsRest = shouldLoadRest && initialSource === "chunk" && initialProducts.length > 0;
+
+  useEffect(() => {
+    if (activeCategory !== "All") loadRestCatalog();
+  }, [activeCategory, loadRestCatalog]);
 
   const { data: restProducts = [], isLoading: loadingRest } = useQuery<(Product | ProductSummary)[]>({
     queryKey: ["/api/products/listing-rest"],
@@ -392,7 +385,10 @@ export default function Shop() {
               setSearchQuery(e.target.value);
               setHasInput(e.target.value.length > 0);
             }}
-            onFocus={() => setFocused(true)}
+             onFocus={() => {
+               setFocused(true);
+               loadRestCatalog();
+             }}
             onBlur={() => {
               setFocused(false);
               setHasInput(searchQuery.length > 0);

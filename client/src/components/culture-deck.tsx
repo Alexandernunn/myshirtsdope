@@ -23,7 +23,7 @@ export default function CultureDeck() {
     queryFn: async () => {
       if (!import.meta.env.DEV) {
         try {
-          const staticRes = await fetch("/data/products-slim-1.json");
+          const staticRes = await fetch("/data/products-deck.json");
           if (staticRes.ok) {
             const data = await staticRes.json();
             if (Array.isArray(data) && data.length > 0) return data;
