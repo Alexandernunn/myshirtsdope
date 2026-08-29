@@ -5,6 +5,7 @@ import { mkdir, writeFile } from "fs/promises";
 import path from "path";
 import { prerenderCatalog } from "./prerender-catalog";
 import { generateSitemap } from "./generate-sitemap";
+import { FEATURED_SHOP_PRODUCT_IDS } from "../client/src/lib/product-grouping";
 
 if (!process.env.SHOPIFY_ACCESS_TOKEN || !process.env.SHOPIFY_STORE_DOMAIN) {
   console.error("[Cache] Build failed: missing SHOPIFY_ACCESS_TOKEN or SHOPIFY_STORE_DOMAIN");
@@ -57,8 +58,17 @@ async function cacheProducts() {
   const PRIMARY_HERO_PRODUCT_NAME = "A Milli youth shirt";
   const CULTURE_DECK_SIZE = 8;
   const INITIAL_CHUNK_SIZE = 50;
-  const slimInitial = slim.slice(0, INITIAL_CHUNK_SIZE);
-  const slimRest = slim.slice(INITIAL_CHUNK_SIZE);
+  const featuredProducts = FEATURED_SHOP_PRODUCT_IDS
+    .map((id) => slim.find((product) => product.id === id))
+    .filter((product): product is ProductSummary => Boolean(product));
+  const featuredIds = new Set(featuredProducts.map((product) => product.id));
+  const remainingProducts = slim.filter((product) => !featuredIds.has(product.id));
+  const slimInitial = [
+    ...featuredProducts,
+    ...remainingProducts.slice(0, Math.max(0, INITIAL_CHUNK_SIZE - featuredProducts.length)),
+  ];
+  const initialIds = new Set(slimInitial.map((product) => product.id));
+  const slimRest = slim.filter((product) => !initialIds.has(product.id));
   const primaryDeckProduct = slim.find((product) => product.name === PRIMARY_HERO_PRODUCT_NAME);
   const deckCandidates = slim.filter((product) => product.name !== PRIMARY_HERO_PRODUCT_NAME);
   const deckSlots = Math.max(0, CULTURE_DECK_SIZE - (primaryDeckProduct ? 1 : 0));

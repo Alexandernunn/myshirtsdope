@@ -7,7 +7,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { Search, ChevronLeft, ChevronRight } from "lucide-react";
-import { groupProducts, interleaveGroups, getFitBadgeLabel, type ProductGroup } from "@/lib/product-grouping";
+import {
+  groupProducts,
+  interleaveGroups,
+  prioritizeFeaturedGroups,
+  getFitBadgeLabel,
+  type ProductGroup,
+} from "@/lib/product-grouping";
 import { pickVariantIndex } from "@shared/image-variants";
 import { IMAGE_PRESETS, shopifyImageProps } from "@shared/shopify-image";
 import type { Product, ProductSummary } from "@shared/schema";
@@ -331,7 +337,8 @@ export default function Shop() {
     });
   }
 
-  const displayGroups = activeCategory === "All" ? interleaveGroups(sortedGroups) : sortedGroups;
+  const orderedGroups = activeCategory === "All" ? interleaveGroups(sortedGroups) : sortedGroups;
+  const displayGroups = prioritizeFeaturedGroups(orderedGroups);
 
   const totalPages = Math.max(1, Math.ceil(displayGroups.length / PRODUCTS_PER_PAGE));
   const paginatedGroups = displayGroups.slice(

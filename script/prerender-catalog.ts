@@ -5,6 +5,7 @@ import {
   getFitBadgeLabel,
   groupProducts,
   interleaveGroups,
+  prioritizeFeaturedGroups,
   type ProductGroup,
 } from "../client/src/lib/product-grouping";
 import { pickVariantIndex } from "../shared/image-variants";
@@ -80,7 +81,7 @@ export function computeShopLcpImageUrl(slimInitial: ProductSummary[]): string | 
 }
 
 function computeShopLcpImage(slimInitial: ProductSummary[]): ShopLcpImage | null {
-  const groups = interleaveGroups(groupProducts(slimInitial));
+  const groups = prioritizeFeaturedGroups(interleaveGroups(groupProducts(slimInitial)));
   const first = groups[0];
   if (!first) return null;
   const product = first.adult;
@@ -397,7 +398,7 @@ function renderStaticProductCard(group: ProductGroup, index: number): string {
 }
 
 function renderShopContent(slimInitial: ProductSummary[]): string {
-  const groups = interleaveGroups(groupProducts(slimInitial));
+  const groups = prioritizeFeaturedGroups(interleaveGroups(groupProducts(slimInitial)));
   const visibleGroups = groups.slice(0, 15);
   const cards = visibleGroups.map((group, index) => renderStaticProductCard(group, index)).join("");
   const categoryLinks = ["All", "Shirts", "Hoodies", "Onesies", "Accessories"].map((category) => `

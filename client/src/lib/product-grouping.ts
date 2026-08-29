@@ -16,6 +16,8 @@ export interface ProductGroup {
   category: string;
 }
 
+export const FEATURED_SHOP_PRODUCT_IDS = [7281451270208] as const;
+
 function getBaseName(name: string): string {
   return name
     .replace(YOUTH_KEYWORDS, "")
@@ -164,6 +166,15 @@ export function interleaveGroups(groups: ProductGroup[]): ProductGroup[] {
   }
 
   return result;
+}
+
+export function prioritizeFeaturedGroups(groups: ProductGroup[]): ProductGroup[] {
+  const rank = new Map<number, number>(FEATURED_SHOP_PRODUCT_IDS.map((id, index) => [id, index]));
+  return [...groups].sort((a, b) => {
+    const aRank = rank.get(a.adult.id) ?? Number.MAX_SAFE_INTEGER;
+    const bRank = rank.get(b.adult.id) ?? Number.MAX_SAFE_INTEGER;
+    return aRank - bRank;
+  });
 }
 
 export function getFitBadgeLabel(fits: FitType[]): string | null {
