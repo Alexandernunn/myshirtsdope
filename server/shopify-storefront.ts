@@ -102,6 +102,8 @@ interface AdminProduct {
   images: { id: number; src: string; alt: string | null }[];
   variants: {
     id: number;
+    sku: string | null;
+    barcode: string | null;
     title: string;
     price: string;
     option1: string | null;
@@ -224,6 +226,8 @@ export function mapStorefrontProduct(product: AdminProduct) {
     const variantGid = `gid://shopify/ProductVariant/${variant.id}`;
     shopifyVariants.push({
       variantId: variantGid,
+      sku: variant.sku?.trim() || null,
+      barcode: variant.barcode?.trim() || null,
       size,
       color,
       price: variant.price,
@@ -250,6 +254,7 @@ export function mapStorefrontProduct(product: AdminProduct) {
     price: lowestPrice,
     category: categorizeProduct(product.product_type, product.title),
     imageUrl: mainImage,
+    imageUrls: product.images.map((image) => image.src).filter(Boolean),
     sizes: Array.from(sizes),
     colors: Array.from(colors),
     colorImages,

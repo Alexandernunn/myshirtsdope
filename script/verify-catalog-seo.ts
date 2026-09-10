@@ -12,6 +12,46 @@ import type { Product, ProductSummary } from "../shared/schema";
 
 const OUTPUT_DIR = path.resolve("dist/public");
 
+type JsonLdNode = Record<string, any>;
+
+function parseGraph(html: string, label: string): JsonLdNode[] {
+  const jsonLd = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)?.[1];
+  assert(jsonLd, `${label} is missing JSON-LD`);
+  const document = JSON.parse(jsonLd);
+  assert.equal(document["@context"], "https://schema.org", `${label} has an invalid schema context`);
+  assert(Array.isArray(document["@graph"]), `${label} must use a connected @graph`);
+  const nodes = document["@graph"] as JsonLdNode[];
+  const ids = new Set<string>();
+  const references = new Set<string>();
+  const visit = (value: unknown): void => {
+    if (!value || typeof value !== "object") return;
+    if (Array.isArray(value)) {
+      value.forEach(visit);
+      return;
+    }
+    const node = value as JsonLdNode;
+    if (typeof node["@id"] === "string") {
+      if (Object.keys(node).length === 1) references.add(node["@id"]);
+      else {
+        assert(!ids.has(node["@id"]), `${label} has duplicate @id ${node["@id"]}`);
+        ids.add(node["@id"]);
+      }
+    }
+    Object.values(node).forEach(visit);
+  };
+  nodes.forEach(visit);
+  for (const reference of references) {
+    assert(ids.has(reference), `${label} has an unresolved @id reference ${reference}`);
+  }
+  return nodes;
+}
+
+function nodeOfType(nodes: JsonLdNode[], type: string): JsonLdNode {
+  const node = nodes.find((candidate) => candidate["@type"] === type);
+  assert(node, `schema graph is missing ${type}`);
+  return node;
+}
+
 async function verifyPublishedCatalog(): Promise<void> {
   const [sitemap, productsJson, redirects] = await Promise.all([
     readFile(path.join(OUTPUT_DIR, "sitemap.xml"), "utf8"),
@@ -58,9 +98,8 @@ async function verifyPublishedCatalog(): Promise<void> {
       !/https:\/\/myshirtsdope\.com\/product\/\d+(?=["'<\s])/.test(productHtml),
       `product ${productHandle} leaks a numeric canonical URL`,
     );
-    const jsonLd = productHtml.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)?.[1];
-    assert(jsonLd, `product ${productHandle} is missing Product JSON-LD`);
-    const productSchema = JSON.parse(jsonLd);
+    const graph = parseGraph(productHtml, `product ${productHandle}`);
+    const productSchema = nodeOfType(graph, "Product");
     const offer = productSchema.offers;
     const productPreload = productHtml.match(
       /<link rel="preload" as="image"[^>]*data-pdp-hero-preload="true"[^>]*>/,
@@ -79,17 +118,28 @@ async function verifyPublishedCatalog(): Promise<void> {
     assert(productData, `product ${productHandle} is missing its hydration data`);
     const hydratedProduct = JSON.parse(productData) as Product;
     assert.equal(hydratedProduct.handle, productHandle, `product ${productHandle} hydration data mismatch`);
+    assert(Array.isArray(hydratedProduct.imageUrls) && hydratedProduct.imageUrls.length > 0, `product ${productHandle} cached images are missing`);
     assert.equal(productSchema["@type"], "Product", `product ${productHandle} schema type mismatch`);
     assert(productSchema.name, `product ${productHandle} schema name is missing`);
     assert.equal(productSchema.sku, String(expectedProduct.id), `product ${productHandle} schema SKU mismatch`);
     assert.equal(offer.url, `https://myshirtsdope.com/product/${productHandle}`, `product ${productHandle} schema URL mismatch`);
     assert(Array.isArray(productSchema.image) && productSchema.image.length > 0, `product ${productHandle} schema image is missing`);
     assert.equal(offer.priceCurrency, "USD", `product ${productHandle} must use USD`);
-    assert(offer.price || offer.lowPrice, `product ${productHandle} schema price is missing`);
+    assert.equal(offer["@type"], "Offer", `product ${productHandle} must use a merchant Offer`);
+    assert(offer.price, `product ${productHandle} schema price is missing`);
+    assert.equal(offer.itemCondition, "https://schema.org/NewCondition");
+    assert(offer.seller?.["@id"]?.endsWith("/#organization"));
     assert(
-      ["http://schema.org/InStock", "http://schema.org/OutOfStock"].includes(offer.availability),
+      ["https://schema.org/InStock", "https://schema.org/OutOfStock"].includes(offer.availability),
       `product ${productHandle} has invalid schema availability`,
     );
+    assert.equal(productSchema.mainEntityOfPage?.["@id"], `https://myshirtsdope.com/product/${productHandle}#webpage`);
+    assert(Array.isArray(productSchema.color) || expectedProduct.colors.length === 0);
+    assert(Array.isArray(productSchema.size) || expectedProduct.sizes.length === 0);
+    nodeOfType(graph, "OnlineStore");
+    nodeOfType(graph, "WebSite");
+    nodeOfType(graph, "WebPage");
+    nodeOfType(graph, "BreadcrumbList");
   }
 
   const redirectLines = redirects.trim().split("\n");
@@ -101,7 +151,26 @@ async function verifyPublishedCatalog(): Promise<void> {
     );
   }
 
-  const shopHtml = await readFile(path.join(OUTPUT_DIR, "shop/index.html"), "utf8");
+  const [homeHtml, shopHtml] = await Promise.all([
+    readFile(path.join(OUTPUT_DIR, "index.html"), "utf8"),
+    readFile(path.join(OUTPUT_DIR, "shop/index.html"), "utf8"),
+  ]);
+  const homeGraph = parseGraph(homeHtml, "home page");
+  const homeStore = nodeOfType(homeGraph, "OnlineStore");
+  assert.equal(homeStore.logo?.width, 1024);
+  assert.equal(homeStore.logo?.height, 1024);
+  nodeOfType(homeGraph, "WebSite");
+  nodeOfType(homeGraph, "WebPage");
+  nodeOfType(homeGraph, "BreadcrumbList");
+
+  const shopGraph = parseGraph(shopHtml, "shop page");
+  nodeOfType(shopGraph, "OnlineStore");
+  nodeOfType(shopGraph, "WebSite");
+  nodeOfType(shopGraph, "CollectionPage");
+  nodeOfType(shopGraph, "BreadcrumbList");
+  const shopItems = nodeOfType(shopGraph, "ItemList");
+  assert.equal(shopItems.numberOfItems, 15, "shop schema must match the initially visible catalog");
+  assert.equal(shopItems.itemListElement.length, 15);
   const preload = shopHtml.match(/<link rel="preload" as="image"[^>]*>/)?.[0];
   const primaryImage = shopHtml.match(/<img [^>]*loading="eager"[^>]*fetchpriority="high"[^>]*>/)?.[0];
   assert(preload, "Shop LCP preload is missing");

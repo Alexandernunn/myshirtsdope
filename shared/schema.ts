@@ -2,6 +2,8 @@ import { z } from "zod";
 
 export interface ShopifyVariantMapping {
   variantId: string;
+  sku: string | null;
+  barcode: string | null;
   size: string;
   color: string;
   price: string;
@@ -18,6 +20,7 @@ export interface Product {
   price: number;
   category: string;
   imageUrl: string;
+  imageUrls: string[];
   badge: string | null;
   isNewDrop: boolean | null;
   sizes: string[];

@@ -21,6 +21,7 @@ async function fetchAndCacheProducts(): Promise<Product[]> {
       price: data.price,
       category: data.category,
       imageUrl: data.imageUrl,
+      imageUrls: data.imageUrls,
       badge: null,
       isNewDrop: data.isNewDrop,
       sizes: data.sizes,

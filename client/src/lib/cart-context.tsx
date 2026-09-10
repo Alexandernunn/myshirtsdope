@@ -46,6 +46,7 @@ function toWithProduct(item: StoredCartItem): CartItemWithProduct {
       name: item.productName,
       price: item.productPrice,
       imageUrl: item.productImageUrl,
+      imageUrls: [item.productImageUrl].filter(Boolean),
       colorImages: item.productColorImages,
       shopifyVariants: item.shopifyVariants,
       description: "",

@@ -15,6 +15,11 @@ import {
   type ShopifyImagePreset,
 } from "../shared/shopify-image";
 import { productPath } from "../shared/product-url";
+import {
+  homePageSchema,
+  productPageSchema,
+  shopPageSchema,
+} from "./storefront-schema";
 
 const OUTPUT_DIR = path.resolve("dist/public");
 const SITE_URL = (process.env.PUBLIC_SITE_URL || "https://myshirtsdope.com").replace(/\/+$/, "");
@@ -451,64 +456,24 @@ function renderProductContent(product: Product): string {
           </div>`;
 }
 
-function productJsonLd(product: Product, canonicalUrl: string) {
-  const variants = product.shopifyVariants ?? [];
-  const prices = variants
-    .map((variant) => Number.parseFloat(variant.price))
-    .filter((price) => Number.isFinite(price));
-  const normalizedPrices = prices.length > 0 ? prices : [product.price];
-  const lowPrice = Math.min(...normalizedPrices);
-  const highPrice = Math.max(...normalizedPrices);
-  const availability = variants.some((variant) => variant.availableForSale)
-    ? "http://schema.org/InStock"
-    : "http://schema.org/OutOfStock";
-  const uniquePrices = new Set(normalizedPrices.map((price) => price.toFixed(2)));
-  const offers = uniquePrices.size === 1
-    ? {
-        "@type": "Offer",
-        url: canonicalUrl,
-        priceCurrency: "USD",
-        price: lowPrice.toFixed(2),
-        availability,
-      }
-    : {
-        "@type": "AggregateOffer",
-        url: canonicalUrl,
-        lowPrice: lowPrice.toFixed(2),
-        highPrice: highPrice.toFixed(2),
-        priceCurrency: "USD",
-        offerCount: variants.length,
-        availability,
-      };
-
-  return {
-    "@context": "https://schema.org",
-    "@type": "Product",
-    name: product.name,
-    description: product.description,
-    image: product.imageUrl ? [product.imageUrl] : undefined,
-    sku: String(product.id),
-    category: product.category,
-    brand: {
-      "@type": "Brand",
-      name: "MyShirtsDope",
-    },
-    offers,
-  };
-}
-
 function renderShopPage(
   template: string,
   products: ProductSummary[],
   lcpImage: ShopLcpImage,
 ): string {
   const canonicalUrl = `${SITE_URL}/shop`;
+  const visibleSchemaProducts = prioritizeFeaturedGroups(
+    interleaveGroups(groupProducts(products)),
+  )
+    .slice(0, 15)
+    .map((group) => group.adult);
   const html = applyPageMetadata(template, {
     title: "Shop | MyShirtsDope",
     description: "Browse MyShirtsDope shirts, hoodies, onesies, and accessories inspired by music, culture, and love.",
     canonicalUrl,
     ogType: "website",
     imageUrl: `${SITE_URL}/favicon.png`,
+    jsonLd: shopPageSchema(SITE_URL, visibleSchemaProducts),
     preloadImage: { url: lcpImage.url, preset: IMAGE_PRESETS.gridCard },
   });
   const withListingData = injectPrerenderedData(html, 'data-prerendered-shop="true"', products);
@@ -527,7 +492,7 @@ function renderProductPage(template: string, product: Product): string {
     ogType: "product",
     imageUrl: product.imageUrl || `${SITE_URL}/favicon.png`,
     price: product.price,
-    jsonLd: productJsonLd(product, canonicalUrl),
+    jsonLd: productPageSchema(SITE_URL, product),
     preloadImage: product.imageUrl
       ? {
           url: product.imageUrl,
@@ -544,7 +509,16 @@ function renderProductPage(template: string, product: Product): string {
 }
 
 function renderHomePage(template: string, deckProducts: ProductSummary[]): string {
-  const withDeckData = injectPrerenderedData(template, 'data-prerendered-deck="true"', deckProducts);
+  const canonicalUrl = `${SITE_URL}/`;
+  const html = applyPageMetadata(template, {
+    title: "MyShirtsDope | Culture You Can Wear",
+    description: "Shirts, hoodies, onesies, and accessories for all ages inspired by music, culture, and love.",
+    canonicalUrl,
+    ogType: "website",
+    imageUrl: `${SITE_URL}/favicon.png`,
+    jsonLd: homePageSchema(SITE_URL),
+  });
+  const withDeckData = injectPrerenderedData(html, 'data-prerendered-deck="true"', deckProducts);
   return injectPrerenderedRoot(
     withDeckData,
     renderStorefrontShell(renderHomeContent(deckProducts), "/"),
