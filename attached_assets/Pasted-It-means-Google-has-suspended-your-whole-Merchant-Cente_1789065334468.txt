@@ -1,0 +1,46 @@
+It means Google has **suspended your whole Merchant Center account**. None of your products can appear in Google Shopping or free product listings in any country until you fix it and pass a review. Your website can still show up in regular Google search. This only blocks the product listings.
+
+The word "Misrepresentation" sounds like an accusation of fraud, but that's not really what it means here. Google's automated checks couldn't confirm that MyShirtsDope is a transparent, trustworthy business. The "No Google Ads account linked" item under it is just a warning, so you can ignore it.
+
+## Why you got flagged
+
+I checked myshirtsdope.com the way Google's crawler sees it, and it fails the first item on that list, business transparency:
+
+- **There's no contact info anywhere.** The site has no email, phone number, or business address. The only email in the code is the "your@email.com" placeholder in the contact form.
+- **There are no policy pages.** Your site's routes are home, shop, product, about, contact, cart, and order confirmation. There's no shipping policy, returns/refund policy, privacy policy, or terms page, and the footer doesn't link to any.
+- **/about and /contact aren't prerendered.** A crawler that doesn't run JavaScript gets the homepage content on those URLs. It's byte-for-byte the same as what a made-up URL returns.
+- **Fake URLs return real pages.** `/anything-random` comes back as the homepage with a 200 status instead of a 404. Automated quality checks read that as a low-effort site.
+- **Your sitemap skips your trust pages.** It lists the homepage, the shop page, and 2,744 product pages, but not About or Contact.
+- **There are no reviews or trust signals** on the site.
+
+To Google, that looks like an anonymous store with no way to reach anyone and no stated rules for shipping or refunds.
+
+## How to fix it, in order
+
+**1. Don't click "I disagree" or request a review yet.** Review attempts are limited: if issues aren't resolved by the second review attempt, a one-week cool down period may begin. Fix everything first.
+
+**2. Verify your identity.** You have to check the "Needs attention" tab for requests to submit a government-issued ID, and this must be done before requesting a review. Use the same business name and address everywhere: your ID documents, Merchant Center, and the website.
+
+**3. Build the missing pages, and link them in the footer on every page:**
+- **Contact:** email, phone, and business address.
+- **Shipping policy:** production time (it's print-on-demand), carriers, costs, and which countries you ship to.
+- **Returns and refunds:** what you accept (misprints, defects, wrong size?), the time window, how to start a return, and who pays for return shipping.
+- **Privacy policy and terms of service.** Shopify can generate starter templates under Settings → Policies. Keep your site's versions word-for-word consistent with what shows at Shopify checkout.
+
+**4. Improve the About page.** Say who's behind the brand, where you're based, and that items are printed to order. Explaining the business model is part of what Google checks.
+
+**5. Fix the technical issues.** Prerender /about, /contact, and the new policy pages. Make unknown URLs return a real 404. Add those pages to your sitemap.
+
+**6. Fill in Merchant Center to match the site exactly.** That means Settings → Business info (name, address, phone, customer service email) and the Shipping and returns section in the left menu.
+
+**7. Check that your feed matches your site.** Prices, availability, and product URLs in the feed have to match your live product pages.
+
+**8. Add reviews.** A review app gets real reviews showing on product pages.
+
+**9. Then request the review.** Wait a few days for Google to recrawl, then choose "I fixed the issue" → "Request review."
+
+Once the shipping and returns pages are live, fill in the `POLICY` section of the `schema.ts` file I gave you so the markup matches them, and set `confirmed` to `true`.
+
+One separate thing to know about: many of your designs reference real artists and songs (Wu-Tang, Biggie, DMX lyrics, Das EFX). That's not what this flag is about. But Google can still disapprove individual products if a rights holder complains, so keep it in mind as you rebuild.
+
+I can write the shipping, returns, and contact pages as React components that match your site's style, with the prerender setup included. Want me to start on those?
