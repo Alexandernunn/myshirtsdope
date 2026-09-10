@@ -9,6 +9,7 @@ import {
   verifyShopifyWebhookSignature,
 } from "../server/shopify-catalog-webhook";
 import type { Product, ProductSummary } from "../shared/schema";
+import { POLICY_PAGES, PUBLIC_TRUST_PATHS, STORE_SUPPORT_EMAIL } from "../shared/store-pages";
 
 const OUTPUT_DIR = path.resolve("dist/public");
 
@@ -74,7 +75,11 @@ async function verifyPublishedCatalog(): Promise<void> {
   const productUrls = sitemapLocs.filter((url) => url.startsWith("https://myshirtsdope.com/product/"));
   assert.equal(productUrls.length, productEntries.length, "sitemap/prerender product count mismatch");
   assert.equal(productEntries.length, products.length, "catalog/prerender product count mismatch");
-  assert.equal(sitemapLocs.length, productEntries.length + 2, "unexpected sitemap URL count");
+  assert.equal(
+    sitemapLocs.length,
+    productEntries.length + 2 + PUBLIC_TRUST_PATHS.length,
+    "unexpected sitemap URL count",
+  );
   assert(productUrls.every((url) => !/\/product\/\d+$/.test(url)), "numeric product URLs leaked into the sitemap");
   assert.equal(
     (sitemap.match(/<lastmod>[^<]+<\/lastmod>/g) ?? []).length,
@@ -129,6 +134,10 @@ async function verifyPublishedCatalog(): Promise<void> {
     assert(offer.price, `product ${productHandle} schema price is missing`);
     assert.equal(offer.itemCondition, "https://schema.org/NewCondition");
     assert(offer.seller?.["@id"]?.endsWith("/#organization"));
+    assert.equal(
+      offer.hasMerchantReturnPolicy?.["@id"],
+      "https://myshirtsdope.com/returns-refunds#policy",
+    );
     assert(
       ["https://schema.org/InStock", "https://schema.org/OutOfStock"].includes(offer.availability),
       `product ${productHandle} has invalid schema availability`,
@@ -140,6 +149,16 @@ async function verifyPublishedCatalog(): Promise<void> {
     nodeOfType(graph, "WebSite");
     nodeOfType(graph, "WebPage");
     nodeOfType(graph, "BreadcrumbList");
+    const returnPolicy = nodeOfType(graph, "MerchantReturnPolicy");
+    assert.equal(returnPolicy.applicableCountry, "US");
+    assert.equal(returnPolicy.merchantReturnDays, 30);
+    assert.equal(returnPolicy.returnMethod, "https://schema.org/ReturnByMail");
+    assert.equal(returnPolicy.returnFees, "https://schema.org/ReturnShippingFees");
+    assert.equal(returnPolicy.merchantReturnLink, "https://myshirtsdope.com/returns-refunds");
+    assert(
+      !graph.some((node) => node["@type"] === "OfferShippingDetails"),
+      `product ${productHandle} must omit shipping schema until checkout rates can be represented accurately`,
+    );
   }
 
   const redirectLines = redirects.trim().split(/\r?\n/);
@@ -184,6 +203,11 @@ async function verifyPublishedCatalog(): Promise<void> {
   const homeStore = nodeOfType(homeGraph, "OnlineStore");
   assert.equal(homeStore.logo?.width, 1024);
   assert.equal(homeStore.logo?.height, 1024);
+  assert.equal(homeStore.email, STORE_SUPPORT_EMAIL);
+  assert.equal(
+    homeStore.hasMerchantReturnPolicy?.["@id"],
+    "https://myshirtsdope.com/returns-refunds#policy",
+  );
   nodeOfType(homeGraph, "WebSite");
   nodeOfType(homeGraph, "WebPage");
   nodeOfType(homeGraph, "BreadcrumbList");
@@ -207,6 +231,81 @@ async function verifyPublishedCatalog(): Promise<void> {
   assert(preload.includes('fetchpriority="high"'));
   assert(primaryImage.includes('loading="eager"'));
   assert(primaryImage.includes("srcset=") && primaryImage.includes("sizes="));
+
+  for (const publicPath of PUBLIC_TRUST_PATHS) {
+    const html = await readFile(
+      path.join(OUTPUT_DIR, publicPath.slice(1), "index.html"),
+      "utf8",
+    );
+    const canonicalUrl = `https://myshirtsdope.com${publicPath}`;
+    assert(
+      html.includes(`<link rel="canonical" href="${canonicalUrl}" />`),
+      `${publicPath} canonical URL mismatch`,
+    );
+    assert(html.includes('data-prerendered-page="trust"'), `${publicPath} lacks visible static trust content`);
+    assert(html.includes(STORE_SUPPORT_EMAIL), `${publicPath} must show or link the public support email`);
+    for (const policyPage of POLICY_PAGES) {
+      assert(
+        html.includes(`href="${policyPage.path}"`),
+        `${publicPath} footer is missing ${policyPage.path}`,
+      );
+    }
+    const trustGraph = parseGraph(html, publicPath);
+    nodeOfType(trustGraph, "OnlineStore");
+    nodeOfType(trustGraph, "WebSite");
+    nodeOfType(
+      trustGraph,
+      publicPath === "/about" ? "AboutPage" : publicPath === "/contact" ? "ContactPage" : "WebPage",
+    );
+    nodeOfType(trustGraph, "BreadcrumbList");
+    const returnPolicy = nodeOfType(trustGraph, "MerchantReturnPolicy");
+    assert.equal(returnPolicy.merchantReturnDays, 30);
+    const normalized = html.toLowerCase();
+    assert(!normalized.includes("[insert"), `${publicPath} contains an unfinished template placeholder`);
+    assert(!normalized.includes("within a certain amount"), `${publicPath} contains unfinished refund timing`);
+    assert(!normalized.includes("tricreativegroup.com"), `${publicPath} contains the old support identity`);
+    assert(!normalized.includes("oberlo"), `${publicPath} contains an unconfirmed legacy provider`);
+  }
+
+  const shippingHtml = await readFile(path.join(OUTPUT_DIR, "shipping-policy/index.html"), "utf8");
+  assert(shippingHtml.includes("printed and fulfilled by Printful"));
+  assert(shippingHtml.includes("2–5 business days"));
+  assert(shippingHtml.includes("1–8 business days"));
+  assert(shippingHtml.includes("1–20 business days"));
+  const returnsHtml = await readFile(path.join(OUTPUT_DIR, "returns-refunds/index.html"), "utf8");
+  assert(returnsHtml.includes("within 30 days after delivery"));
+  assert(returnsHtml.includes("within 30 business days"));
+  assert(!returnsHtml.includes("within 15 days"));
+  const privacyHtml = await readFile(path.join(OUTPUT_DIR, "privacy-policy/index.html"), "utf8");
+  assert(privacyHtml.includes("sale or sharing of personal information"));
+  assert(privacyHtml.includes("Do Not Sell or Share My Personal Information"));
+
+  for (const policyPage of POLICY_PAGES) {
+    assert(
+      sitemapLocs.includes(`https://myshirtsdope.com${policyPage.path}`),
+      `${policyPage.path} is missing from the sitemap`,
+    );
+  }
+  assert(sitemapLocs.includes("https://myshirtsdope.com/about"));
+  assert(sitemapLocs.includes("https://myshirtsdope.com/contact"));
+
+  const [notFoundHtml, appShell, netlifyConfig] = await Promise.all([
+    readFile(path.join(OUTPUT_DIR, "404.html"), "utf8"),
+    readFile(path.join(OUTPUT_DIR, "app-shell.html"), "utf8"),
+    readFile(path.resolve("netlify.toml"), "utf8"),
+  ]);
+  assert(notFoundHtml.includes('content="noindex, nofollow"'));
+  assert(notFoundHtml.includes('data-prerendered-page="not-found"'));
+  assert(notFoundHtml.includes("PAGE NOT FOUND"));
+  assert(appShell.includes('content="noindex, nofollow"'));
+  assert(netlifyConfig.includes('from = "/product/*"\n  to = "/404.html"\n  status = 404'));
+  assert(netlifyConfig.includes('from = "/*"\n  to = "/404.html"\n  status = 404'));
+  for (const applicationPath of ["/cart", "/order-confirmation", "/start"]) {
+    assert(
+      netlifyConfig.includes(`from = "${applicationPath}"\n  to = "/app-shell.html"\n  status = 200`),
+      `${applicationPath} direct-load rewrite is missing`,
+    );
+  }
 }
 
 async function verifyPageSpeedContracts(): Promise<void> {
@@ -278,6 +377,13 @@ async function verifyPageSpeedContracts(): Promise<void> {
   );
   assert(footer.includes('className="storefront-footer border-t border-border bg-background min-h-[300px]"'));
   assert(footer.includes('style={{ contain: "layout style", contentVisibility: "auto" }}'));
+  for (const policyPage of POLICY_PAGES) {
+    assert(footer.includes(`href="${policyPage.path}"`), `interactive footer is missing ${policyPage.path}`);
+  }
+  assert(app.includes('<Route path="/shipping-policy" component={PolicyPage} />'));
+  assert(app.includes('<Route path="/returns-refunds" component={PolicyPage} />'));
+  assert(app.includes('<Route path="/privacy-policy" component={PolicyPage} />'));
+  assert(app.includes('<Route path="/terms-of-service" component={PolicyPage} />'));
   assert(!main.includes("replaceChildren"), "prerendered content must not be cleared before React commits");
   assert(main.includes("flushSync"), "the interactive storefront must commit in one synchronous paint");
   assert(home.includes("isPrerenderedDocument() ? tagline : \"\""));

@@ -38,6 +38,18 @@ export default function About() {
         </div>
 
         <div className="bg-card border border-card-border rounded-md p-6 sm:p-8">
+          <h2 className="font-pixel text-[10px] text-neon-blue neon-text-blue mb-4">THE BUSINESS</h2>
+          <p className="font-display text-lg text-foreground leading-relaxed mb-4">
+            My Shirts Dope operates from the United States and serves customers through MyShirtsDope.com.
+          </p>
+          <p className="text-muted-foreground leading-relaxed">
+            Our online storefront and secure checkout are powered by Shopify. Products are printed and
+            fulfilled by Printful after purchase, then shipped to supported destinations worldwide.
+            Customer questions are handled by the MyShirtsDope support team at info@myshirtsdope.com.
+          </p>
+        </div>
+
+        <div className="bg-card border border-card-border rounded-md p-6 sm:p-8">
           <h2 className="font-pixel text-[10px] text-neon-green neon-text-green mb-4">THE VIBE</h2>
           <p className="font-display text-lg text-foreground leading-relaxed mb-4">
             We are nostalgic. We are bold. We are community-driven. We believe the best music, the best

@@ -24,6 +24,7 @@ const loadProductDetail = () => import("@/pages/product-detail").then((module) =
 const loadCart = () => import("@/pages/cart");
 const loadAbout = () => import("@/pages/about");
 const loadContact = () => import("@/pages/contact");
+const loadPolicyPage = () => import("@/pages/policy-page");
 const loadOrderConfirmation = () => import("@/pages/order-confirmation");
 const loadNotFound = () => import("@/pages/not-found");
 
@@ -32,6 +33,7 @@ const ProductDetail = lazy(loadProductDetail);
 const CartPage = lazy(loadCart);
 const About = lazy(loadAbout);
 const Contact = lazy(loadContact);
+const PolicyPage = lazy(loadPolicyPage);
 const OrderConfirmation = lazy(loadOrderConfirmation);
 const NotFound = lazy(loadNotFound);
 const DeferredToaster = lazy(() =>
@@ -65,6 +67,10 @@ export async function preloadCurrentRoute(pathname: string): Promise<void> {
     await loadAbout();
   } else if (normalizedPath === "/contact") {
     await loadContact();
+  } else if (
+    ["/shipping-policy", "/returns-refunds", "/privacy-policy", "/terms-of-service"].includes(normalizedPath)
+  ) {
+    await loadPolicyPage();
   } else if (normalizedPath === "/order-confirmation") {
     await loadOrderConfirmation();
   } else if (normalizedPath !== "/") {
@@ -126,6 +132,10 @@ function Router() {
         <Route path="/cart" component={CartPage} />
         <Route path="/about" component={About} />
         <Route path="/contact" component={Contact} />
+        <Route path="/shipping-policy" component={PolicyPage} />
+        <Route path="/returns-refunds" component={PolicyPage} />
+        <Route path="/privacy-policy" component={PolicyPage} />
+        <Route path="/terms-of-service" component={PolicyPage} />
         <Route path="/order-confirmation" component={OrderConfirmation} />
         <Route component={NotFound} />
       </Switch>

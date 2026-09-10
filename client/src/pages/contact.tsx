@@ -9,6 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { Send, MessageSquare } from "lucide-react";
+import { STORE_SUPPORT_EMAIL } from "@shared/store-pages";
 
 const FORMSPREE_ENDPOINT = "https://formspree.io/f/mvkpnyae";
 
@@ -74,6 +75,12 @@ export default function Contact() {
           </h1>
           <p className="font-display text-lg text-muted-foreground">
             Questions, custom orders, bulk pricing, or just want to say what's up? Drop us a line.
+          </p>
+          <p className="font-display text-base text-muted-foreground mt-4">
+            Email us directly at{" "}
+            <a className="text-neon-blue underline underline-offset-4" href={`mailto:${STORE_SUPPORT_EMAIL}`}>
+              {STORE_SUPPORT_EMAIL}
+            </a>
           </p>
         </div>
 

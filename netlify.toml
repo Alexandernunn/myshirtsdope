@@ -26,6 +26,21 @@
   [headers.values]
     Cache-Control = "public, max-age=300, stale-while-revalidate=60"
 
+[[headers]]
+  for = "/cart"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
+[[headers]]
+  for = "/order-confirmation"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
+[[headers]]
+  for = "/start"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/api"
@@ -34,7 +49,7 @@
 
 [[redirects]]
   from = "/product/*"
-  to = "/index.html"
+  to = "/404.html"
   status = 404
 
 [[redirects]]
@@ -44,6 +59,21 @@
   force = true
 
 [[redirects]]
-  from = "/*"
-  to = "/index.html"
+  from = "/cart"
+  to = "/app-shell.html"
   status = 200
+
+[[redirects]]
+  from = "/order-confirmation"
+  to = "/app-shell.html"
+  status = 200
+
+[[redirects]]
+  from = "/start"
+  to = "/app-shell.html"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/404.html"
+  status = 404

@@ -8,12 +8,22 @@ export default function Footer() {
     >
       <div className="retro-divider" />
       <div className="max-w-7xl mx-auto px-4 py-10">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           <div>
             <h3 className="font-pixel text-[10px] text-neon-blue neon-text-blue mb-4">MyShirtsDope</h3>
             <p className="font-display text-base text-muted-foreground leading-relaxed">
               Shirts, hoodies, onesies, and accessories for all ages inspired by music, culture and love.
             </p>
+          </div>
+
+          <div>
+            <h4 className="font-pixel text-[9px] text-neon-orange mb-4">POLICIES</h4>
+            <div className="flex flex-col gap-2">
+              <Link href="/shipping-policy"><span className="font-display text-base text-muted-foreground">Shipping</span></Link>
+              <Link href="/returns-refunds"><span className="font-display text-base text-muted-foreground">Returns &amp; Refunds</span></Link>
+              <Link href="/privacy-policy"><span className="font-display text-base text-muted-foreground">Privacy</span></Link>
+              <Link href="/terms-of-service"><span className="font-display text-base text-muted-foreground">Terms</span></Link>
+            </div>
           </div>
 
           <div>

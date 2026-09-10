@@ -1,5 +1,6 @@
 import { access, readdir, readFile, writeFile } from "fs/promises";
 import path from "path";
+import { PUBLIC_TRUST_PATHS } from "../shared/store-pages";
 
 const OUTPUT_DIR = path.resolve("dist/public");
 const SITE_URL = (process.env.PUBLIC_SITE_URL || "https://myshirtsdope.com").replace(/\/+$/, "");
@@ -72,6 +73,9 @@ export async function generateSitemap(products: SitemapProduct[]): Promise<void>
   const urls = [
     `  <url><loc>${escapeXml(SITE_URL)}</loc></url>`,
     `  <url><loc>${escapeXml(`${SITE_URL}/shop`)}</loc></url>`,
+    ...PUBLIC_TRUST_PATHS.map((publicPath) => (
+      `  <url><loc>${escapeXml(`${SITE_URL}${publicPath}`)}</loc></url>`
+    )),
     ...activeProducts.map((product) => (
       `  <url><loc>${escapeXml(`${SITE_URL}/product/${product.handle}`)}</loc><lastmod>${formatLastModified(product.updatedAt, product.id)}</lastmod></url>`
     )),
@@ -83,9 +87,9 @@ export async function generateSitemap(products: SitemapProduct[]): Promise<void>
 
   const writtenSitemap = await readFile(sitemapPath, "utf8");
   const urlCount = (writtenSitemap.match(/<url>/g) ?? []).length;
-  if (urlCount !== activeProducts.length + 2) {
+  if (urlCount !== activeProducts.length + 2 + PUBLIC_TRUST_PATHS.length) {
     throw new Error(
-      `Sitemap generation failed: wrote ${urlCount} URLs, expected ${activeProducts.length + 2}`,
+      `Sitemap generation failed: wrote ${urlCount} URLs, expected ${activeProducts.length + 2 + PUBLIC_TRUST_PATHS.length}`,
     );
   }
 

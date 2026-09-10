@@ -16,9 +16,15 @@ import {
 } from "../shared/shopify-image";
 import { productPath } from "../shared/product-url";
 import {
+  POLICY_PAGES,
+  STORE_SUPPORT_EMAIL,
+  type StorePageDefinition,
+} from "../shared/store-pages";
+import {
   homePageSchema,
   productPageSchema,
   shopPageSchema,
+  trustPageSchema,
 } from "./storefront-schema";
 
 const OUTPUT_DIR = path.resolve("dist/public");
@@ -293,7 +299,7 @@ function renderStorefrontFooter(): string {
     <footer class="storefront-footer border-t border-border bg-background min-h-[300px]" style="contain:layout style;content-visibility:auto">
       <div class="retro-divider"></div>
       <div class="max-w-7xl mx-auto px-4 py-10">
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-8">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           <div>
             <h3 class="font-pixel text-[10px] text-neon-blue neon-text-blue mb-4">MyShirtsDope</h3>
             <p class="font-display text-base text-muted-foreground leading-relaxed">Shirts, hoodies, onesies, and accessories for all ages inspired by music, culture and love.</p>
@@ -305,6 +311,10 @@ function renderStorefrontFooter(): string {
           <div>
             <h4 class="font-pixel text-[9px] text-neon-green mb-4">CATEGORIES</h4>
             <div class="flex flex-col gap-2"><a href="/shop?category=Shirts" class="font-display text-base text-muted-foreground">Shirts</a><a href="/shop?category=Hoodies" class="font-display text-base text-muted-foreground">Hoodies</a><a href="/shop?category=Onesies" class="font-display text-base text-muted-foreground">Onesies</a><a href="/shop?category=Accessories" class="font-display text-base text-muted-foreground">Accessories</a></div>
+          </div>
+          <div>
+            <h4 class="font-pixel text-[9px] text-neon-orange mb-4">POLICIES</h4>
+            <div class="flex flex-col gap-2"><a href="/shipping-policy" class="font-display text-base text-muted-foreground">Shipping</a><a href="/returns-refunds" class="font-display text-base text-muted-foreground">Returns &amp; Refunds</a><a href="/privacy-policy" class="font-display text-base text-muted-foreground">Privacy</a><a href="/terms-of-service" class="font-display text-base text-muted-foreground">Terms</a></div>
           </div>
         </div>
         <div class="mt-10 pt-6 border-t border-border/50 text-center"><p class="font-pixel text-[8px] text-muted-foreground animate-neon-pulse">MyShirtsDope.com &mdash; CULTURE NEVER DIES</p></div>
@@ -525,6 +535,133 @@ function renderHomePage(template: string, deckProducts: ProductSummary[]): strin
   );
 }
 
+function linkSupportEmail(value: string): string {
+  return escapeHtml(value).replace(
+    STORE_SUPPORT_EMAIL,
+    `<a href="mailto:${STORE_SUPPORT_EMAIL}" class="text-neon-blue underline">${STORE_SUPPORT_EMAIL}</a>`,
+  );
+}
+
+function renderPublicPageContent(page: StorePageDefinition): string {
+  const sections = page.sections.map((section) => {
+    const paragraphs = section.paragraphs
+      ?.map((paragraph) => `<p class="text-muted-foreground leading-relaxed">${linkSupportEmail(paragraph)}</p>`)
+      .join("") ?? "";
+    const bullets = section.bullets
+      ? `<ul class="list-disc pl-5 space-y-2 text-muted-foreground leading-relaxed">${section.bullets
+          .map((item) => `<li>${escapeHtml(item)}</li>`)
+          .join("")}</ul>`
+      : "";
+    return `
+              <section class="bg-card border border-card-border rounded-md p-6 sm:p-8">
+                <h2 class="font-pixel text-[10px] text-neon-yellow mb-4">${escapeHtml(section.heading.toUpperCase())}</h2>
+                <div class="space-y-4">${paragraphs}${bullets}</div>
+              </section>`;
+  }).join("");
+
+  return `
+          <div class="min-h-screen" data-prerendered-page="trust">
+            <div class="retro-divider"></div>
+            <article class="max-w-3xl mx-auto px-4 py-16">
+              <header class="text-center mb-10">
+                <p class="font-pixel text-[9px] text-neon-green mb-3 tracking-widest">STORE INFO</p>
+                <h1 class="font-pixel text-lg sm:text-xl text-neon-blue leading-relaxed">${escapeHtml(page.title.toUpperCase())}</h1>
+              </header>
+              <div class="space-y-6">${sections}</div>
+            </article>
+          </div>`;
+}
+
+const ABOUT_PAGE: StorePageDefinition = {
+  path: "/about",
+  title: "Our Story",
+  shortTitle: "About",
+  description: "Learn who operates MyShirtsDope, what the store sells, and how orders and customer support are handled.",
+  schemaType: "AboutPage",
+  sections: [
+    {
+      heading: "Who we are",
+      paragraphs: [
+        "My Shirts Dope operates from the United States and serves customers through MyShirtsDope.com.",
+        "We create wearable art inspired by music, culture, love, and the moments that shape us. The collection includes shirts, hoodies, onesies, and accessories for all ages.",
+      ],
+    },
+    {
+      heading: "How the store works",
+      paragraphs: [
+        `Our online storefront and secure checkout are powered by Shopify. Products are printed and fulfilled by Printful after purchase, then shipped to supported destinations worldwide. Customer questions are handled by the MyShirtsDope support team at ${STORE_SUPPORT_EMAIL}.`,
+      ],
+    },
+  ],
+};
+
+const CONTACT_PAGE: StorePageDefinition = {
+  path: "/contact",
+  title: "Contact Us",
+  shortTitle: "Contact",
+  description: "Contact MyShirtsDope customer support about an order, product, return, or other store question.",
+  schemaType: "ContactPage",
+  sections: [
+    {
+      heading: "Customer support",
+      paragraphs: [
+        `Email ${STORE_SUPPORT_EMAIL} for help with an order, product, shipping issue, return request, custom order, or bulk-pricing question.`,
+        "Include your order number when asking about an existing purchase. You can also use the contact form on this page after JavaScript loads.",
+      ],
+    },
+  ],
+};
+
+const PUBLIC_PAGES = [ABOUT_PAGE, CONTACT_PAGE, ...POLICY_PAGES];
+
+function renderPublicPage(template: string, page: StorePageDefinition): string {
+  const canonicalUrl = `${SITE_URL}${page.path}`;
+  const html = applyPageMetadata(template, {
+    title: `${page.title} | MyShirtsDope`,
+    description: page.description,
+    canonicalUrl,
+    ogType: "website",
+    imageUrl: `${SITE_URL}/favicon.png`,
+    jsonLd: trustPageSchema(SITE_URL, page.path, page.schemaType, page.title, page.description),
+  });
+  return injectPrerenderedRoot(
+    html,
+    renderStorefrontShell(renderPublicPageContent(page), page.path),
+  );
+}
+
+function renderNoindexAppShell(template: string): string {
+  return replaceHeadTag(
+    template,
+    /<meta\s+name=["']robots["'][^>]*>/i,
+    '<meta name="robots" content="noindex, nofollow" />',
+  );
+}
+
+function renderNotFoundPage(template: string): string {
+  let html = applyPageMetadata(template, {
+    title: "Page Not Found | MyShirtsDope",
+    description: "The requested MyShirtsDope page could not be found.",
+    canonicalUrl: `${SITE_URL}/404`,
+    ogType: "website",
+  });
+  html = replaceHeadTag(
+    html,
+    /<meta\s+name=["']robots["'][^>]*>/i,
+    '<meta name="robots" content="noindex, nofollow" />',
+  );
+  return injectPrerenderedRoot(
+    html,
+    renderStorefrontShell(`
+          <div class="min-h-[60vh] flex flex-col items-center justify-center px-4 text-center" data-prerendered-page="not-found">
+            <p class="font-pixel text-4xl text-neon-blue mb-4">404</p>
+            <h1 class="font-pixel text-[10px] text-neon-yellow mb-2">PAGE NOT FOUND</h1>
+            <p class="font-display text-lg text-muted-foreground mb-8">This page does not exist. Return home or browse the shop.</p>
+            <div class="flex gap-4"><a href="/" class="font-pixel text-[10px] bg-neon-blue text-white px-6 py-4 rounded-md">RETURN HOME</a><a href="/shop" class="font-pixel text-[10px] border border-neon-yellow text-neon-yellow px-6 py-4 rounded-md">SHOP</a></div>
+          </div>`, ""),
+  );
+}
+
 export async function prerenderCatalog(
   products: Product[],
   slimInitial: ProductSummary[],
@@ -542,11 +679,13 @@ export async function prerenderCatalog(
   const template = await readFile(path.join(OUTPUT_DIR, "index.html"), "utf-8");
   const productOutputDir = path.join(OUTPUT_DIR, "product");
   const shopOutputDir = path.join(OUTPUT_DIR, "shop");
+  const publicOutputDirs = PUBLIC_PAGES.map((page) => path.join(OUTPUT_DIR, page.path.slice(1)));
   const uniqueProducts = Array.from(new Map(products.map((product) => [product.id, product])).values());
 
   await Promise.all([
     rm(productOutputDir, { recursive: true, force: true }),
     rm(shopOutputDir, { recursive: true, force: true }),
+    ...publicOutputDirs.map((outputDir) => rm(outputDir, { recursive: true, force: true })),
   ]);
 
   await mkdir(shopOutputDir, { recursive: true });
@@ -555,6 +694,15 @@ export async function prerenderCatalog(
     path.join(shopOutputDir, "index.html"),
     renderShopPage(template, slimInitial, shopLcpImage),
   );
+  await Promise.all(PUBLIC_PAGES.map(async (page) => {
+    const outputDir = path.join(OUTPUT_DIR, page.path.slice(1));
+    await mkdir(outputDir, { recursive: true });
+    await writeFile(path.join(outputDir, "index.html"), renderPublicPage(template, page));
+  }));
+  await Promise.all([
+    writeFile(path.join(OUTPUT_DIR, "404.html"), renderNotFoundPage(template)),
+    writeFile(path.join(OUTPUT_DIR, "app-shell.html"), renderNoindexAppShell(template)),
+  ]);
 
   for (let index = 0; index < uniqueProducts.length; index += PRODUCT_BATCH_SIZE) {
     const batch = uniqueProducts.slice(index, index + PRODUCT_BATCH_SIZE);
@@ -575,7 +723,7 @@ export async function prerenderCatalog(
     .join("\n");
   await writeFile(path.join(OUTPUT_DIR, "_redirects"), `${redirects}\n`);
 
-  console.log(`[Prerender] Generated branded home, shop, and ${uniqueProducts.length} product pages`);
+  console.log(`[Prerender] Generated branded home, shop, ${PUBLIC_PAGES.length} trust pages, and ${uniqueProducts.length} product pages`);
   console.log(`[Prerender] Generated ${uniqueProducts.length} permanent numeric product redirects`);
   console.log(`[Prerender] Canonical site URL: ${SITE_URL}`);
 }

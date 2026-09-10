@@ -28,6 +28,7 @@ function organizationNode(siteUrl: string): JsonLdNode {
     alternateName: "My Shirts Dope",
     url: `${siteUrl}/`,
     description: STORE_DESCRIPTION,
+    email: "info@myshirtsdope.com",
     logo: {
       "@type": "ImageObject",
       "@id": entityIds.logo,
@@ -37,6 +38,20 @@ function organizationNode(siteUrl: string): JsonLdNode {
       height: 1024,
     },
     image: reference(entityIds.logo),
+    hasMerchantReturnPolicy: reference(`${siteUrl}/returns-refunds#policy`),
+  };
+}
+
+function merchantReturnPolicyNode(siteUrl: string): JsonLdNode {
+  return {
+    "@type": "MerchantReturnPolicy",
+    "@id": `${siteUrl}/returns-refunds#policy`,
+    applicableCountry: "US",
+    returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
+    merchantReturnDays: 30,
+    returnMethod: "https://schema.org/ReturnByMail",
+    returnFees: "https://schema.org/ReturnShippingFees",
+    merchantReturnLink: `${siteUrl}/returns-refunds`,
   };
 }
 
@@ -144,6 +159,7 @@ function productOffer(siteUrl: string, product: Product, canonicalUrl: string): 
       : "https://schema.org/OutOfStock",
     itemCondition: "https://schema.org/NewCondition",
     seller: reference(ids(siteUrl).organization),
+    hasMerchantReturnPolicy: reference(`${siteUrl}/returns-refunds#policy`),
   };
 }
 
@@ -179,6 +195,7 @@ export function homePageSchema(siteUrl: string): JsonLdNode {
   const canonicalUrl = `${siteUrl}/`;
   return graph([
     organizationNode(siteUrl),
+    merchantReturnPolicyNode(siteUrl),
     websiteNode(siteUrl),
     pageNode(
       siteUrl,
@@ -196,6 +213,7 @@ export function shopPageSchema(siteUrl: string, products: ProductSummary[]): Jso
   const itemListId = `${canonicalUrl}#products`;
   return graph([
     organizationNode(siteUrl),
+    merchantReturnPolicyNode(siteUrl),
     websiteNode(siteUrl),
     pageNode(
       siteUrl,
@@ -229,6 +247,7 @@ export function productPageSchema(siteUrl: string, product: Product): JsonLdNode
   const canonicalUrl = `${siteUrl}${productPath(product)}`;
   return graph([
     organizationNode(siteUrl),
+    merchantReturnPolicyNode(siteUrl),
     websiteNode(siteUrl),
     pageNode(
       siteUrl,
@@ -244,5 +263,25 @@ export function productPageSchema(siteUrl: string, product: Product): JsonLdNode
       { name: product.name, url: canonicalUrl },
     ]),
     productNode(siteUrl, product, canonicalUrl),
+  ]);
+}
+
+export function trustPageSchema(
+  siteUrl: string,
+  path: string,
+  type: "AboutPage" | "ContactPage" | "WebPage",
+  name: string,
+  description: string,
+): JsonLdNode {
+  const canonicalUrl = `${siteUrl}${path}`;
+  return graph([
+    organizationNode(siteUrl),
+    merchantReturnPolicyNode(siteUrl),
+    websiteNode(siteUrl),
+    pageNode(siteUrl, canonicalUrl, type, name, description),
+    breadcrumbNode(canonicalUrl, [
+      { name: "Home", url: `${siteUrl}/` },
+      { name, url: canonicalUrl },
+    ]),
   ]);
 }
