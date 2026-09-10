@@ -142,12 +142,37 @@ async function verifyPublishedCatalog(): Promise<void> {
     nodeOfType(graph, "BreadcrumbList");
   }
 
-  const redirectLines = redirects.trim().split("\n");
+  const redirectLines = redirects.trim().split(/\r?\n/);
   assert.equal(redirectLines.length, products.length, "numeric redirect count mismatch");
+  const redirectsBySource = new Map<string, string>();
+  for (const [index, line] of redirectLines.entries()) {
+    const match = line.match(/^\/product\/(\d+)\s+\/product\/([a-z0-9]+(?:-[a-z0-9]+)*)\s+301!$/);
+    assert(match, `invalid product redirect syntax at line ${index + 1}`);
+    const [, productId, productHandle] = match;
+    const source = `/product/${productId}`;
+    const destination = `/product/${productHandle}`;
+    assert(!redirectsBySource.has(source), `duplicate redirect source ${source}`);
+    assert.notEqual(source, destination, `redirect loop for ${source}`);
+    assert(!/\/product\/\d+$/.test(destination), `numeric redirect destination ${destination}`);
+    redirectsBySource.set(source, destination);
+  }
   for (const product of products) {
+    const source = `/product/${product.id}`;
+    const destination = `/product/${product.handle}`;
     assert(
-      redirectLines.includes(`/product/${product.id}  /product/${product.handle}  301!`),
+      redirectsBySource.get(source) === destination,
       `missing permanent redirect for product ${product.id}`,
+    );
+    assert(!redirectsBySource.has(destination), `redirect chain begins at ${destination}`);
+    const destinationHtml = await readFile(
+      path.join(OUTPUT_DIR, "product", product.handle, "index.html"),
+      "utf8",
+    );
+    assert(
+      destinationHtml.includes(
+        `<link rel="canonical" href="https://myshirtsdope.com${destination}" />`,
+      ),
+      `redirect destination ${destination} does not self-canonicalize`,
     );
   }
 

@@ -9,6 +9,7 @@
     "build:client": "vite build",
     "build:netlify": "vite build && npx tsx script/build-catalog.ts",
     "verify:catalog-seo": "npx tsx script/verify-catalog-seo.ts",
+    "audit:search-console-indexing": "npx tsx script/audit-search-console-product-indexing.ts",
     "start": "NODE_ENV=production node dist/index.cjs",
     "check": "tsc"
   },
