@@ -314,7 +314,7 @@ function renderStorefrontFooter(): string {
           </div>
           <div>
             <h4 class="font-pixel text-[9px] text-neon-orange mb-4">POLICIES</h4>
-            <div class="flex flex-col gap-2"><a href="/shipping-policy" class="font-display text-base text-muted-foreground">Shipping</a><a href="/returns-refunds" class="font-display text-base text-muted-foreground">Returns &amp; Refunds</a><a href="/privacy-policy" class="font-display text-base text-muted-foreground">Privacy</a><a href="/terms-of-service" class="font-display text-base text-muted-foreground">Terms</a></div>
+            <div class="flex flex-col gap-2"><a href="/shipping-policy" class="font-display text-base text-muted-foreground">Shipping</a><a href="/returns-refunds" class="font-display text-base text-muted-foreground">Returns &amp; Refunds</a><a href="/privacy-policy" class="font-display text-base text-muted-foreground">Privacy</a><button type="button" data-privacy-choices="true" class="w-fit text-left font-display text-base text-muted-foreground">Privacy Choices</button><a href="/terms-of-service" class="font-display text-base text-muted-foreground">Terms</a></div>
           </div>
         </div>
         <div class="mt-10 pt-6 border-t border-border/50 text-center"><p class="font-pixel text-[8px] text-muted-foreground animate-neon-pulse">MyShirtsDope.com &mdash; CULTURE NEVER DIES</p></div>
@@ -582,7 +582,7 @@ const ABOUT_PAGE: StorePageDefinition = {
     {
       heading: "Who we are",
       paragraphs: [
-        "My Shirts Dope operates from the United States and serves customers through MyShirtsDope.com.",
+        "My Shirts Dope operates from Nashville, Tennessee, and serves customers through MyShirtsDope.com.",
         "We create wearable art inspired by music, culture, love, and the moments that shape us. The collection includes shirts, hoodies, onesies, and accessories for all ages.",
       ],
     },

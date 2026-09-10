@@ -40,7 +40,7 @@ export default function About() {
         <div className="bg-card border border-card-border rounded-md p-6 sm:p-8">
           <h2 className="font-pixel text-[10px] text-neon-blue neon-text-blue mb-4">THE BUSINESS</h2>
           <p className="font-display text-lg text-foreground leading-relaxed mb-4">
-            My Shirts Dope operates from the United States and serves customers through MyShirtsDope.com.
+            My Shirts Dope operates from Nashville, Tennessee, and serves customers through MyShirtsDope.com.
           </p>
           <p className="text-muted-foreground leading-relaxed">
             Our online storefront and secure checkout are powered by Shopify. Products are printed and

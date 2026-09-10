@@ -31,11 +31,16 @@ export const handler: Handler = async (event) => {
 
   let eventName: string;
   let eventData: Record<string, any>;
+  let advertisingConsent: boolean;
 
   try {
-    ({ eventName, eventData } = JSON.parse(event.body || "{}"));
+    ({ eventName, eventData, advertisingConsent } = JSON.parse(event.body || "{}"));
   } catch {
     return { statusCode: 400, body: "Invalid JSON" };
+  }
+
+  if (advertisingConsent !== true || event.headers["sec-gpc"] === "1") {
+    return { statusCode: 204, body: "" };
   }
 
   if (!eventName) {

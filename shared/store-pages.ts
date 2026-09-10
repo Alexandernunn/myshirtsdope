@@ -109,7 +109,7 @@ export const POLICY_PAGES: StorePageDefinition[] = [
         heading: "Service providers and choices",
         paragraphs: [
           "MyShirtsDope uses service providers to operate the store, including Shopify for commerce and checkout, Formspree for contact-form delivery, and analytics or advertising providers such as Google and Meta. These providers process information under their own terms and privacy practices.",
-          "You can limit optional cookies through browser controls and available consent settings. Depending on where you live, you may have rights to request access, correction, deletion, or restriction of personal information.",
+          "Use the Privacy Choices control in the website footer to allow or refuse advertising data sharing. MyShirtsDope also honors supported Global Privacy Control browser signals as a refusal. Depending on where you live, you may have rights to request access, correction, deletion, or restriction of personal information.",
           `To make a privacy request, email ${STORE_SUPPORT_EMAIL}. MyShirtsDope may need to verify the request before acting on it.`,
         ],
       },
@@ -117,7 +117,7 @@ export const POLICY_PAGES: StorePageDefinition[] = [
         heading: "Sale or sharing and opt-out requests",
         paragraphs: [
           "MyShirtsDope uses advertising and analytics services, including Google and Meta. Providing identifiers and storefront activity to these services for advertising measurement or personalized advertising may be considered a sale or sharing of personal information under some privacy laws.",
-          `To request that MyShirtsDope not sell or share your personal information for these purposes, email ${STORE_SUPPORT_EMAIL} with the subject “Do Not Sell or Share My Personal Information.” MyShirtsDope will process verified requests as required by applicable law.`,
+          `Use the Privacy Choices control in the website footer to refuse advertising data sharing. You may also email ${STORE_SUPPORT_EMAIL} with the subject “Do Not Sell or Share My Personal Information.” MyShirtsDope will process verified requests as required by applicable law.`,
         ],
       },
       {

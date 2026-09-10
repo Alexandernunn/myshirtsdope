@@ -1,3 +1,5 @@
+import { advertisingDataAllowed, PRIVACY_CHOICE_EVENT } from "@/lib/privacy-choices";
+
 const GA_MEASUREMENT_ID = "G-EV5P2LKEHE";
 const META_PIXEL_ID = "1085522715399637";
 const MAX_SCRIPT_ATTEMPTS = 2;
@@ -56,7 +58,7 @@ let activeDeferrals = 0;
 let retryListenerTimer: number | undefined;
 
 function prepareGoogleQueue() {
-  if (typeof window === "undefined" || googleQueuePrepared) return;
+  if (typeof window === "undefined" || googleQueuePrepared || !advertisingDataAllowed()) return;
 
   window.dataLayer = window.dataLayer || [];
   if (!window.gtag) {
@@ -78,7 +80,7 @@ function prepareGoogleQueue() {
 }
 
 function prepareMetaQueue() {
-  if (typeof window === "undefined" || metaQueuePrepared) return;
+  if (typeof window === "undefined" || metaQueuePrepared || !advertisingDataAllowed()) return;
 
   if (!window.fbq) {
     const fbq = function (...args: any[]) {
@@ -219,7 +221,7 @@ function appendMarketingScript(state: MarketingScriptState) {
 }
 
 function loadMarketingScripts() {
-  if (typeof document === "undefined") return;
+  if (typeof document === "undefined" || !advertisingDataAllowed()) return;
 
   prepareMarketingQueues();
   appendMarketingScript(googleScript);
@@ -234,7 +236,42 @@ function handleInteraction() {
 export function deferMarketingScriptsUntilInteraction() {
   if (typeof document === "undefined") return () => {};
 
-  prepareMarketingQueues();
+  const handlePrivacyChoice = () => {
+    if (advertisingDataAllowed()) {
+      for (const state of [googleScript, metaScript]) {
+        if (state.status === "disabled") {
+          state.status = "idle";
+          state.attempts = 0;
+        }
+      }
+      window.gtag?.("consent", "update", {
+        ad_storage: "granted",
+        analytics_storage: "granted",
+        ad_user_data: "granted",
+        ad_personalization: "granted",
+      });
+      window.fbq?.("consent", "grant");
+      prepareMarketingQueues();
+      addInteractionListeners();
+    } else {
+      window.gtag?.("consent", "update", {
+        ad_storage: "denied",
+        analytics_storage: "denied",
+        ad_user_data: "denied",
+        ad_personalization: "denied",
+      });
+      window.fbq?.("consent", "revoke");
+      removeInteractionListeners();
+      googleScript.status = "disabled";
+      metaScript.status = "disabled";
+      document.getElementById(googleScript.id)?.remove();
+      document.getElementById(metaScript.id)?.remove();
+      disableBrowserQueue(googleScript);
+      disableBrowserQueue(metaScript);
+    }
+  };
+  window.addEventListener(PRIVACY_CHOICE_EVENT, handlePrivacyChoice);
+  if (advertisingDataAllowed()) prepareMarketingQueues();
   activeDeferrals += 1;
   addInteractionListeners();
 
@@ -249,11 +286,13 @@ export function deferMarketingScriptsUntilInteraction() {
         window.clearTimeout(retryListenerTimer);
         retryListenerTimer = undefined;
       }
+      window.removeEventListener(PRIVACY_CHOICE_EVENT, handlePrivacyChoice);
     }
   };
 }
 
 export function queueGooglePageView(path: string) {
+  if (!advertisingDataAllowed()) return;
   prepareGoogleQueue();
   window.gtag?.("config", GA_MEASUREMENT_ID, {
     page_path: path,
@@ -265,6 +304,7 @@ export function queueMetaPixelEvent(
   params: Record<string, any>,
   eventId: string,
 ) {
+  if (!advertisingDataAllowed()) return;
   prepareMetaQueue();
   window.fbq?.("track", eventName, params, { eventID: eventId });
 }
