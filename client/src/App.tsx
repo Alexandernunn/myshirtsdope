@@ -122,7 +122,7 @@ function Router() {
         <Route path="/" component={Home} />
         <Route path="/start" component={Start} />
         <Route path="/shop" component={Shop} />
-        <Route path="/product/:id" component={ResolvedProductDetailRoute} />
+        <Route path="/product/:handle" component={ResolvedProductDetailRoute} />
         <Route path="/cart" component={CartPage} />
         <Route path="/about" component={About} />
         <Route path="/contact" component={Contact} />

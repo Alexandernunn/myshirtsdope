@@ -3,3 +3,4 @@
 - [Marketing script deferral](marketing-script-deferral.md) — queue browser analytics immediately, load vendors after interaction, and keep Meta CAPI immediate.
 - [Shopify image transforms](shopify-image-transforms.md) — width/format=webp CDN params (Accept-negotiated), LCP preload must mirror the client's negative-index variant fallback.
 - [Static-first storefront activation](static-first-storefront.md) — build-time branded routes remain visible until the matching interactive route commits atomically.
+- [Product URL identity](product-url-identity.md) — Shopify handles are public product URLs; numeric IDs remain internal and redirect permanently.

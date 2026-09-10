@@ -8,22 +8,34 @@ import {
   createShopifyCatalogWebhookApp,
   verifyShopifyWebhookSignature,
 } from "../server/shopify-catalog-webhook";
-import type { ProductSummary } from "../shared/schema";
+import type { Product, ProductSummary } from "../shared/schema";
 
 const OUTPUT_DIR = path.resolve("dist/public");
 
 async function verifyPublishedCatalog(): Promise<void> {
-  const sitemap = await readFile(path.join(OUTPUT_DIR, "sitemap.xml"), "utf8");
+  const [sitemap, productsJson, redirects] = await Promise.all([
+    readFile(path.join(OUTPUT_DIR, "sitemap.xml"), "utf8"),
+    readFile(path.join(OUTPUT_DIR, "data/products.json"), "utf8"),
+    readFile(path.join(OUTPUT_DIR, "_redirects"), "utf8"),
+  ]);
+  const products = JSON.parse(productsJson) as Product[];
+  assert(products.length > 0, "cached product catalog is empty");
+  assert(products.every((product) => /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(product.handle)));
+  assert(products.every((product) => !/^\d+$/.test(product.handle)), "numeric-only handles are not readable URLs");
+  assert.equal(new Set(products.map((product) => product.handle)).size, products.length, "product handles must be unique");
+  const productsByHandle = new Map(products.map((product) => [product.handle, product]));
   const sitemapLocs = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1]);
   assert.equal(new Set(sitemapLocs).size, sitemapLocs.length, "sitemap has duplicate URLs");
   assert(sitemapLocs.includes("https://myshirtsdope.com"));
   assert(sitemapLocs.includes("https://myshirtsdope.com/shop"));
 
   const productEntries = (await readdir(path.join(OUTPUT_DIR, "product"), { withFileTypes: true }))
-    .filter((entry) => entry.isDirectory() && /^\d+$/.test(entry.name));
-  const productUrls = sitemapLocs.filter((url) => /^https:\/\/myshirtsdope\.com\/product\/\d+$/.test(url));
+    .filter((entry) => entry.isDirectory());
+  const productUrls = sitemapLocs.filter((url) => url.startsWith("https://myshirtsdope.com/product/"));
   assert.equal(productUrls.length, productEntries.length, "sitemap/prerender product count mismatch");
+  assert.equal(productEntries.length, products.length, "catalog/prerender product count mismatch");
   assert.equal(sitemapLocs.length, productEntries.length + 2, "unexpected sitemap URL count");
+  assert(productUrls.every((url) => !/\/product\/\d+$/.test(url)), "numeric product URLs leaked into the sitemap");
   assert.equal(
     (sitemap.match(/<lastmod>[^<]+<\/lastmod>/g) ?? []).length,
     productEntries.length,
@@ -31,17 +43,23 @@ async function verifyPublishedCatalog(): Promise<void> {
   );
 
   for (const entry of productEntries) {
-    const productId = entry.name;
+    const productHandle = entry.name;
+    const expectedProduct = productsByHandle.get(productHandle);
+    assert(expectedProduct, `unexpected prerendered product handle ${productHandle}`);
     const productHtml = await readFile(
-      path.join(OUTPUT_DIR, "product", productId, "index.html"),
+      path.join(OUTPUT_DIR, "product", productHandle, "index.html"),
       "utf8",
     );
     assert(
-      productHtml.includes(`<link rel="canonical" href="https://myshirtsdope.com/product/${productId}" />`),
-      `product ${productId} canonical URL mismatch`,
+      productHtml.includes(`<link rel="canonical" href="https://myshirtsdope.com/product/${productHandle}" />`),
+      `product ${productHandle} canonical URL mismatch`,
+    );
+    assert(
+      !/https:\/\/myshirtsdope\.com\/product\/\d+(?=["'<\s])/.test(productHtml),
+      `product ${productHandle} leaks a numeric canonical URL`,
     );
     const jsonLd = productHtml.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)?.[1];
-    assert(jsonLd, `product ${productId} is missing Product JSON-LD`);
+    assert(jsonLd, `product ${productHandle} is missing Product JSON-LD`);
     const productSchema = JSON.parse(jsonLd);
     const offer = productSchema.offers;
     const productPreload = productHtml.match(
@@ -53,22 +71,33 @@ async function verifyPublishedCatalog(): Promise<void> {
     const productData = productHtml.match(
       /<script type="application\/json" data-prerendered-product="true">([^<]+)<\/script>/,
     )?.[1];
-    assert(productPreload, `product ${productId} is missing its LCP image preload`);
-    assert(productPreload.includes("width=640&amp;format=webp"), `product ${productId} preload is not the product-detail WebP rendition`);
+    assert(productPreload, `product ${productHandle} is missing its LCP image preload`);
+    assert(productPreload.includes("width=640&amp;format=webp"), `product ${productHandle} preload is not the product-detail WebP rendition`);
     assert(productPreload.includes("imagesrcset=") && productPreload.includes("imagesizes="));
-    assert(productHero, `product ${productId} is missing an eager high-priority hero image`);
+    assert(productHero, `product ${productHandle} is missing an eager high-priority hero image`);
     assert(productHero.includes("srcset=") && productHero.includes("sizes="));
-    assert(productData, `product ${productId} is missing its hydration data`);
-    assert.equal(String(JSON.parse(productData).id), productId, `product ${productId} hydration data mismatch`);
-    assert.equal(productSchema["@type"], "Product", `product ${productId} schema type mismatch`);
-    assert(productSchema.name, `product ${productId} schema name is missing`);
-    assert.equal(productSchema.sku, productId, `product ${productId} schema SKU mismatch`);
-    assert(Array.isArray(productSchema.image) && productSchema.image.length > 0, `product ${productId} schema image is missing`);
-    assert.equal(offer.priceCurrency, "USD", `product ${productId} must use USD`);
-    assert(offer.price || offer.lowPrice, `product ${productId} schema price is missing`);
+    assert(productData, `product ${productHandle} is missing its hydration data`);
+    const hydratedProduct = JSON.parse(productData) as Product;
+    assert.equal(hydratedProduct.handle, productHandle, `product ${productHandle} hydration data mismatch`);
+    assert.equal(productSchema["@type"], "Product", `product ${productHandle} schema type mismatch`);
+    assert(productSchema.name, `product ${productHandle} schema name is missing`);
+    assert.equal(productSchema.sku, String(expectedProduct.id), `product ${productHandle} schema SKU mismatch`);
+    assert.equal(offer.url, `https://myshirtsdope.com/product/${productHandle}`, `product ${productHandle} schema URL mismatch`);
+    assert(Array.isArray(productSchema.image) && productSchema.image.length > 0, `product ${productHandle} schema image is missing`);
+    assert.equal(offer.priceCurrency, "USD", `product ${productHandle} must use USD`);
+    assert(offer.price || offer.lowPrice, `product ${productHandle} schema price is missing`);
     assert(
       ["http://schema.org/InStock", "http://schema.org/OutOfStock"].includes(offer.availability),
-      `product ${productId} has invalid schema availability`,
+      `product ${productHandle} has invalid schema availability`,
+    );
+  }
+
+  const redirectLines = redirects.trim().split("\n");
+  assert.equal(redirectLines.length, products.length, "numeric redirect count mismatch");
+  for (const product of products) {
+    assert(
+      redirectLines.includes(`/product/${product.id}  /product/${product.handle}  301!`),
+      `missing permanent redirect for product ${product.id}`,
     );
   }
 
@@ -176,7 +205,7 @@ async function verifyPageSpeedContracts(): Promise<void> {
   assert(
     app.includes("function ResolvedProductDetailRoute()") &&
       app.includes("return ProductDetailComponent ? <ProductDetailComponent /> : <ProductDetail />;") &&
-      app.includes('<Route path="/product/:id" component={ResolvedProductDetailRoute} />'),
+      app.includes('<Route path="/product/:handle" component={ResolvedProductDetailRoute} />'),
     "preloaded product pages must retain Wouter's matching route context",
   );
   assert(productDetail.includes("requestIdleCallback"));
@@ -184,11 +213,11 @@ async function verifyPageSpeedContracts(): Promise<void> {
   assert(productDetail.includes('loading="lazy"'));
   assert(productDetail.includes("min-h-[44px]"));
   const primaryProductQuery = productDetail.slice(
-    productDetail.indexOf('queryKey: ["/api/products", id]'),
-    productDetail.indexOf("useEffect(() => {", productDetail.indexOf('queryKey: ["/api/products", id]')),
+    productDetail.indexOf('queryKey: ["/api/products", handle]'),
+    productDetail.indexOf("useEffect(() => {", productDetail.indexOf('queryKey: ["/api/products", handle]')),
   );
   assert(primaryProductQuery.includes("initialData: prerenderedProduct"));
-  assert(primaryProductQuery.includes("fetchPrerenderedProduct(id)"));
+  assert(primaryProductQuery.includes("fetchPrerenderedProduct(handle)"));
   assert(!primaryProductQuery.includes("/data/products.json"), "the primary PDP query must not load the full catalog");
 
   const [homeHtml, shopHtml, firstProduct] = await Promise.all([

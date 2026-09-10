@@ -6,6 +6,7 @@ const CART_KEY = "msd_cart";
 interface StoredCartItem {
   id: string;
   productId: number;
+  productHandle?: string;
   size: string;
   color: string;
   quantity: number;
@@ -39,6 +40,7 @@ function toWithProduct(item: StoredCartItem): CartItemWithProduct {
     quantity: item.quantity,
     product: {
       id: item.productId,
+      handle: item.productHandle || String(item.productId),
       shopifyProductId: null,
       updatedAt: "",
       name: item.productName,
@@ -96,6 +98,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const newItem: StoredCartItem = {
         id: `cart_${Date.now()}_${Math.random().toString(36).slice(2)}`,
         productId: product.id,
+        productHandle: product.handle,
         size,
         color,
         quantity: 1,

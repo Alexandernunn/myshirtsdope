@@ -21,6 +21,7 @@ async function cacheProducts() {
     const data = mapStorefrontProduct(sp);
     return {
       id: sp.id,
+      handle: data.handle,
       shopifyProductId: data.shopifyProductId,
       updatedAt: data.updatedAt,
       name: data.name,
@@ -38,10 +39,29 @@ async function cacheProducts() {
     };
   });
 
+  const invalidHandles = products.filter(
+    (product) =>
+      !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(product.handle) ||
+      /^\d+$/.test(product.handle),
+  );
+  if (invalidHandles.length > 0) {
+    throw new Error(
+      `Active Shopify products have missing or invalid handles: ${invalidHandles
+        .slice(0, 10)
+        .map((product) => product.id)
+        .join(", ")}`,
+    );
+  }
+  const handles = new Set(products.map((product) => product.handle));
+  if (handles.size !== products.length) {
+    throw new Error("Active Shopify products have duplicate handles");
+  }
+
   const slim: ProductSummary[] = products.map((p) => {
     const variants = getColorImageVariants(p.colorImages ?? null);
     return {
       id: p.id,
+      handle: p.handle,
       name: p.name,
       price: p.price,
       category: p.category,

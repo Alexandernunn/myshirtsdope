@@ -145,6 +145,7 @@ export function registerRoutes(httpServer: Server, app: Express): void {
         const variants = getColorImageVariants(p.colorImages);
         return {
           id: p.id,
+          handle: p.handle,
           name: p.name,
           price: p.price,
           category: p.category,
@@ -184,13 +185,13 @@ export function registerRoutes(httpServer: Server, app: Express): void {
     }
   });
 
-  app.get("/api/products/:id", productLimiter, async (req, res) => {
+  app.get("/api/products/:identifier", productLimiter, async (req, res) => {
     try {
-      const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id);
-      if (isNaN(id)) return res.status(400).json({ error: "Invalid product ID" });
-
+      const identifier = Array.isArray(req.params.identifier)
+        ? req.params.identifier[0]
+        : req.params.identifier;
       await loadProducts();
-      const product = getProduct(id);
+      const product = getProduct(identifier);
       if (!product) return res.status(404).json({ error: "Product not found" });
       res.json(product);
     } catch (error) {

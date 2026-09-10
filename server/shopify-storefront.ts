@@ -93,6 +93,7 @@ async function storefrontQuery(query: string, variables?: Record<string, unknown
 
 interface AdminProduct {
   id: number;
+  handle: string;
   updated_at: string;
   title: string;
   body_html: string;
@@ -241,6 +242,7 @@ export function mapStorefrontProduct(product: AdminProduct) {
     .filter((t) => t.length > 0);
 
   return {
+    handle: product.handle,
     shopifyProductId: `gid://shopify/Product/${product.id}`,
     updatedAt: product.updated_at,
     name: product.title,

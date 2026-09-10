@@ -8,6 +8,7 @@ import { usePageTitle } from "@/hooks/use-page-title";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { IMAGE_PRESETS, shopifyImageProps } from "@shared/shopify-image";
+import { productPath } from "@shared/product-url";
 import { trackEvent } from "@/lib/meta-capi";
 
 export default function Cart() {
@@ -115,7 +116,7 @@ export default function Cart() {
                   data-testid={`cart-item-${item.id}`}
                   className="bg-card border border-card-border rounded-md p-4 flex items-center gap-4"
                 >
-                  <Link href={`/product/${item.productId}`}>
+                  <Link href={productPath(item.product)}>
                     <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-md overflow-hidden bg-muted flex-shrink-0 cursor-pointer">
                       <img
                         {...shopifyImageProps(

@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { IMAGE_PRESETS, shopifyImageProps } from "@shared/shopify-image";
 import type { Product, ProductSummary } from "@shared/schema";
+import { productPath } from "@shared/product-url";
 import {
   isPrerenderedDocument,
   PRERENDERED_DECK_DATA_SELECTOR,
@@ -199,12 +200,12 @@ export default function CultureDeck() {
     isPointerDownRef.current = false;
   }, []);
 
-  const handleCardTap = useCallback((productId: number) => {
+  const handleCardTap = useCallback((product: Product | ProductSummary) => {
     const elapsed = Date.now() - pointerStartTimeRef.current;
     if (!isTapRef.current || elapsed > TAP_MAX_TIME || totalDragDistRef.current > TAP_MAX_DIST) {
       return;
     }
-    navigate(`/product/${productId}`);
+    navigate(productPath(product));
   }, [navigate]);
 
   if (shuffledProducts.length === 0) return null;
@@ -263,7 +264,7 @@ export default function CultureDeck() {
                   }}
                 >
                   <div
-                    onClick={() => handleCardTap(product.id)}
+                    onClick={() => handleCardTap(product)}
                     className="w-full h-full rounded-md overflow-hidden bg-[#0a0a0a] border border-white/15 shadow-[0_4px_24px_rgba(0,0,0,0.7)] cursor-pointer relative"
                     style={{ backfaceVisibility: "hidden" }}
                     data-testid={`culture-card-${product.id}`}

@@ -10,6 +10,7 @@ export interface ShopifyVariantMapping {
 
 export interface Product {
   id: number;
+  handle: string;
   shopifyProductId: string | null;
   updatedAt: string;
   name: string;
@@ -28,6 +29,7 @@ export interface Product {
 
 export interface ProductSummary {
   id: number;
+  handle: string;
   name: string;
   price: number;
   category: string;

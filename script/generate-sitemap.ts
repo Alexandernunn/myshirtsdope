@@ -6,6 +6,7 @@ const SITE_URL = (process.env.PUBLIC_SITE_URL || "https://myshirtsdope.com").rep
 
 interface SitemapProduct {
   id: number;
+  handle: string;
   updatedAt: string;
 }
 
@@ -27,30 +28,30 @@ function formatLastModified(updatedAt: string, productId: number): string {
   return updated.toISOString();
 }
 
-async function verifyPrerenderedCatalog(productIds: number[]): Promise<void> {
+async function verifyPrerenderedCatalog(productHandles: string[]): Promise<void> {
   const productRoot = path.join(OUTPUT_DIR, "product");
   const entries = await readdir(productRoot, { withFileTypes: true });
-  const prerenderedIds = new Set<number>();
+  const prerenderedHandles = new Set<string>();
 
   for (const entry of entries) {
-    if (!entry.isDirectory() || !/^\d+$/.test(entry.name)) continue;
+    if (!entry.isDirectory()) continue;
 
     const productPage = path.join(productRoot, entry.name, "index.html");
     await access(productPage);
-    prerenderedIds.add(Number(entry.name));
+    prerenderedHandles.add(entry.name);
   }
 
-  const expectedIds = new Set(productIds);
-  const missingPages = productIds.filter((id) => !prerenderedIds.has(id));
-  const unexpectedPages = [...prerenderedIds].filter((id) => !expectedIds.has(id));
+  const expectedHandles = new Set(productHandles);
+  const missingPages = productHandles.filter((handle) => !prerenderedHandles.has(handle));
+  const unexpectedPages = [...prerenderedHandles].filter((handle) => !expectedHandles.has(handle));
 
   if (
-    prerenderedIds.size !== expectedIds.size ||
+    prerenderedHandles.size !== expectedHandles.size ||
     missingPages.length > 0 ||
     unexpectedPages.length > 0
   ) {
     throw new Error(
-      `Sitemap generation failed: sitemap has ${expectedIds.size} active products but prerendered catalog has ${prerenderedIds.size}. Missing pages: ${missingPages.join(", ") || "none"}. Unexpected pages: ${unexpectedPages.join(", ") || "none"}.`,
+      `Sitemap generation failed: sitemap has ${expectedHandles.size} active products but prerendered catalog has ${prerenderedHandles.size}. Missing pages: ${missingPages.join(", ") || "none"}. Unexpected pages: ${unexpectedPages.join(", ") || "none"}.`,
     );
   }
 }
@@ -65,14 +66,14 @@ export async function generateSitemap(products: SitemapProduct[]): Promise<void>
   }
 
   const activeProducts = [...byId.values()].sort((a, b) => a.id - b.id);
-  const productIds = activeProducts.map((product) => product.id);
-  await verifyPrerenderedCatalog(productIds);
+  const productHandles = activeProducts.map((product) => product.handle);
+  await verifyPrerenderedCatalog(productHandles);
 
   const urls = [
     `  <url><loc>${escapeXml(SITE_URL)}</loc></url>`,
     `  <url><loc>${escapeXml(`${SITE_URL}/shop`)}</loc></url>`,
     ...activeProducts.map((product) => (
-      `  <url><loc>${escapeXml(`${SITE_URL}/product/${product.id}`)}</loc><lastmod>${formatLastModified(product.updatedAt, product.id)}</lastmod></url>`
+      `  <url><loc>${escapeXml(`${SITE_URL}/product/${product.handle}`)}</loc><lastmod>${formatLastModified(product.updatedAt, product.id)}</lastmod></url>`
     )),
   ];
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join("\n")}\n</urlset>\n`;

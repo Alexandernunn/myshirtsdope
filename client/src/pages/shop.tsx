@@ -17,6 +17,7 @@ import {
 import { pickVariantIndex } from "@shared/image-variants";
 import { IMAGE_PRESETS, shopifyImageProps } from "@shared/shopify-image";
 import type { Product, ProductSummary } from "@shared/schema";
+import { productPath } from "@shared/product-url";
 import {
   PRERENDERED_SHOP_DATA_SELECTOR,
   readPrerenderedJson,
@@ -143,7 +144,7 @@ function GroupedProductCard({ group, index }: { group: ProductGroup; index: numb
     : null;
   const [imgSrc, setImgSrc] = useState(pickedVariant ?? product.imageUrl);
   return (
-    <Link href={`/product/${product.id}`} data-testid={`link-product-${product.id}`}>
+    <Link href={productPath(product)} data-testid={`link-product-${product.id}`}>
       <div className="catalog-card group bg-card border border-card-border rounded-md overflow-hidden hover-elevate active-elevate-2 transition-transform duration-200 cursor-pointer">
         <div className="relative overflow-hidden rounded-t-md bg-muted" style={{ aspectRatio: "1", maxHeight: "220px" }}>
           <img

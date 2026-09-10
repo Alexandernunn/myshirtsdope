@@ -6,7 +6,7 @@
 
 - [Home](https://myshirtsdope.com/): Brand landing page with the latest drops.
 - [Shop](https://myshirtsdope.com/shop): Full product catalog with search and category filters (Shirts, Hoodies, Onesies, Accessories).
-- Product pages: https://myshirtsdope.com/product/{id} — each product page includes name, price, description, sizes, colors, and Product structured data (JSON-LD).
+- Product pages: https://myshirtsdope.com/product/{shopify-handle} — each product page includes name, price, description, sizes, colors, and Product structured data (JSON-LD).
 
 ## Key links
 

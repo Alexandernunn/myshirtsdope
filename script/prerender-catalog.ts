@@ -14,6 +14,7 @@ import {
   shopifyImageProps,
   type ShopifyImagePreset,
 } from "../shared/shopify-image";
+import { productPath } from "../shared/product-url";
 
 const OUTPUT_DIR = path.resolve("dist/public");
 const SITE_URL = (process.env.PUBLIC_SITE_URL || "https://myshirtsdope.com").replace(/\/+$/, "");
@@ -327,7 +328,7 @@ function renderStaticCultureDeck(products: ProductSummary[]): string {
     return `
             <div class="absolute" style="transform-style:preserve-3d;transform:rotateY(${angle}deg) translateZ(320px);z-index:${Math.round(depth * 100)}">
               <div class="absolute" style="width:140px;height:190px;left:-70px;top:-95px;transform-style:preserve-3d;transform:rotateY(${-angle}deg) scale(${(0.75 + 0.25 * depth).toFixed(3)});filter:brightness(${(0.3 + 0.7 * depth).toFixed(3)});visibility:${isBehind ? "hidden" : "visible"}">
-                <a href="/product/${product.id}" class="block w-full h-full rounded-md overflow-hidden bg-[#0a0a0a] border border-white/15 shadow-[0_4px_24px_rgba(0,0,0,0.7)] cursor-pointer relative">
+                <a href="${productPath(product)}" class="block w-full h-full rounded-md overflow-hidden bg-[#0a0a0a] border border-white/15 shadow-[0_4px_24px_rgba(0,0,0,0.7)] cursor-pointer relative">
                   <img ${imageAttributes} alt="${escapeHtml(product.name)}" width="140" height="190" class="w-full h-full object-cover pointer-events-none" loading="${index === 0 ? "eager" : "lazy"}"${index === 0 ? ' fetchpriority="high"' : ""} />
                   <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/60 to-transparent p-2 pt-8"><p class="font-display text-[10px] text-white/90 line-clamp-2 leading-tight">${escapeHtml(product.name)}</p></div>
                 </a>
@@ -385,7 +386,7 @@ function renderStaticProductCard(group: ProductGroup, index: number): string {
   const imageAttributes = responsiveImageAttributes(imageUrl, IMAGE_PRESETS.gridCard);
   const fitBadge = getFitBadgeLabel(group.fits);
   return `
-              <a href="/product/${product.id}">
+              <a href="${productPath(product)}">
                 <div class="catalog-card group bg-card border border-card-border rounded-md overflow-hidden transition-transform duration-200 cursor-pointer">
                   <div class="relative overflow-hidden rounded-t-md bg-muted" style="aspect-ratio:1;max-height:220px">
                     <img ${imageAttributes} alt="${escapeHtml(product.name)}" width="400" height="400" class="w-full h-full object-cover"${index === 0 ? ' loading="eager" fetchpriority="high"' : ' loading="lazy"'} />
@@ -518,7 +519,7 @@ function renderShopPage(
 }
 
 function renderProductPage(template: string, product: Product): string {
-  const canonicalUrl = `${SITE_URL}/product/${product.id}`;
+  const canonicalUrl = `${SITE_URL}${productPath(product)}`;
   const html = applyPageMetadata(template, {
     title: `${product.name} | MyShirtsDope`,
     description: product.description || `${product.name} from MyShirtsDope`,
@@ -585,7 +586,7 @@ export async function prerenderCatalog(
     const batch = uniqueProducts.slice(index, index + PRODUCT_BATCH_SIZE);
     await Promise.all(
       batch.map(async (product) => {
-        const outputDir = path.join(productOutputDir, String(product.id));
+        const outputDir = path.join(productOutputDir, product.handle);
         await mkdir(outputDir, { recursive: true });
         await writeFile(
           path.join(outputDir, "index.html"),
@@ -595,6 +596,12 @@ export async function prerenderCatalog(
     );
   }
 
+  const redirects = uniqueProducts
+    .map((product) => `/product/${product.id}  ${productPath(product)}  301!`)
+    .join("\n");
+  await writeFile(path.join(OUTPUT_DIR, "_redirects"), `${redirects}\n`);
+
   console.log(`[Prerender] Generated branded home, shop, and ${uniqueProducts.length} product pages`);
+  console.log(`[Prerender] Generated ${uniqueProducts.length} permanent numeric product redirects`);
   console.log(`[Prerender] Canonical site URL: ${SITE_URL}`);
 }

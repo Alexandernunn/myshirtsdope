@@ -12,6 +12,7 @@ import { findGroupForProduct, groupProducts, getProductForFit, getFitLabel, type
 import { IMAGE_PRESETS, shopifyImageProps, shopifyImageUrl } from "@shared/shopify-image";
 import { trackEvent } from "@/lib/meta-capi";
 import type { Product } from "@shared/schema";
+import { productPath } from "@shared/product-url";
 
 const COLOR_HEX_MAP: Record<string, string> = {
   "red": "#cc0000",
@@ -77,26 +78,26 @@ function getColorHex(colorName: string): string | null {
 const PDP_HERO_PRELOAD_ATTRIBUTE = "data-pdp-hero-preload";
 const PRERENDERED_PRODUCT_DATA_SELECTOR = 'script[data-prerendered-product="true"]';
 
-function readPrerenderedProduct(root: ParentNode, expectedId: string | undefined): Product | undefined {
+function readPrerenderedProduct(root: ParentNode, expectedHandle: string | undefined): Product | undefined {
   const serializedProduct = root.querySelector(PRERENDERED_PRODUCT_DATA_SELECTOR)?.textContent;
   if (!serializedProduct) return undefined;
 
   try {
     const product = JSON.parse(serializedProduct) as Product;
-    return String(product.id) === String(expectedId) ? product : undefined;
+    return product.handle === expectedHandle || String(product.id) === expectedHandle ? product : undefined;
   } catch {
     return undefined;
   }
 }
 
-async function fetchPrerenderedProduct(id: string | undefined): Promise<Product | undefined> {
-  if (!id) return undefined;
+async function fetchPrerenderedProduct(handle: string | undefined): Promise<Product | undefined> {
+  if (!handle) return undefined;
 
-  const response = await fetch(`/product/${id}`);
+  const response = await fetch(`/product/${encodeURIComponent(handle)}`);
   if (!response.ok) return undefined;
 
   const documentFragment = new DOMParser().parseFromString(await response.text(), "text/html");
-  return readPrerenderedProduct(documentFragment, id);
+  return readPrerenderedProduct(documentFragment, handle);
 }
 
 function upsertPdpHeroPreload(imageUrl: string | undefined): HTMLLinkElement | null {
@@ -137,7 +138,7 @@ function usePdpHeroPreload(imageUrl: string | undefined): void {
 }
 
 export default function ProductDetail() {
-  const { id } = useParams<{ id: string }>();
+  const { handle } = useParams<{ handle: string }>();
   const { addToCart, isAdding } = useCart();
   const { toast } = useToast();
   const [selectedSize, setSelectedSize] = useState<string>("");
@@ -151,14 +152,14 @@ export default function ProductDetail() {
   const [secondaryProductId, setSecondaryProductId] = useState<number | null>(null);
   const prerenderedProduct = typeof document === "undefined"
     ? undefined
-    : readPrerenderedProduct(document, id);
+    : readPrerenderedProduct(document, handle);
 
   const { data: product, isLoading } = useQuery<Product>({
-    queryKey: ["/api/products", id],
+    queryKey: ["/api/products", handle],
     initialData: prerenderedProduct,
     queryFn: async () => {
       if (!import.meta.env.DEV) {
-        const staticProduct = await fetchPrerenderedProduct(id);
+        const staticProduct = await fetchPrerenderedProduct(handle);
         if (staticProduct) {
           upsertPdpHeroPreload(staticProduct.imageUrl);
           return staticProduct;
@@ -168,7 +169,7 @@ export default function ProductDetail() {
         "X-Requested-With": "XMLHttpRequest",
         "X-App-Token": import.meta.env.VITE_APP_TOKEN || "msd-storefront-v1",
       };
-      const res = await fetch(`/api/products/${id}`, { headers });
+      const res = await fetch(`/api/products/${encodeURIComponent(handle || "")}`, { headers });
       if (!res.ok) throw new Error(`${res.status}: ${res.statusText}`);
       const found = await res.json() as Product;
       upsertPdpHeroPreload(found.imageUrl);
@@ -232,7 +233,7 @@ export default function ProductDetail() {
   useEffect(() => {
     if (!product?.id) return;
 
-    const canonicalHref = `https://myshirtsdope.com/product/${product.id}`;
+    const canonicalHref = `https://myshirtsdope.com${productPath(product)}`;
     let canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
     const previousHref = canonical?.getAttribute("href");
     if (!canonical) {
@@ -247,7 +248,7 @@ export default function ProductDetail() {
       if (previousHref) canonical.href = previousHref;
       else canonical.remove();
     };
-  }, [product?.id]);
+  }, [product?.handle]);
 
   useEffect(() => {
     if (isLoading || product) return;
@@ -268,7 +269,7 @@ export default function ProductDetail() {
     };
   }, [isLoading, product]);
 
-  const group = product && allProducts.length > 0 ? findGroupForProduct(allProducts, Number(id)) : null;
+  const group = product && allProducts.length > 0 ? findGroupForProduct(allProducts, product.id) : null;
   const hasMutipleFits = group ? group.fits.length > 1 : false;
 
   const productFit: FitType | null = group && product
@@ -309,7 +310,7 @@ export default function ProductDetail() {
     setSelectedSize("");
     setSelectedColor("");
     setDisplayImage("");
-  }, [id]);
+  }, [handle]);
 
   const handleColorSelect = (color: string) => {
     setSelectedColor(color);
@@ -333,9 +334,9 @@ export default function ProductDetail() {
   const related = allGroups
     .filter(
       (g) =>
-        g.adult.id !== Number(id) &&
-        g.youth?.id !== Number(id) &&
-        g.toddler?.id !== Number(id) &&
+        g.adult.id !== product?.id &&
+        g.youth?.id !== product?.id &&
+        g.toddler?.id !== product?.id &&
         g.category === product?.category
     )
     .slice(0, 4);
@@ -573,7 +574,7 @@ export default function ProductDetail() {
             </h2>
             <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-thin">
               {related.map((g) => (
-                <Link key={g.adult.id} href={`/product/${g.adult.id}`} data-testid={`link-related-${g.adult.id}`}>
+                <Link key={g.adult.id} href={productPath(g.adult)} data-testid={`link-related-${g.adult.id}`}>
                   <div className="bg-card border border-card-border rounded-md overflow-hidden hover-elevate cursor-pointer flex-shrink-0" style={{ width: "180px" }}>
                     <div className="overflow-hidden" style={{ height: "180px" }}>
                       <img

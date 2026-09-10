@@ -13,6 +13,7 @@ async function fetchAndCacheProducts(): Promise<Product[]> {
     const data = mapStorefrontProduct(sp);
     return {
       id: sp.id,
+      handle: data.handle,
       shopifyProductId: data.shopifyProductId,
       updatedAt: data.updatedAt,
       name: data.name,
@@ -82,6 +83,10 @@ export async function forceRefreshProducts(): Promise<Product[]> {
   return loadProducts();
 }
 
-export function getProduct(id: number): Product | undefined {
-  return productCache.find((p) => p.id === id);
+export function getProduct(identifier: string | number): Product | undefined {
+  const normalized = String(identifier).trim();
+  const numericId = /^\d+$/.test(normalized) ? Number(normalized) : null;
+  return productCache.find((product) =>
+    product.handle === normalized || (numericId !== null && product.id === numericId)
+  );
 }
