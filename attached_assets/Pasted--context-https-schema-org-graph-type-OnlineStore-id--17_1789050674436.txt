@@ -1,0 +1,1063 @@
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "OnlineStore",
+      "@id": "https://myshirtsdope.com/#organization",
+      "name": "MyShirtsDope",
+      "alternateName": "My Shirts Dope",
+      "url": "https://myshirtsdope.com/",
+      "description": "Shirts, hoodies, onesies, and accessories for all ages inspired by music, culture and love.",
+      "slogan": "Culture never dies",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://myshirtsdope.com/favicon.png"
+      }
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://myshirtsdope.com/#website",
+      "url": "https://myshirtsdope.com/",
+      "name": "MyShirtsDope",
+      "alternateName": "My Shirts Dope",
+      "publisher": {
+        "@id": "https://myshirtsdope.com/#organization"
+      },
+      "inLanguage": "en-US"
+    },
+    {
+      "@type": "ItemPage",
+      "@id": "https://myshirtsdope.com/product/6606691958848#webpage",
+      "url": "https://myshirtsdope.com/product/6606691958848",
+      "name": "They Want EFX hoodie | MyShirtsDope",
+      "isPartOf": {
+        "@id": "https://myshirtsdope.com/#website"
+      },
+      "inLanguage": "en-US",
+      "breadcrumb": {
+        "@id": "https://myshirtsdope.com/product/6606691958848#breadcrumb"
+      },
+      "mainEntity": {
+        "@id": "https://myshirtsdope.com/product/6606691958848#product"
+      },
+      "primaryImageOfPage": {
+        "@type": "ImageObject",
+        "url": "https://cdn.shopify.com/s/files/1/0095/8257/5680/products/unisex-heavy-blend-hoodie-sport-grey-front-62b31ca1c778a.jpg?v=1655905457"
+      },
+      "dateModified": "2026-07-18T06:19:12-05:00"
+    },
+    {
+      "@type": "BreadcrumbList",
+      "@id": "https://myshirtsdope.com/product/6606691958848#breadcrumb",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://myshirtsdope.com/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Shop",
+          "item": "https://myshirtsdope.com/shop"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Hoodies",
+          "item": "https://myshirtsdope.com/shop?category=Hoodies"
+        },
+        {
+          "@type": "ListItem",
+          "position": 4,
+          "name": "They Want EFX hoodie"
+        }
+      ]
+    },
+    {
+      "@type": "ProductGroup",
+      "@id": "https://myshirtsdope.com/product/6606691958848#product",
+      "name": "They Want EFX hoodie",
+      "description": "Everyone needs a cozy go-to hoodie to curl up in, so go for one that's soft, smooth, and stylish. It's the perfect choice for cooler evenings! • 50% pre-shrunk cotton, 50% polyester • Fabric weight: 8.0 oz/yd² (271.25 g/m²) • Air-jet spun yarn with a soft feel and reduced pilling • Double-lined hood with matching drawcord • Quarter-turned body to avoid crease down the middle • 1 × 1 athletic rib-knit cuffs and waistband with spandex • Front pouch pocket • Double-needle stitched collar, shoulders, armholes, cuffs, and hem • Blank product sourced from Honduras, Mexico, or Nicaragua",
+      "url": "https://myshirtsdope.com/product/6606691958848",
+      "image": [
+        "https://cdn.shopify.com/s/files/1/0095/8257/5680/products/unisex-heavy-blend-hoodie-sport-grey-front-62b31ca1c778a.jpg?v=1655905457",
+        "https://cdn.shopify.com/s/files/1/0095/8257/5680/products/unisex-heavy-blend-hoodie-red-front-62b31ca1c84f1.jpg?v=1655905458",
+        "https://cdn.shopify.com/s/files/1/0095/8257/5680/products/unisex-heavy-blend-hoodie-indigo-blue-front-62b31ca1c88a1.jpg?v=1655905460",
+        "https://cdn.shopify.com/s/files/1/0095/8257/5680/products/unisex-heavy-blend-hoodie-irish-green-front-62b31ca1c8efe.jpg?v=1655905461",
+        "https://cdn.shopify.com/s/files/1/0095/8257/5680/products/unisex-heavy-blend-hoodie-light-blue-front-62b31ca1c9cb7.jpg?v=1655905462",
+        "https://cdn.shopify.com/s/files/1/0095/8257/5680/products/unisex-heavy-blend-hoodie-light-pink-front-62b31ca1cb0d3.jpg?v=1655905464",
+        "https://cdn.shopify.com/s/files/1/0095/8257/5680/products/unisex-heavy-blend-hoodie-white-front-62b31ca1cc259.jpg?v=1655905465"
+      ],
+      "brand": {
+        "@type": "Brand",
+        "name": "MyShirtsDope"
+      },
+      "category": "Hoodies",
+      "material": "50% pre-shrunk cotton, 50% polyester",
+      "audience": {
+        "@type": "PeopleAudience",
+        "suggestedGender": "unisex",
+        "suggestedMinAge": 13
+      },
+      "keywords": "das efx, dead serious, def squad, east coast, hip hop, hit squad, hoodie, music, rap, they want efx",
+      "productGroupID": "6606691958848",
+      "variesBy": [
+        "https://schema.org/size",
+        "https://schema.org/color"
+      ],
+      "hasVariant": [
+        {
+          "@type": "Product",
+          "@id": "https://myshirtsdope.com/product/6606691958848#variant-39443027001408",
+          "name": "They Want EFX hoodie - Red / S",
+          "sku": "39443027001408",
+          "image": "https://cdn.shopify.com/s/files/1/0095/8257/5680/products/unisex-heavy-blend-hoodie-red-front-62b31ca1c84f1.jpg?v=1655905458",
+          "color": "Red",
+          "size": "S",
+          "offers": {
+            "@type": "Offer",
+            "url": "https://myshirtsdope.com/product/6606691958848?variant=39443027001408",
+            "price": 50,
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock",
+            "itemCondition": "https://schema.org/NewCondition",
+            "seller": {
+              "@id": "https://myshirtsdope.com/#organization"
+            },
+            "shippingDetails": {
+              "@id": "https://myshirtsdope.com/#offer-shipping"
+            },
+            "hasMerchantReturnPolicy": {
+              "@id": "https://myshirtsdope.com/#return-policy"
+            }
+          }
+        },
+        {
+          "@type": "Product",
+          "@id": "https://myshirtsdope.com/product/6606691958848#variant-39443027034176",
+          "name": "They Want EFX hoodie - Red / M",
+          "sku": "39443027034176",
+          "image": "https://cdn.shopify.com/s/files/1/0095/8257/5680/products/unisex-heavy-blend-hoodie-red-front-62b31ca1c84f1.jpg?v=1655905458",
+          "color": "Red",
+          "size": "M",
+          "offers": {
+            "@type": "Offer",
+            "url": "https://myshirtsdope.com/product/6606691958848?variant=39443027034176",
+            "price": 50,
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock",
+            "itemCondition": "https://schema.org/NewCondition",
+            "seller": {
+              "@id": "https://myshirtsdope.com/#organization"
+            },
+            "shippingDetails": {
+              "@id": "https://myshirtsdope.com/#offer-shipping"
+            },
+            "hasMerchantReturnPolicy": {
+              "@id": "https://myshirtsdope.com/#return-policy"
+            }
+          }
+        },
+        {
+          "@type": "Product",
+          "@id": "https://myshirtsdope.com/product/6606691958848#variant-39443027066944",
+          "name": "They Want EFX hoodie - Red / L",
+          "sku": "39443027066944",
+          "image": "https://cdn.shopify.com/s/files/1/0095/8257/5680/products/unisex-heavy-blend-hoodie-red-front-62b31ca1c84f1.jpg?v=1655905458",
+          "color": "Red",
+          "size": "L",
+          "offers": {
+            "@type": "Offer",
+            "url": "https://myshirtsdope.com/product/6606691958848?variant=39443027066944",
+            "price": 50,
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock",
+            "itemCondition": "https://schema.org/NewCondition",
+            "seller": {
+              "@id": "https://myshirtsdope.com/#organization"
+            },
+            "shippingDetails": {
+              "@id": "https://myshirtsdope.com/#offer-shipping"
+            },
+            "hasMerchantReturnPolicy": {
+              "@id": "https://myshirtsdope.com/#return-policy"
+            }
+          }
+        },
+        {
+          "@type": "Product",
+          "@id": "https://myshirtsdope.com/product/6606691958848#variant-39443027099712",
+          "name": "They Want EFX hoodie - Red / XL",
+          "sku": "39443027099712",
+          "image": "https://cdn.shopify.com/s/files/1/0095/8257/5680/products/unisex-heavy-blend-hoodie-red-front-62b31ca1c84f1.jpg?v=1655905458",
+          "color": "Red",
+          "size": "XL",
+          "offers": {
+            "@type": "Offer",
+            "url": "https://myshirtsdope.com/product/6606691958848?variant=39443027099712",
+            "price": 50,
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock",
+            "itemCondition": "https://schema.org/NewCondition",
+            "seller": {
+              "@id": "https://myshirtsdope.com/#organization"
+            },
+            "shippingDetails": {
+              "@id": "https://myshirtsdope.com/#offer-shipping"
+            },
+            "hasMerchantReturnPolicy": {
+              "@id": "https://myshirtsdope.com/#return-policy"
+            }
+          }
+        },
+        {
+          "@type": "Product",
+          "@id": "https://myshirtsdope.com/product/6606691958848#variant-39443027132480",
+          "name": "They Want EFX hoodie - Red / 2XL",
+          "sku": "39443027132480",
+          "image": "https://cdn.shopify.com/s/files/1/0095/8257/5680/products/unisex-heavy-blend-hoodie-red-front-62b31ca1c84f1.jpg?v=1655905458",
+          "color": "Red",
+          "size": "2XL",
+          "offers": {
+            "@type": "Offer",
+            "url": "https://myshirtsdope.com/product/6606691958848?variant=39443027132480",
+            "price": 50,
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock",
+            "itemCondition": "https://schema.org/NewCondition",
+            "seller": {
+              "@id": "https://myshirtsdope.com/#organization"
+            },
+            "shippingDetails": {
+              "@id": "https://myshirtsdope.com/#offer-shipping"
+            },
+            "hasMerchantReturnPolicy": {
+              "@id": "https://myshirtsdope.com/#return-policy"
+            }
+          }
+        },
+        {
+          "@type": "Product",
+          "@id": "https://myshirtsdope.com/product/6606691958848#variant-39443027165248",
+          "name": "They Want EFX hoodie - Indigo Blue / S",
+          "sku": "39443027165248",
+          "image": "https://cdn.shopify.com/s/files/1/0095/8257/5680/products/unisex-heavy-blend-hoodie-indigo-blue-front-62b31ca1c88a1.jpg?v=1655905460",
+          "color": "Indigo Blue",
+          "size": "S",
+          "offers": {
+            "@type": "Offer",
+            "url": "https://myshirtsdope.com/product/6606691958848?variant=39443027165248",
+            "price": 50,
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock",
+            "itemCondition": "https://schema.org/NewCondition",
+            "seller": {
+              "@id": "https://myshirtsdope.com/#organization"
+            },
+            "shippingDetails": {
+              "@id": "https://myshirtsdope.com/#offer-shipping"
+            },
+            "hasMerchantReturnPolicy": {
+              "@id": "https://myshirtsdope.com/#return-policy"
+            }
+          }
+        },
+        {
+          "@type": "Product",
+          "@id": "https://myshirtsdope.com/product/6606691958848#variant-39443027198016",
+          "name": "They Want EFX hoodie - Indigo Blue / M",
+          "sku": "39443027198016",
+          "image": "https://cdn.shopify.com/s/files/1/0095/8257/5680/products/unisex-heavy-blend-hoodie-indigo-blue-front-62b31ca1c88a1.jpg?v=1655905460",
+          "color": "Indigo Blue",
+          "size": "M",
+          "offers": {
+            "@type": "Offer",
+            "url": "https://myshirtsdope.com/product/6606691958848?variant=39443027198016",
+            "price": 50,
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock",
+            "itemCondition": "https://schema.org/NewCondition",
+            "seller": {
+              "@id": "https://myshirtsdope.com/#organization"
+            },
+            "shippingDetails": {
+              "@id": "https://myshirtsdope.com/#offer-shipping"
+            },
+            "hasMerchantReturnPolicy": {
+              "@id": "https://myshirtsdope.com/#return-policy"
+            }
+          }
+        },
+        {
+          "@type": "Product",
+          "@id": "https://myshirtsdope.com/product/6606691958848#variant-39443027230784",
+          "name": "They Want EFX hoodie - Indigo Blue / L",
+          "sku": "39443027230784",
+          "image": "https://cdn.shopify.com/s/files/1/0095/8257/5680/products/unisex-heavy-blend-hoodie-indigo-blue-front-62b31ca1c88a1.jpg?v=1655905460",
+          "color": "Indigo Blue",
+          "size": "L",
+          "offers": {
+            "@type": "Offer",
+            "url": "https://myshirtsdope.com/product/6606691958848?variant=39443027230784",
+            "price": 50,
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock",
+            "itemCondition": "https://schema.org/NewCondition",
+            "seller": {
+              "@id": "https://myshirtsdope.com/#organization"
+            },
+            "shippingDetails": {
+              "@id": "https://myshirtsdope.com/#offer-shipping"
+            },
+            "hasMerchantReturnPolicy": {
+              "@id": "https://myshirtsdope.com/#return-policy"
+            }
+          }
+        },
+        {
+          "@type": "Product",
+          "@id": "https://myshirtsdope.com/product/6606691958848#variant-39443027263552",
+          "name": "They Want EFX hoodie - Indigo Blue / XL",
+          "sku": "39443027263552",
+          "image": "https://cdn.shopify.com/s/files/1/0095/8257/5680/products/unisex-heavy-blend-hoodie-indigo-blue-front-62b31ca1c88a1.jpg?v=1655905460",
+          "color": "Indigo Blue",
+          "size": "XL",
+          "offers": {
+            "@type": "Offer",
+            "url": "https://myshirtsdope.com/product/6606691958848?variant=39443027263552",
+            "price": 50,
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock",
+            "itemCondition": "https://schema.org/NewCondition",
+            "seller": {
+              "@id": "https://myshirtsdope.com/#organization"
+            },
+            "shippingDetails": {
+              "@id": "https://myshirtsdope.com/#offer-shipping"
+            },
+            "hasMerchantReturnPolicy": {
+              "@id": "https://myshirtsdope.com/#return-policy"
+            }
+          }
+        },
+        {
+          "@type": "Product",
+          "@id": "https://myshirtsdope.com/product/6606691958848#variant-39443027296320",
+          "name": "They Want EFX hoodie - Indigo Blue / 2XL",
+          "sku": "39443027296320",
+          "image": "https://cdn.shopify.com/s/files/1/0095/8257/5680/products/unisex-heavy-blend-hoodie-indigo-blue-front-62b31ca1c88a1.jpg?v=1655905460",
+          "color": "Indigo Blue",
+          "size": "2XL",
+          "offers": {
+            "@type": "Offer",
+            "url": "https://myshirtsdope.com/product/6606691958848?variant=39443027296320",
+            "price": 50,
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock",
+            "itemCondition": "https://schema.org/NewCondition",
+            "seller": {
+              "@id": "https://myshirtsdope.com/#organization"
+            },
+            "shippingDetails": {
+              "@id": "https://myshirtsdope.com/#offer-shipping"
+            },
+            "hasMerchantReturnPolicy": {
+              "@id": "https://myshirtsdope.com/#return-policy"
+            }
+          }
+        },
+        {
+          "@type": "Product",
+          "@id": "https://myshirtsdope.com/product/6606691958848#variant-39443027329088",
+          "name": "They Want EFX hoodie - Irish Green / S",
+          "sku": "39443027329088",
+          "image": "https://cdn.shopify.com/s/files/1/0095/8257/5680/products/unisex-heavy-blend-hoodie-irish-green-front-62b31ca1c8efe.jpg?v=1655905461",
+          "color": "Irish Green",
+          "size": "S",
+          "offers": {
+            "@type": "Offer",
+            "url": "https://myshirtsdope.com/product/6606691958848?variant=39443027329088",
+            "price": 50,
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock",
+            "itemCondition": "https://schema.org/NewCondition",
+            "seller": {
+              "@id": "https://myshirtsdope.com/#organization"
+            },
+            "shippingDetails": {
+              "@id": "https://myshirtsdope.com/#offer-shipping"
+            },
+            "hasMerchantReturnPolicy": {
+              "@id": "https://myshirtsdope.com/#return-policy"
+            }
+          }
+        },
+        {
+          "@type": "Product",
+          "@id": "https://myshirtsdope.com/product/6606691958848#variant-39443027361856",
+          "name": "They Want EFX hoodie - Irish Green / M",
+          "sku": "39443027361856",
+          "image": "https://cdn.shopify.com/s/files/1/0095/8257/5680/products/unisex-heavy-blend-hoodie-irish-green-front-62b31ca1c8efe.jpg?v=1655905461",
+          "color": "Irish Green",
+          "size": "M",
+          "offers": {
+            "@type": "Offer",
+            "url": "https://myshirtsdope.com/product/6606691958848?variant=39443027361856",
+            "price": 50,
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock",
+            "itemCondition": "https://schema.org/NewCondition",
+            "seller": {
+              "@id": "https://myshirtsdope.com/#organization"
+            },
+            "shippingDetails": {
+              "@id": "https://myshirtsdope.com/#offer-shipping"
+            },
+            "hasMerchantReturnPolicy": {
+              "@id": "https://myshirtsdope.com/#return-policy"
+            }
+          }
+        },
+        {
+          "@type": "Product",
+          "@id": "https://myshirtsdope.com/product/6606691958848#variant-39443027394624",
+          "name": "They Want EFX hoodie - Irish Green / L",
+          "sku": "39443027394624",
+          "image": "https://cdn.shopify.com/s/files/1/0095/8257/5680/products/unisex-heavy-blend-hoodie-irish-green-front-62b31ca1c8efe.jpg?v=1655905461",
+          "color": "Irish Green",
+          "size": "L",
+          "offers": {
+            "@type": "Offer",
+            "url": "https://myshirtsdope.com/product/6606691958848?variant=39443027394624",
+            "price": 50,
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock",
+            "itemCondition": "https://schema.org/NewCondition",
+            "seller": {
+              "@id": "https://myshirtsdope.com/#organization"
+            },
+            "shippingDetails": {
+              "@id": "https://myshirtsdope.com/#offer-shipping"
+            },
+            "hasMerchantReturnPolicy": {
+              "@id": "https://myshirtsdope.com/#return-policy"
+            }
+          }
+        },
+        {
+          "@type": "Product",
+          "@id": "https://myshirtsdope.com/product/6606691958848#variant-39443027427392",
+          "name": "They Want EFX hoodie - Irish Green / XL",
+          "sku": "39443027427392",
+          "image": "https://cdn.shopify.com/s/files/1/0095/8257/5680/products/unisex-heavy-blend-hoodie-irish-green-front-62b31ca1c8efe.jpg?v=1655905461",
+          "color": "Irish Green",
+          "size": "XL",
+          "offers": {
+            "@type": "Offer",
+            "url": "https://myshirtsdope.com/product/6606691958848?variant=39443027427392",
+            "price": 50,
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock",
+            "itemCondition": "https://schema.org/NewCondition",
+            "seller": {
+              "@id": "https://myshirtsdope.com/#organization"
+            },
+            "shippingDetails": {
+              "@id": "https://myshirtsdope.com/#offer-shipping"
+            },
+            "hasMerchantReturnPolicy": {
+              "@id": "https://myshirtsdope.com/#return-policy"
+            }
+          }
+        },
+        {
+          "@type": "Product",
+          "@id": "https://myshirtsdope.com/product/6606691958848#variant-39443027460160",
+          "name": "They Want EFX hoodie - Irish Green / 2XL",
+          "sku": "39443027460160",
+          "image": "https://cdn.shopify.com/s/files/1/0095/8257/5680/products/unisex-heavy-blend-hoodie-irish-green-front-62b31ca1c8efe.jpg?v=1655905461",
+          "color": "Irish Green",
+          "size": "2XL",
+          "offers": {
+            "@type": "Offer",
+            "url": "https://myshirtsdope.com/product/6606691958848?variant=39443027460160",
+            "price": 50,
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock",
+            "itemCondition": "https://schema.org/NewCondition",
+            "seller": {
+              "@id": "https://myshirtsdope.com/#organization"
+            },
+            "shippingDetails": {
+              "@id": "https://myshirtsdope.com/#offer-shipping"
+            },
+            "hasMerchantReturnPolicy": {
+              "@id": "https://myshirtsdope.com/#return-policy"
+            }
+          }
+        },
+        {
+          "@type": "Product",
+          "@id": "https://myshirtsdope.com/product/6606691958848#variant-39443027492928",
+          "name": "They Want EFX hoodie - Sport Grey / S",
+          "sku": "39443027492928",
+          "image": "https://cdn.shopify.com/s/files/1/0095/8257/5680/products/unisex-heavy-blend-hoodie-sport-grey-front-62b31ca1c778a.jpg?v=1655905457",
+          "color": "Sport Grey",
+          "size": "S",
+          "offers": {
+            "@type": "Offer",
+            "url": "https://myshirtsdope.com/product/6606691958848?variant=39443027492928",
+            "price": 50,
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock",
+            "itemCondition": "https://schema.org/NewCondition",
+            "seller": {
+              "@id": "https://myshirtsdope.com/#organization"
+            },
+            "shippingDetails": {
+              "@id": "https://myshirtsdope.com/#offer-shipping"
+            },
+            "hasMerchantReturnPolicy": {
+              "@id": "https://myshirtsdope.com/#return-policy"
+            }
+          }
+        },
+        {
+          "@type": "Product",
+          "@id": "https://myshirtsdope.com/product/6606691958848#variant-39443027525696",
+          "name": "They Want EFX hoodie - Sport Grey / M",
+          "sku": "39443027525696",
+          "image": "https://cdn.shopify.com/s/files/1/0095/8257/5680/products/unisex-heavy-blend-hoodie-sport-grey-front-62b31ca1c778a.jpg?v=1655905457",
+          "color": "Sport Grey",
+          "size": "M",
+          "offers": {
+            "@type": "Offer",
+            "url": "https://myshirtsdope.com/product/6606691958848?variant=39443027525696",
+            "price": 50,
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock",
+            "itemCondition": "https://schema.org/NewCondition",
+            "seller": {
+              "@id": "https://myshirtsdope.com/#organization"
+            },
+            "shippingDetails": {
+              "@id": "https://myshirtsdope.com/#offer-shipping"
+            },
+            "hasMerchantReturnPolicy": {
+              "@id": "https://myshirtsdope.com/#return-policy"
+            }
+          }
+        },
+        {
+          "@type": "Product",
+          "@id": "https://myshirtsdope.com/product/6606691958848#variant-39443027558464",
+          "name": "They Want EFX hoodie - Sport Grey / L",
+          "sku": "39443027558464",
+          "image": "https://cdn.shopify.com/s/files/1/0095/8257/5680/products/unisex-heavy-blend-hoodie-sport-grey-front-62b31ca1c778a.jpg?v=1655905457",
+          "color": "Sport Grey",
+          "size": "L",
+          "offers": {
+            "@type": "Offer",
+            "url": "https://myshirtsdope.com/product/6606691958848?variant=39443027558464",
+            "price": 50,
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock",
+            "itemCondition": "https://schema.org/NewCondition",
+            "seller": {
+              "@id": "https://myshirtsdope.com/#organization"
+            },
+            "shippingDetails": {
+              "@id": "https://myshirtsdope.com/#offer-shipping"
+            },
+            "hasMerchantReturnPolicy": {
+              "@id": "https://myshirtsdope.com/#return-policy"
+            }
+          }
+        },
+        {
+          "@type": "Product",
+          "@id": "https://myshirtsdope.com/product/6606691958848#variant-39443027591232",
+          "name": "They Want EFX hoodie - Sport Grey / XL",
+          "sku": "39443027591232",
+          "image": "https://cdn.shopify.com/s/files/1/0095/8257/5680/products/unisex-heavy-blend-hoodie-sport-grey-front-62b31ca1c778a.jpg?v=1655905457",
+          "color": "Sport Grey",
+          "size": "XL",
+          "offers": {
+            "@type": "Offer",
+            "url": "https://myshirtsdope.com/product/6606691958848?variant=39443027591232",
+            "price": 50,
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock",
+            "itemCondition": "https://schema.org/NewCondition",
+            "seller": {
+              "@id": "https://myshirtsdope.com/#organization"
+            },
+            "shippingDetails": {
+              "@id": "https://myshirtsdope.com/#offer-shipping"
+            },
+            "hasMerchantReturnPolicy": {
+              "@id": "https://myshirtsdope.com/#return-policy"
+            }
+          }
+        },
+        {
+          "@type": "Product",
+          "@id": "https://myshirtsdope.com/product/6606691958848#variant-39443027624000",
+          "name": "They Want EFX hoodie - Sport Grey / 2XL",
+          "sku": "39443027624000",
+          "image": "https://cdn.shopify.com/s/files/1/0095/8257/5680/products/unisex-heavy-blend-hoodie-sport-grey-front-62b31ca1c778a.jpg?v=1655905457",
+          "color": "Sport Grey",
+          "size": "2XL",
+          "offers": {
+            "@type": "Offer",
+            "url": "https://myshirtsdope.com/product/6606691958848?variant=39443027624000",
+            "price": 50,
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock",
+            "itemCondition": "https://schema.org/NewCondition",
+            "seller": {
+              "@id": "https://myshirtsdope.com/#organization"
+            },
+            "shippingDetails": {
+              "@id": "https://myshirtsdope.com/#offer-shipping"
+            },
+            "hasMerchantReturnPolicy": {
+              "@id": "https://myshirtsdope.com/#return-policy"
+            }
+          }
+        },
+        {
+          "@type": "Product",
+          "@id": "https://myshirtsdope.com/product/6606691958848#variant-39443027656768",
+          "name": "They Want EFX hoodie - Light Blue / S",
+          "sku": "39443027656768",
+          "image": "https://cdn.shopify.com/s/files/1/0095/8257/5680/products/unisex-heavy-blend-hoodie-light-blue-front-62b31ca1c9cb7.jpg?v=1655905462",
+          "color": "Light Blue",
+          "size": "S",
+          "offers": {
+            "@type": "Offer",
+            "url": "https://myshirtsdope.com/product/6606691958848?variant=39443027656768",
+            "price": 50,
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock",
+            "itemCondition": "https://schema.org/NewCondition",
+            "seller": {
+              "@id": "https://myshirtsdope.com/#organization"
+            },
+            "shippingDetails": {
+              "@id": "https://myshirtsdope.com/#offer-shipping"
+            },
+            "hasMerchantReturnPolicy": {
+              "@id": "https://myshirtsdope.com/#return-policy"
+            }
+          }
+        },
+        {
+          "@type": "Product",
+          "@id": "https://myshirtsdope.com/product/6606691958848#variant-39443027689536",
+          "name": "They Want EFX hoodie - Light Blue / M",
+          "sku": "39443027689536",
+          "image": "https://cdn.shopify.com/s/files/1/0095/8257/5680/products/unisex-heavy-blend-hoodie-light-blue-front-62b31ca1c9cb7.jpg?v=1655905462",
+          "color": "Light Blue",
+          "size": "M",
+          "offers": {
+            "@type": "Offer",
+            "url": "https://myshirtsdope.com/product/6606691958848?variant=39443027689536",
+            "price": 50,
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock",
+            "itemCondition": "https://schema.org/NewCondition",
+            "seller": {
+              "@id": "https://myshirtsdope.com/#organization"
+            },
+            "shippingDetails": {
+              "@id": "https://myshirtsdope.com/#offer-shipping"
+            },
+            "hasMerchantReturnPolicy": {
+              "@id": "https://myshirtsdope.com/#return-policy"
+            }
+          }
+        },
+        {
+          "@type": "Product",
+          "@id": "https://myshirtsdope.com/product/6606691958848#variant-39443027722304",
+          "name": "They Want EFX hoodie - Light Blue / L",
+          "sku": "39443027722304",
+          "image": "https://cdn.shopify.com/s/files/1/0095/8257/5680/products/unisex-heavy-blend-hoodie-light-blue-front-62b31ca1c9cb7.jpg?v=1655905462",
+          "color": "Light Blue",
+          "size": "L",
+          "offers": {
+            "@type": "Offer",
+            "url": "https://myshirtsdope.com/product/6606691958848?variant=39443027722304",
+            "price": 50,
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock",
+            "itemCondition": "https://schema.org/NewCondition",
+            "seller": {
+              "@id": "https://myshirtsdope.com/#organization"
+            },
+            "shippingDetails": {
+              "@id": "https://myshirtsdope.com/#offer-shipping"
+            },
+            "hasMerchantReturnPolicy": {
+              "@id": "https://myshirtsdope.com/#return-policy"
+            }
+          }
+        },
+        {
+          "@type": "Product",
+          "@id": "https://myshirtsdope.com/product/6606691958848#variant-39443027755072",
+          "name": "They Want EFX hoodie - Light Blue / XL",
+          "sku": "39443027755072",
+          "image": "https://cdn.shopify.com/s/files/1/0095/8257/5680/products/unisex-heavy-blend-hoodie-light-blue-front-62b31ca1c9cb7.jpg?v=1655905462",
+          "color": "Light Blue",
+          "size": "XL",
+          "offers": {
+            "@type": "Offer",
+            "url": "https://myshirtsdope.com/product/6606691958848?variant=39443027755072",
+            "price": 50,
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock",
+            "itemCondition": "https://schema.org/NewCondition",
+            "seller": {
+              "@id": "https://myshirtsdope.com/#organization"
+            },
+            "shippingDetails": {
+              "@id": "https://myshirtsdope.com/#offer-shipping"
+            },
+            "hasMerchantReturnPolicy": {
+              "@id": "https://myshirtsdope.com/#return-policy"
+            }
+          }
+        },
+        {
+          "@type": "Product",
+          "@id": "https://myshirtsdope.com/product/6606691958848#variant-39443027787840",
+          "name": "They Want EFX hoodie - Light Blue / 2XL",
+          "sku": "39443027787840",
+          "image": "https://cdn.shopify.com/s/files/1/0095/8257/5680/products/unisex-heavy-blend-hoodie-light-blue-front-62b31ca1c9cb7.jpg?v=1655905462",
+          "color": "Light Blue",
+          "size": "2XL",
+          "offers": {
+            "@type": "Offer",
+            "url": "https://myshirtsdope.com/product/6606691958848?variant=39443027787840",
+            "price": 50,
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock",
+            "itemCondition": "https://schema.org/NewCondition",
+            "seller": {
+              "@id": "https://myshirtsdope.com/#organization"
+            },
+            "shippingDetails": {
+              "@id": "https://myshirtsdope.com/#offer-shipping"
+            },
+            "hasMerchantReturnPolicy": {
+              "@id": "https://myshirtsdope.com/#return-policy"
+            }
+          }
+        },
+        {
+          "@type": "Product",
+          "@id": "https://myshirtsdope.com/product/6606691958848#variant-39443027820608",
+          "name": "They Want EFX hoodie - Light Pink / S",
+          "sku": "39443027820608",
+          "image": "https://cdn.shopify.com/s/files/1/0095/8257/5680/products/unisex-heavy-blend-hoodie-light-pink-front-62b31ca1cb0d3.jpg?v=1655905464",
+          "color": "Light Pink",
+          "size": "S",
+          "offers": {
+            "@type": "Offer",
+            "url": "https://myshirtsdope.com/product/6606691958848?variant=39443027820608",
+            "price": 50,
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock",
+            "itemCondition": "https://schema.org/NewCondition",
+            "seller": {
+              "@id": "https://myshirtsdope.com/#organization"
+            },
+            "shippingDetails": {
+              "@id": "https://myshirtsdope.com/#offer-shipping"
+            },
+            "hasMerchantReturnPolicy": {
+              "@id": "https://myshirtsdope.com/#return-policy"
+            }
+          }
+        },
+        {
+          "@type": "Product",
+          "@id": "https://myshirtsdope.com/product/6606691958848#variant-39443027853376",
+          "name": "They Want EFX hoodie - Light Pink / M",
+          "sku": "39443027853376",
+          "image": "https://cdn.shopify.com/s/files/1/0095/8257/5680/products/unisex-heavy-blend-hoodie-light-pink-front-62b31ca1cb0d3.jpg?v=1655905464",
+          "color": "Light Pink",
+          "size": "M",
+          "offers": {
+            "@type": "Offer",
+            "url": "https://myshirtsdope.com/product/6606691958848?variant=39443027853376",
+            "price": 50,
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock",
+            "itemCondition": "https://schema.org/NewCondition",
+            "seller": {
+              "@id": "https://myshirtsdope.com/#organization"
+            },
+            "shippingDetails": {
+              "@id": "https://myshirtsdope.com/#offer-shipping"
+            },
+            "hasMerchantReturnPolicy": {
+              "@id": "https://myshirtsdope.com/#return-policy"
+            }
+          }
+        },
+        {
+          "@type": "Product",
+          "@id": "https://myshirtsdope.com/product/6606691958848#variant-39443027886144",
+          "name": "They Want EFX hoodie - Light Pink / L",
+          "sku": "39443027886144",
+          "image": "https://cdn.shopify.com/s/files/1/0095/8257/5680/products/unisex-heavy-blend-hoodie-light-pink-front-62b31ca1cb0d3.jpg?v=1655905464",
+          "color": "Light Pink",
+          "size": "L",
+          "offers": {
+            "@type": "Offer",
+            "url": "https://myshirtsdope.com/product/6606691958848?variant=39443027886144",
+            "price": 50,
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock",
+            "itemCondition": "https://schema.org/NewCondition",
+            "seller": {
+              "@id": "https://myshirtsdope.com/#organization"
+            },
+            "shippingDetails": {
+              "@id": "https://myshirtsdope.com/#offer-shipping"
+            },
+            "hasMerchantReturnPolicy": {
+              "@id": "https://myshirtsdope.com/#return-policy"
+            }
+          }
+        },
+        {
+          "@type": "Product",
+          "@id": "https://myshirtsdope.com/product/6606691958848#variant-39443027918912",
+          "name": "They Want EFX hoodie - Light Pink / XL",
+          "sku": "39443027918912",
+          "image": "https://cdn.shopify.com/s/files/1/0095/8257/5680/products/unisex-heavy-blend-hoodie-light-pink-front-62b31ca1cb0d3.jpg?v=1655905464",
+          "color": "Light Pink",
+          "size": "XL",
+          "offers": {
+            "@type": "Offer",
+            "url": "https://myshirtsdope.com/product/6606691958848?variant=39443027918912",
+            "price": 50,
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock",
+            "itemCondition": "https://schema.org/NewCondition",
+            "seller": {
+              "@id": "https://myshirtsdope.com/#organization"
+            },
+            "shippingDetails": {
+              "@id": "https://myshirtsdope.com/#offer-shipping"
+            },
+            "hasMerchantReturnPolicy": {
+              "@id": "https://myshirtsdope.com/#return-policy"
+            }
+          }
+        },
+        {
+          "@type": "Product",
+          "@id": "https://myshirtsdope.com/product/6606691958848#variant-39443027951680",
+          "name": "They Want EFX hoodie - Light Pink / 2XL",
+          "sku": "39443027951680",
+          "image": "https://cdn.shopify.com/s/files/1/0095/8257/5680/products/unisex-heavy-blend-hoodie-light-pink-front-62b31ca1cb0d3.jpg?v=1655905464",
+          "color": "Light Pink",
+          "size": "2XL",
+          "offers": {
+            "@type": "Offer",
+            "url": "https://myshirtsdope.com/product/6606691958848?variant=39443027951680",
+            "price": 50,
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock",
+            "itemCondition": "https://schema.org/NewCondition",
+            "seller": {
+              "@id": "https://myshirtsdope.com/#organization"
+            },
+            "shippingDetails": {
+              "@id": "https://myshirtsdope.com/#offer-shipping"
+            },
+            "hasMerchantReturnPolicy": {
+              "@id": "https://myshirtsdope.com/#return-policy"
+            }
+          }
+        },
+        {
+          "@type": "Product",
+          "@id": "https://myshirtsdope.com/product/6606691958848#variant-39443027984448",
+          "name": "They Want EFX hoodie - White / S",
+          "sku": "39443027984448",
+          "image": "https://cdn.shopify.com/s/files/1/0095/8257/5680/products/unisex-heavy-blend-hoodie-white-front-62b31ca1cc259.jpg?v=1655905465",
+          "color": "White",
+          "size": "S",
+          "offers": {
+            "@type": "Offer",
+            "url": "https://myshirtsdope.com/product/6606691958848?variant=39443027984448",
+            "price": 50,
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock",
+            "itemCondition": "https://schema.org/NewCondition",
+            "seller": {
+              "@id": "https://myshirtsdope.com/#organization"
+            },
+            "shippingDetails": {
+              "@id": "https://myshirtsdope.com/#offer-shipping"
+            },
+            "hasMerchantReturnPolicy": {
+              "@id": "https://myshirtsdope.com/#return-policy"
+            }
+          }
+        },
+        {
+          "@type": "Product",
+          "@id": "https://myshirtsdope.com/product/6606691958848#variant-39443028017216",
+          "name": "They Want EFX hoodie - White / M",
+          "sku": "39443028017216",
+          "image": "https://cdn.shopify.com/s/files/1/0095/8257/5680/products/unisex-heavy-blend-hoodie-white-front-62b31ca1cc259.jpg?v=1655905465",
+          "color": "White",
+          "size": "M",
+          "offers": {
+            "@type": "Offer",
+            "url": "https://myshirtsdope.com/product/6606691958848?variant=39443028017216",
+            "price": 50,
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock",
+            "itemCondition": "https://schema.org/NewCondition",
+            "seller": {
+              "@id": "https://myshirtsdope.com/#organization"
+            },
+            "shippingDetails": {
+              "@id": "https://myshirtsdope.com/#offer-shipping"
+            },
+            "hasMerchantReturnPolicy": {
+              "@id": "https://myshirtsdope.com/#return-policy"
+            }
+          }
+        },
+        {
+          "@type": "Product",
+          "@id": "https://myshirtsdope.com/product/6606691958848#variant-39443028049984",
+          "name": "They Want EFX hoodie - White / L",
+          "sku": "39443028049984",
+          "image": "https://cdn.shopify.com/s/files/1/0095/8257/5680/products/unisex-heavy-blend-hoodie-white-front-62b31ca1cc259.jpg?v=1655905465",
+          "color": "White",
+          "size": "L",
+          "offers": {
+            "@type": "Offer",
+            "url": "https://myshirtsdope.com/product/6606691958848?variant=39443028049984",
+            "price": 50,
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock",
+            "itemCondition": "https://schema.org/NewCondition",
+            "seller": {
+              "@id": "https://myshirtsdope.com/#organization"
+            },
+            "shippingDetails": {
+              "@id": "https://myshirtsdope.com/#offer-shipping"
+            },
+            "hasMerchantReturnPolicy": {
+              "@id": "https://myshirtsdope.com/#return-policy"
+            }
+          }
+        },
+        {
+          "@type": "Product",
+          "@id": "https://myshirtsdope.com/product/6606691958848#variant-39443028082752",
+          "name": "They Want EFX hoodie - White / XL",
+          "sku": "39443028082752",
+          "image": "https://cdn.shopify.com/s/files/1/0095/8257/5680/products/unisex-heavy-blend-hoodie-white-front-62b31ca1cc259.jpg?v=1655905465",
+          "color": "White",
+          "size": "XL",
+          "offers": {
+            "@type": "Offer",
+            "url": "https://myshirtsdope.com/product/6606691958848?variant=39443028082752",
+            "price": 50,
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock",
+            "itemCondition": "https://schema.org/NewCondition",
+            "seller": {
+              "@id": "https://myshirtsdope.com/#organization"
+            },
+            "shippingDetails": {
+              "@id": "https://myshirtsdope.com/#offer-shipping"
+            },
+            "hasMerchantReturnPolicy": {
+              "@id": "https://myshirtsdope.com/#return-policy"
+            }
+          }
+        },
+        {
+          "@type": "Product",
+          "@id": "https://myshirtsdope.com/product/6606691958848#variant-39443028115520",
+          "name": "They Want EFX hoodie - White / 2XL",
+          "sku": "39443028115520",
+          "image": "https://cdn.shopify.com/s/files/1/0095/8257/5680/products/unisex-heavy-blend-hoodie-white-front-62b31ca1cc259.jpg?v=1655905465",
+          "color": "White",
+          "size": "2XL",
+          "offers": {
+            "@type": "Offer",
+            "url": "https://myshirtsdope.com/product/6606691958848?variant=39443028115520",
+            "price": 50,
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock",
+            "itemCondition": "https://schema.org/NewCondition",
+            "seller": {
+              "@id": "https://myshirtsdope.com/#organization"
+            },
+            "shippingDetails": {
+              "@id": "https://myshirtsdope.com/#offer-shipping"
+            },
+            "hasMerchantReturnPolicy": {
+              "@id": "https://myshirtsdope.com/#return-policy"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "@type": "OfferShippingDetails",
+      "@id": "https://myshirtsdope.com/#offer-shipping",
+      "shippingRate": {
+        "@type": "MonetaryAmount",
+        "value": 0,
+        "currency": "USD"
+      },
+      "shippingDestination": {
+        "@type": "DefinedRegion",
+        "addressCountry": "US"
+      },
+      "deliveryTime": {
+        "@type": "ShippingDeliveryTime",
+        "handlingTime": {
+          "@type": "QuantitativeValue",
+          "minValue": 2,
+          "maxValue": 5,
+          "unitCode": "DAY"
+        },
+        "transitTime": {
+          "@type": "QuantitativeValue",
+          "minValue": 2,
+          "maxValue": 7,
+          "unitCode": "DAY"
+        }
+      }
+    },
+    {
+      "@type": "MerchantReturnPolicy",
+      "@id": "https://myshirtsdope.com/#return-policy",
+      "url": "https://myshirtsdope.com/returns",
+      "applicableCountry": "US",
+      "returnPolicyCategory": "https://schema.org/MerchantReturnFiniteReturnWindow",
+      "returnPolicyCountry": "US",
+      "merchantReturnDays": 30,
+      "returnMethod": "https://schema.org/ReturnByMail",
+      "returnFees": "https://schema.org/FreeReturn"
+    }
+  ]
+}

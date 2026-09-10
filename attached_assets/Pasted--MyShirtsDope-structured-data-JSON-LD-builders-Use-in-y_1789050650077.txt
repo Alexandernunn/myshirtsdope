@@ -1,0 +1,564 @@
+/**
+ * MyShirtsDope — structured data (JSON-LD) builders
+ *
+ * Use in your prerender step. Each page emits ONE
+ * <script type="application/ld+json"> containing an @graph, so every entity
+ * (store, website, page, breadcrumb, product) is linked by @id and crawlers /
+ * AI systems read the site as one connected knowledge graph.
+ *
+ * IMPORTANT: remove the microdata attributes (itemscope / itemtype / itemprop)
+ * from the product page HTML once this is live, or Google sees two Products.
+ */
+
+/* ------------------------------------------------------------------ */
+/* 1. Site config — fill in every TODO with real values               */
+/* ------------------------------------------------------------------ */
+
+export const SITE = {
+  url: "https://myshirtsdope.com",
+  name: "MyShirtsDope",
+  alternateName: ["My Shirts Dope", "MyShirtsDope.com"],
+  description:
+    "Shirts, hoodies, onesies, and accessories for all ages inspired by music, culture and love.",
+  slogan: "Culture Never Dies",
+  language: "en-US",
+  logo: "https://myshirtsdope.com/logo-512.png", // TODO: square logo, 112x112 minimum
+  email: "support@myshirtsdope.com", // TODO: real support email
+  sameAs: [
+    // TODO: real profile URLs only — these are how AI ties the brand together
+    // "https://www.instagram.com/myshirtsdope",
+    // "https://www.tiktok.com/@myshirtsdope",
+    // "https://www.facebook.com/myshirtsdope",
+  ] as string[],
+  currency: "USD",
+  shipsTo: ["US"], // TODO: add "CA", etc. if you ship there
+  policyPageUrl: "https://myshirtsdope.com/shipping-returns", // TODO: create this page
+  shipping: {
+    flatRate: 4.99, // TODO: your real rate
+    freeOver: null as number | null, // TODO: e.g. 75 for free shipping over $75
+    handlingDays: [2, 5] as [number, number], // print-on-demand production time
+    transitDays: [3, 7] as [number, number],
+  },
+  returns: {
+    // TODO: set to 0 if you only replace misprints/defects (common for POD)
+    windowDays: 30,
+    fees: "ReturnFeesCustomerResponsibility" as
+      | "FreeReturn"
+      | "ReturnFeesCustomerResponsibility",
+  },
+};
+
+/* ------------------------------------------------------------------ */
+/* 2. Types — matches the data-prerendered-product JSON you already emit */
+/* ------------------------------------------------------------------ */
+
+export interface ShopifyVariant {
+  variantId: string; // gid://shopify/ProductVariant/123
+  size: string;
+  color: string;
+  price: string;
+  availableForSale: boolean;
+}
+
+export interface StoreProduct {
+  id: number;
+  handle?: string; // e.g. "they-want-efx-hoodie" — used for canonical URLs
+  name: string;
+  description: string;
+  price: number;
+  category: string; // Shirts | Hoodies | Onesies | Accessories
+  imageUrl: string;
+  sizes: string[];
+  colors: string[];
+  colorImages: Record<string, string>;
+  tags: string[];
+  updatedAt?: string;
+  shopifyVariants: ShopifyVariant[];
+}
+
+type Node = Record<string, unknown>;
+
+/* ------------------------------------------------------------------ */
+/* 3. Helpers                                                          */
+/* ------------------------------------------------------------------ */
+
+export const IDS = {
+  org: `${SITE.url}/#organization`,
+  website: `${SITE.url}/#website`,
+  shipping: `${SITE.url}/#standard-shipping`,
+  returns: `${SITE.url}/#return-policy`,
+};
+
+/** Must match the page's <link rel="canonical">, og:url, and sitemap <loc> exactly. */
+export const productUrl = (p: StoreProduct) => `${SITE.url}/product/${p.handle ?? p.id}`;
+export const categoryUrl = (c: string) =>
+  `${SITE.url}/shop?category=${encodeURIComponent(c)}`;
+const numericId = (gid: string) => gid.split("/").pop() as string;
+const unique = <T>(arr: T[]) => [...new Set(arr.filter(Boolean))];
+
+/**
+ * Google product taxonomy paths. Verify against Google's taxonomy file
+ * (google.com/basepages/producttype/taxonomy.en-US.txt) before shipping.
+ */
+const GOOGLE_CATEGORY: Record<string, string> = {
+  Shirts: "Apparel & Accessories > Clothing > Shirts & Tops",
+  Hoodies: "Apparel & Accessories > Clothing > Shirts & Tops",
+  Onesies: "Apparel & Accessories > Clothing > Baby & Toddler Clothing",
+  Accessories: "Apparel & Accessories > Clothing Accessories",
+};
+
+/** Splits the Printful-style "intro • feature • feature" description. */
+function parseDescription(desc: string) {
+  const [intro, ...features] = desc.split("•").map((s) => s.trim());
+  return { intro, features: features.filter(Boolean) };
+}
+
+function cleanDescription(desc: string) {
+  const { intro, features } = parseDescription(desc);
+  const body = features.map((f) => (/[.!?]$/.test(f) ? f : `${f}.`)).join(" ");
+  return [intro, body].filter(Boolean).join(" ");
+}
+
+/** Audience for apparel. Heuristic — override per product if needed. */
+function audienceFor(p: StoreProduct): Node {
+  const hay = `${p.name} ${p.category} ${p.imageUrl}`.toLowerCase();
+  const age = (min: number, max: number | null, unitCode: "ANN" | "MON") => ({
+    "@type": "QuantitativeValue",
+    minValue: min,
+    ...(max !== null ? { maxValue: max } : {}),
+    unitCode,
+  });
+  let suggestedAge = age(13, null, "ANN"); // adult
+  if (/onesie|baby|infant/.test(hay)) suggestedAge = age(0, 24, "MON");
+  else if (/toddler/.test(hay)) suggestedAge = age(1, 5, "ANN");
+  else if (/youth|kid/.test(hay)) suggestedAge = age(5, 13, "ANN");
+  return { "@type": "PeopleAudience", suggestedGender: "unisex", suggestedAge };
+}
+
+/* ------------------------------------------------------------------ */
+/* 4. Sitewide entities                                                */
+/* ------------------------------------------------------------------ */
+
+export function buildReturnPolicy(): Node {
+  const r = SITE.returns;
+  const base = {
+    "@type": "MerchantReturnPolicy",
+    "@id": IDS.returns,
+    applicableCountry: SITE.shipsTo,
+    merchantReturnLink: SITE.policyPageUrl,
+  };
+  if (r.windowDays <= 0) {
+    return {
+      ...base,
+      returnPolicyCategory: "https://schema.org/MerchantReturnNotPermitted",
+    };
+  }
+  return {
+    ...base,
+    returnPolicyCountry: "US",
+    returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
+    merchantReturnDays: r.windowDays,
+    returnMethod: "https://schema.org/ReturnByMail",
+    returnFees: `https://schema.org/${r.fees}`,
+    refundType: "https://schema.org/FullRefund",
+  };
+}
+
+export function buildShippingService(): Node {
+  const s = SITE.shipping;
+  const shippingDestination = SITE.shipsTo.map((c) => ({
+    "@type": "DefinedRegion",
+    addressCountry: c,
+  }));
+  const days = ([min, max]: [number, number]) => ({
+    "@type": "QuantitativeValue",
+    minValue: min,
+    maxValue: max,
+    unitCode: "DAY",
+  });
+  const transitTime = { "@type": "ServicePeriod", duration: days(s.transitDays) };
+  const rate = (value: number) => ({
+    "@type": "MonetaryAmount",
+    value,
+    currency: SITE.currency,
+  });
+
+  const shippingConditions: Node[] =
+    s.freeOver == null
+      ? [{ "@type": "ShippingConditions", shippingDestination, shippingRate: rate(s.flatRate), transitTime }]
+      : [
+          {
+            "@type": "ShippingConditions",
+            shippingDestination,
+            orderValue: {
+              "@type": "MonetaryAmount",
+              minValue: 0,
+              maxValue: Math.round((s.freeOver - 0.01) * 100) / 100,
+              currency: SITE.currency,
+            },
+            shippingRate: rate(s.flatRate),
+            transitTime,
+          },
+          {
+            "@type": "ShippingConditions",
+            shippingDestination,
+            orderValue: { "@type": "MonetaryAmount", minValue: s.freeOver, currency: SITE.currency },
+            shippingRate: rate(0),
+            transitTime,
+          },
+        ];
+
+  return {
+    "@type": "ShippingService",
+    "@id": IDS.shipping,
+    name: "Standard Shipping",
+    description:
+      s.freeOver == null
+        ? `Flat $${s.flatRate} shipping. Printed to order in ${s.handlingDays[0]}-${s.handlingDays[1]} business days, then ${s.transitDays[0]}-${s.transitDays[1]} business days in transit.`
+        : `Free shipping on orders over $${s.freeOver}, otherwise $${s.flatRate}. Printed to order in ${s.handlingDays[0]}-${s.handlingDays[1]} business days.`,
+    fulfillmentType: "https://schema.org/FulfillmentTypeDelivery",
+    handlingTime: { "@type": "ServicePeriod", duration: days(s.handlingDays) },
+    shippingConditions,
+  };
+}
+
+/**
+ * OnlineStore (a Google-supported Organization subtype).
+ * withPolicies: include on the home page and /shipping-returns.
+ * Elsewhere the lightweight version is enough for @id references to resolve.
+ */
+export function buildOrganization({ withPolicies = false } = {}): Node {
+  const org: Node = {
+    "@type": "OnlineStore",
+    "@id": IDS.org,
+    name: SITE.name,
+    alternateName: SITE.alternateName,
+    url: `${SITE.url}/`,
+    logo: { "@type": "ImageObject", url: SITE.logo },
+    image: SITE.logo,
+    description: SITE.description,
+    slogan: SITE.slogan,
+    email: SITE.email,
+    contactPoint: {
+      "@type": "ContactPoint",
+      contactType: "customer support",
+      email: SITE.email,
+      url: `${SITE.url}/contact`,
+      availableLanguage: ["English"],
+    },
+    ...(SITE.sameAs.length ? { sameAs: SITE.sameAs } : {}),
+  };
+  if (withPolicies) {
+    org.hasMerchantReturnPolicy = buildReturnPolicy();
+    org.hasShippingService = buildShippingService();
+  }
+  return org;
+}
+
+export function buildWebSite(): Node {
+  return {
+    "@type": "WebSite",
+    "@id": IDS.website,
+    url: `${SITE.url}/`,
+    name: SITE.name,
+    alternateName: SITE.alternateName,
+    description: SITE.description,
+    inLanguage: SITE.language,
+    publisher: { "@id": IDS.org },
+    // If /shop supports ?q= search, uncomment:
+    // potentialAction: {
+    //   "@type": "SearchAction",
+    //   target: { "@type": "EntryPoint", urlTemplate: `${SITE.url}/shop?q={search_term_string}` },
+    //   "query-input": "required name=search_term_string",
+    // },
+  };
+}
+
+type Crumb = { name: string; url: string };
+
+export function buildBreadcrumb(pageUrl: string, crumbs: Crumb[]): Node {
+  return {
+    "@type": "BreadcrumbList",
+    "@id": `${pageUrl}#breadcrumb`,
+    itemListElement: crumbs.map((c, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: c.name,
+      item: c.url,
+    })),
+  };
+}
+
+/* ------------------------------------------------------------------ */
+/* 5. Product page                                                     */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Variant offer URLs use ?variant=<id>. Your PDP must read that param and
+ * preselect the matching size, color AND image, or Google will flag a mismatch.
+ */
+function buildVariant(p: StoreProduct, v: ShopifyVariant): Node {
+  const vid = numericId(v.variantId);
+  const url = `${productUrl(p)}?variant=${vid}`;
+  return {
+    "@type": "Product",
+    "@id": `${url}#product`,
+    name: `${p.name} - ${v.color} / ${v.size}`,
+    sku: vid,
+    color: v.color,
+    size: v.size,
+    image: p.colorImages[v.color] ?? p.imageUrl,
+    offers: {
+      "@type": "Offer",
+      url,
+      price: Number(v.price),
+      priceCurrency: SITE.currency,
+      availability: v.availableForSale
+        ? "https://schema.org/InStock"
+        : "https://schema.org/OutOfStock",
+      itemCondition: "https://schema.org/NewCondition",
+      seller: { "@id": IDS.org },
+    },
+  };
+}
+
+export function buildProduct(p: StoreProduct): Node {
+  const url = productUrl(p);
+  const { features } = parseDescription(p.description);
+  const material = features.find((f) => /cotton|polyester|fleece|blend/i.test(f));
+  const fabricWeight = features.find((f) => /fabric weight/i.test(f));
+
+  const shared: Node = {
+    "@id": `${url}#product`,
+    name: p.name,
+    url,
+    description: cleanDescription(p.description),
+    image: unique([p.imageUrl, ...Object.values(p.colorImages)]),
+    brand: { "@type": "Brand", name: SITE.name },
+    category: GOOGLE_CATEGORY[p.category] ?? p.category,
+    keywords: unique(p.tags).join(", "),
+    audience: audienceFor(p),
+    mainEntityOfPage: { "@id": `${url}#webpage` },
+    ...(material ? { material } : {}),
+    ...(fabricWeight
+      ? {
+          additionalProperty: [
+            {
+              "@type": "PropertyValue",
+              name: "Fabric weight",
+              value: fabricWeight.replace(/fabric weight:\s*/i, ""),
+            },
+          ],
+        }
+      : {}),
+  };
+
+  // Single-variant products (some accessories): plain Product + Offer
+  if (p.shopifyVariants.length <= 1) {
+    const v = p.shopifyVariants[0];
+    return {
+      "@type": "Product",
+      ...shared,
+      sku: v ? numericId(v.variantId) : String(p.id),
+      offers: {
+        "@type": "Offer",
+        url,
+        price: Number(v?.price ?? p.price),
+        priceCurrency: SITE.currency,
+        availability:
+          v && !v.availableForSale
+            ? "https://schema.org/OutOfStock"
+            : "https://schema.org/InStock",
+        itemCondition: "https://schema.org/NewCondition",
+        seller: { "@id": IDS.org },
+      },
+    };
+  }
+
+  const variesBy = unique([
+    new Set(p.shopifyVariants.map((v) => v.size)).size > 1 ? "https://schema.org/size" : "",
+    new Set(p.shopifyVariants.map((v) => v.color)).size > 1 ? "https://schema.org/color" : "",
+  ]);
+
+  return {
+    "@type": "ProductGroup",
+    ...shared,
+    productGroupID: String(p.id),
+    variesBy,
+    hasVariant: p.shopifyVariants.map((v) => buildVariant(p, v)),
+  };
+}
+
+export function productPageGraph(p: StoreProduct): Node[] {
+  const url = productUrl(p);
+  return [
+    buildOrganization(),
+    buildWebSite(),
+    {
+      "@type": "ItemPage",
+      "@id": `${url}#webpage`,
+      url,
+      name: `${p.name} | ${SITE.name}`,
+      inLanguage: SITE.language,
+      isPartOf: { "@id": IDS.website },
+      breadcrumb: { "@id": `${url}#breadcrumb` },
+      mainEntity: { "@id": `${url}#product` },
+      primaryImageOfPage: { "@type": "ImageObject", url: p.imageUrl },
+      ...(p.updatedAt ? { dateModified: p.updatedAt } : {}),
+    },
+    buildBreadcrumb(url, [
+      { name: "Home", url: `${SITE.url}/` },
+      { name: "Shop", url: `${SITE.url}/shop` },
+      { name: p.category, url: categoryUrl(p.category) },
+      { name: p.name, url },
+    ]),
+    buildProduct(p),
+  ];
+}
+
+/* ------------------------------------------------------------------ */
+/* 6. Other page types                                                 */
+/* ------------------------------------------------------------------ */
+
+export function homePageGraph(featured: StoreProduct[] = []): Node[] {
+  const url = `${SITE.url}/`;
+  const nodes: Node[] = [
+    buildOrganization({ withPolicies: true }),
+    buildWebSite(),
+    {
+      "@type": "WebPage",
+      "@id": `${url}#webpage`,
+      url,
+      name: `${SITE.name} | Music & Culture Inspired Apparel`,
+      description: SITE.description,
+      inLanguage: SITE.language,
+      isPartOf: { "@id": IDS.website },
+      about: { "@id": IDS.org },
+      ...(featured.length ? { mainEntity: { "@id": `${url}#featured` } } : {}),
+    },
+  ];
+  if (featured.length) nodes.push(itemList(`${url}#featured`, "Featured drops", featured));
+  return nodes;
+}
+
+/** /shop and /shop?category=X. Pass only products actually rendered on that page. */
+export function collectionPageGraph(products: StoreProduct[], category?: string): Node[] {
+  const url = category ? categoryUrl(category) : `${SITE.url}/shop`;
+  const name = category ? `${category} | ${SITE.name}` : `Shop All | ${SITE.name}`;
+  const crumbs: Crumb[] = [
+    { name: "Home", url: `${SITE.url}/` },
+    { name: "Shop", url: `${SITE.url}/shop` },
+    ...(category ? [{ name: category, url }] : []),
+  ];
+  return [
+    buildOrganization(),
+    buildWebSite(),
+    {
+      "@type": "CollectionPage",
+      "@id": `${url}#webpage`,
+      url,
+      name,
+      inLanguage: SITE.language,
+      isPartOf: { "@id": IDS.website },
+      breadcrumb: { "@id": `${url}#breadcrumb` },
+      mainEntity: { "@id": `${url}#itemlist` },
+    },
+    buildBreadcrumb(url, crumbs),
+    itemList(`${url}#itemlist`, name, products),
+  ];
+}
+
+function itemList(id: string, name: string, products: StoreProduct[]): Node {
+  return {
+    "@type": "ItemList",
+    "@id": id,
+    name,
+    numberOfItems: products.length,
+    itemListElement: products.map((p, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      url: productUrl(p),
+      name: p.name,
+    })),
+  };
+}
+
+export function aboutPageGraph(): Node[] {
+  const url = `${SITE.url}/about`;
+  return [
+    buildOrganization({ withPolicies: true }),
+    buildWebSite(),
+    {
+      "@type": "AboutPage",
+      "@id": `${url}#webpage`,
+      url,
+      name: `Our Story | ${SITE.name}`,
+      inLanguage: SITE.language,
+      isPartOf: { "@id": IDS.website },
+      about: { "@id": IDS.org },
+      mainEntity: { "@id": IDS.org },
+    },
+  ];
+}
+
+export function contactPageGraph(): Node[] {
+  const url = `${SITE.url}/contact`;
+  return [
+    buildOrganization(),
+    buildWebSite(),
+    {
+      "@type": "ContactPage",
+      "@id": `${url}#webpage`,
+      url,
+      name: `Contact | ${SITE.name}`,
+      inLanguage: SITE.language,
+      isPartOf: { "@id": IDS.website },
+      about: { "@id": IDS.org },
+    },
+  ];
+}
+
+export function policyPageGraph(): Node[] {
+  const url = SITE.policyPageUrl;
+  return [
+    buildOrganization({ withPolicies: true }),
+    buildWebSite(),
+    {
+      "@type": "WebPage",
+      "@id": `${url}#webpage`,
+      url,
+      name: `Shipping & Returns | ${SITE.name}`,
+      inLanguage: SITE.language,
+      isPartOf: { "@id": IDS.website },
+      about: [{ "@id": IDS.shipping }, { "@id": IDS.returns }],
+    },
+  ];
+}
+
+/* ------------------------------------------------------------------ */
+/* 7. Output                                                           */
+/* ------------------------------------------------------------------ */
+
+/** Serializes safely for inline <script> (escapes "<" so "</script>" can't break out). */
+export function toJsonLd(nodes: Node[]): string {
+  return JSON.stringify({ "@context": "https://schema.org", "@graph": nodes }).replace(
+    /</g,
+    "\\u003c",
+  );
+}
+
+export const jsonLdScriptTag = (nodes: Node[]) =>
+  `<script type="application/ld+json">${toJsonLd(nodes)}</script>`;
+
+/** Extra Open Graph product tags (Facebook/Meta, Pinterest, many AI previewers read these). */
+export function productMetaTags(p: StoreProduct): string {
+  const anyInStock = p.shopifyVariants.some((v) => v.availableForSale);
+  const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+  return [
+    `<meta property="product:brand" content="${esc(SITE.name)}" />`,
+    `<meta property="product:availability" content="${anyInStock ? "in stock" : "out of stock"}" />`,
+    `<meta property="product:condition" content="new" />`,
+    `<meta property="product:retailer_item_id" content="${p.id}" />`,
+    `<meta property="product:category" content="${esc(p.category)}" />`,
+  ].join("\n");
+}
