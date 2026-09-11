@@ -1,0 +1,28 @@
+Yes, this is a good plan and I'd approve it. It fixes the two biggest problems, the duplicate microdata and the missing variants. It's also disciplined about not inventing data, which matters because Google treats schema that contradicts your real policies as a violation. I'd make a few edits before it runs.
+
+**1. Accept the shipping warning, and fix it in Merchant Center.**
+Leaving shipping out is the honest call if rates vary at checkout. But the `shippingDetails` warning will stay in the Rich Results Test, so "done" shouldn't mean zero warnings. The better fix lives outside the code: set up your shipping rates in Google Merchant Center, which is free. Google uses those settings for your merchant listings, so the markup doesn't have to carry them. Add that as a follow-up task so it doesn't get dropped.
+
+**2. Check the return policy against how print-on-demand actually works.**
+Your current schema claims a 30-day return window. Many print-on-demand stores only accept returns for defective or misprinted items. If that's your real policy, the 30-day claim is the kind of mismatch Google penalizes, so read your published returns page before this ships. Also, if customers pay their own return shipping and there's no fixed amount, use `ReturnFeesCustomerResponsibility` instead of `ReturnShippingFees`. That clears the missing-amount warning truthfully. Step 4 should name this fix explicitly rather than just saying "retain supported claims."
+
+**3. Keep availability from going stale.**
+Your pages are prerendered, so `availability` is frozen at build time. If Printful discontinues a color, the schema will still say InStock until the next build. Add a step to trigger a re-prerender when products change, either with a Shopify webhook or a scheduled nightly rebuild.
+
+**4. Fix the default selection mismatch.**
+The current prerendered page shows Red and S selected, but the main image is Sport Grey. When no variant parameters are in the URL, the selected color and the image should agree. Also, AI crawlers mostly don't run JavaScript. If variant preselection only happens client-side, those crawlers will always see the default, which is acceptable but worth knowing.
+
+**5. Add a live check to validation.**
+Your `verify-catalog-seo.ts` script can only check your own rules. It can't run Google's Rich Results Test. Add a manual step after deploy: run the test on four live URLs, one each for a shirt, a hoodie, a onesie, and an accessory, plus one product without variants to confirm the fallback works. Then use Search Console as your ongoing metric.
+
+**6. Small additions to the variant markup.**
+Give each variant a descriptive `name` like "They Want EFX hoodie – Red / S." Make sure each variant's offer still references your return policy `@id`. Point the WebPage's `mainEntity` at the new ProductGroup `@id`.
+
+**7. Move social links into scope.**
+The plan leaves them out because they haven't been "supplied and verified." You can remove that blocker in two minutes by giving the agent your real Instagram, TikTok, and other profile URLs. It's one of the cheapest wins for brand recognition.
+
+Here's a line you can add to "Done looks like":
+
+> Rich Results Test shows 0 errors on representative live product URLs (with any remaining warnings limited to intentionally omitted shipping); Search Console Merchant listings valid-item count trends toward total product count after recrawl.
+
+With those edits, this plan gets you to the high-level standard we talked about.
