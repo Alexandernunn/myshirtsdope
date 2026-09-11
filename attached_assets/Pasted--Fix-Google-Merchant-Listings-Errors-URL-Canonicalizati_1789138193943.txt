@@ -1,0 +1,100 @@
+# Fix Google Merchant Listings Errors + URL Canonicalization (Critical First)
+
+Google Search Console flagged structured data issues on myshirtsdope.com product pages.
+
+**Merchant listings, critical:** Invalid floating point number in property "price" (in "offers")
+**Merchant listings, non-critical:** Missing "shippingDetails", Missing "hasMerchantReturnPolicy" (in offers), No global identifier (gtin, brand), Duplicate field "color", Invalid object type for field "brand"
+**Product snippets, non-critical:** Missing "review", Missing "aggregateRating", Missing "availability" (in offers), Invalid price format in "price"
+
+A live check of production on Sept 11 found:
+- The JSON-LD itself looks correct. In a 30-product sample, every price was "50.00", "25.00", etc., and availability was present.
+- Prerendered product pages still contain a second Product in microdata: `<article itemscope itemtype="https://schema.org/Product">` with `<data itemprop="price" value="50.00">$50.00</data>`. Google is most likely reading the visible text "$50.00" as the price. That microdata Offer also has no availability, brand, or return policy. This is probably the source of the critical error and several warnings.
+- `/product/{handle}` returns 301 to `/product/{handle}/`, but the sitemap, canonical, og:url, and schema `@id`s all use the no-slash URL. `/product/{shopifyId}` takes two hops: 301 to no-slash, then 301 to slash.
+
+Relevant files: `script/storefront-schema.ts`, `script/prerender-catalog.ts`, `script/verify-catalog-seo.ts`, `client/src/pages/product-detail.tsx`, `shared/schema.ts`, plus the server or static-hosting config.
+
+---
+
+## STEP 0: Audit first and report before editing
+
+Run each check against production (https://myshirtsdope.com) and the local prerender output. Report PASS/FAIL for each. If something already passes because of an earlier change, say so and skip that fix.
+
+1. `curl -sI https://myshirtsdope.com/product/they-want-efx-hoodie` should return **200** (currently 301).
+2. `curl -sI https://myshirtsdope.com/product/they-want-efx-hoodie/` should return **one 301** to the no-slash URL.
+3. `curl -sI https://myshirtsdope.com/product/6588631482432` should return **one 301** directly to a URL that returns 200.
+4. Prerendered product HTML should contain **no** `itemscope`, `itemtype`, or `itemprop` attributes.
+5. For every product URL in the sitemap, parse the JSON-LD and confirm:
+   - exactly one Product or ProductGroup entity on the page
+   - every `offers.price` matches `^\d+\.\d{2}$` (no `$`, commas, empty values, or 0)
+   - every Offer has `availability` and `hasMerchantReturnPolicy`
+6. `brand` is `{"@type":"Brand", ...}`, not a reference to the OnlineStore.
+7. No Product entity has an array for `color` or `size`.
+
+---
+
+## PRIORITY 1: Critical (blocks merchant listings and crawling)
+
+### A. Remove the duplicate microdata Product
+- Remove every `itemscope`, `itemtype`, `itemprop`, `<link itemprop>`, and `<meta itemprop>` related to Product or Offer, in both the prerender templates and `product-detail.tsx`. Hydration must not add them back.
+- Keep all visible content unchanged. The `<data>` price element can become a normal `<span>`.
+- The JSON-LD `@graph` becomes the only product structured data on the page.
+
+### B. Make price output bulletproof
+- In `storefront-schema.ts`, always output price as a string with two decimals and no currency symbol or thousands separator.
+- If a product has no valid price, don't output Product/Offer markup for it. Have `verify-catalog-seo.ts` fail and list those handles instead of guessing a price.
+
+### C. Fix the trailing-slash conflict
+- Canonical format is **no trailing slash**. Don't switch the site to slashes.
+- `/product/{handle}` must return 200 directly.
+- `/product/{handle}/` must return one 301 to `/product/{handle}`.
+- `/product/{shopifyId}` must return one 301 straight to `/product/{handle}`.
+- The likely cause is prerendered files at `product/{handle}/index.html` with directory-slash redirects. If Express static is involved, set `{ redirect: false }` and serve the matching `index.html` for the no-slash path. Check any hosting-level redirect rules too.
+- Confirm that the sitemap, canonical, og:url, schema `url`/`@id`, breadcrumbs, and internal links all use the no-slash format.
+
+---
+
+## PRIORITY 2: Non-critical, fix now
+
+### D. Brand type
+- Product `brand` becomes `{"@type": "Brand", "name": "MyShirtsDope"}`.
+- The OnlineStore stays as the Offer `seller` and the site organization.
+
+### E. Duplicate "color"
+- Preferred fix: implement task #70 (ProductGroup + hasVariant). Each variant has exactly one `color`, one `size`, its real Shopify SKU, price, availability, and matching image.
+- If #70 isn't being done in this pass, remove the `color` and `size` arrays from the single Product for now.
+
+### F. hasMerchantReturnPolicy on every Offer
+- Every Offer, including variant offers, references `https://myshirtsdope.com/returns-refunds#policy`.
+- Compare the MerchantReturnPolicy against the published /returns-refunds page:
+  - If customers pay return shipping and there's no fixed amount, use `https://schema.org/ReturnFeesCustomerResponsibility` instead of `ReturnShippingFees`.
+  - If the published policy only accepts returns for damaged or misprinted items, or has a different window, make the schema match the page.
+- Do not change the policy itself. Report any mismatch.
+
+### G. Global identifier
+- A valid Brand (fix D) should address this.
+- Only add `gtin` if the Shopify variant `barcode` is a real, valid GTIN. Never invent gtin or mpn values.
+
+---
+
+## DO NOT
+
+- Add `review` or `aggregateRating` unless real customer reviews are visibly displayed on that product page. Leave those warnings alone.
+- Add `shippingDetails` with made-up flat rates. Shipping is calculated at checkout, so this warning stays until shipping is set up in Google Merchant Center.
+- Change prices, inventory, return terms, or product content.
+
+---
+
+## ALSO REPORT (don't change)
+
+1. In the live sample, **every youth hoodie showed `OutOfStock`**. Confirm this matches Shopify `availableForSale` and isn't a mapping bug. Report the result.
+2. List near-duplicate product handles, such as ones ending in `-1` that share a base title with another product. Report only.
+
+---
+
+## DONE WHEN
+
+- `verify-catalog-seo.ts` runs checks 1–7 from Step 0 across **all** sitemap product URLs (plus the no-variant fallback products) and passes.
+- Production curl checks 1–3 pass after deploy.
+- You give me a final PASS/FAIL table for every item above, plus the youth-hoodie and duplicate-handle findings.
+
+After deploy, I'll run Google's Rich Results Test on a shirt, a hoodie, a onesie, a youth item, and an accessory, then click **Validate fix** on each issue in Search Console.
