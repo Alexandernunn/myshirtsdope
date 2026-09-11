@@ -4,6 +4,7 @@ export interface ShopifyVariantMapping {
   variantId: string;
   sku: string | null;
   barcode: string | null;
+  imageUrl: string | null;
   size: string;
   color: string;
   price: string;

@@ -1,5 +1,7 @@
 import type { Product, ProductSummary } from "../shared/schema";
 import { productPath } from "../shared/product-url";
+import { getVariantImage, getVariantPath } from "../shared/product-variant";
+import type { ShopifyVariantMapping } from "../shared/schema";
 
 type JsonLdNode = Record<string, unknown>;
 
@@ -50,7 +52,7 @@ function merchantReturnPolicyNode(siteUrl: string): JsonLdNode {
     returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
     merchantReturnDays: 30,
     returnMethod: "https://schema.org/ReturnByMail",
-    returnFees: "https://schema.org/ReturnShippingFees",
+    returnFees: "https://schema.org/ReturnFeesCustomerResponsibility",
     merchantReturnLink: `${siteUrl}/returns-refunds`,
   };
 }
@@ -163,7 +165,35 @@ function productOffer(siteUrl: string, product: Product, canonicalUrl: string): 
   };
 }
 
+function variantOffer(
+  siteUrl: string,
+  product: Product,
+  canonicalUrl: string,
+  variant: ShopifyVariantMapping,
+): JsonLdNode {
+  const variantUrl = `${siteUrl}${getVariantPath(product, variant)}`;
+  return {
+    "@type": "Offer",
+    "@id": `${canonicalUrl}#offer-${variant.variantId.split("/").pop()}`,
+    url: variantUrl,
+    priceCurrency: "USD",
+    price: Number.parseFloat(variant.price).toFixed(2),
+    availability: variant.availableForSale
+      ? "https://schema.org/InStock"
+      : "https://schema.org/OutOfStock",
+    itemCondition: "https://schema.org/NewCondition",
+    seller: reference(ids(siteUrl).organization),
+    hasMerchantReturnPolicy: reference(`${siteUrl}/returns-refunds#policy`),
+  };
+}
+
 function productNode(siteUrl: string, product: Product, canonicalUrl: string): JsonLdNode {
+  const usableVariants = (product.shopifyVariants ?? []).filter((variant) =>
+    Number.isFinite(Number.parseFloat(variant.price)),
+  );
+  const uniqueSelections = new Set(
+    usableVariants.map((variant) => `${variant.color}\u0000${variant.size}`),
+  );
   const barcodes = new Set(
     (product.shopifyVariants ?? [])
       .map((variant) => variant.barcode)
@@ -171,6 +201,46 @@ function productNode(siteUrl: string, product: Product, canonicalUrl: string): J
   );
   const gtin = barcodes.size === 1 ? [...barcodes][0] : undefined;
   const audience = audienceFor(product);
+  if (usableVariants.length > 1 && uniqueSelections.size === usableVariants.length) {
+    const colors = new Set(usableVariants.map((variant) => variant.color).filter(Boolean));
+    const sizes = new Set(usableVariants.map((variant) => variant.size).filter(Boolean));
+    const variesBy = [
+      ...(colors.size > 1 ? ["https://schema.org/color"] : []),
+      ...(sizes.size > 1 ? ["https://schema.org/size"] : []),
+    ];
+    return {
+      "@type": "ProductGroup",
+      "@id": `${canonicalUrl}#product`,
+      url: canonicalUrl,
+      mainEntityOfPage: reference(`${canonicalUrl}#webpage`),
+      name: product.name,
+      description: product.description,
+      productGroupID: product.shopifyProductId?.split("/").pop() || String(product.id),
+      ...(variesBy.length > 0 ? { variesBy } : {}),
+      image: product.imageUrls.length > 0 ? product.imageUrls : [product.imageUrl].filter(Boolean),
+      category: product.category,
+      brand: reference(ids(siteUrl).organization),
+      ...(audience ? { audience } : {}),
+      hasVariant: usableVariants.map((variant) => {
+        const variantId = variant.variantId.split("/").pop();
+        const variantImage = getVariantImage(product, variant);
+        return {
+          "@type": "Product",
+          "@id": `${canonicalUrl}#variant-${variantId}`,
+          name: `${product.name} – ${variant.color} / ${variant.size}`,
+          url: `${siteUrl}${getVariantPath(product, variant)}`,
+          ...(variant.sku ? { sku: variant.sku } : {}),
+          ...(variant.barcode ? { gtin: variant.barcode } : {}),
+          color: variant.color,
+          size: variant.size,
+          ...(variantImage ? { image: [variantImage] } : {}),
+          isVariantOf: reference(`${canonicalUrl}#product`),
+          offers: variantOffer(siteUrl, product, canonicalUrl, variant),
+        };
+      }),
+    };
+  }
+  const onlyVariant = usableVariants[0];
 
   return {
     "@type": "Product",
@@ -180,7 +250,7 @@ function productNode(siteUrl: string, product: Product, canonicalUrl: string): J
     name: product.name,
     description: product.description,
     image: product.imageUrls.length > 0 ? product.imageUrls : [product.imageUrl].filter(Boolean),
-    sku: String(product.id),
+    sku: onlyVariant?.sku || String(product.id),
     ...(gtin ? { gtin } : {}),
     category: product.category,
     brand: reference(ids(siteUrl).organization),

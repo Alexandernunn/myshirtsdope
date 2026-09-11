@@ -13,6 +13,11 @@ import { IMAGE_PRESETS, shopifyImageProps, shopifyImageUrl } from "@shared/shopi
 import { trackEvent } from "@/lib/meta-capi";
 import type { Product } from "@shared/schema";
 import { productPath } from "@shared/product-url";
+import {
+  findRequestedVariant,
+  getDefaultVariant,
+  getVariantImage,
+} from "@shared/product-variant";
 
 const COLOR_HEX_MAP: Record<string, string> = {
   "red": "#cc0000",
@@ -141,18 +146,32 @@ export default function ProductDetail() {
   const { handle } = useParams<{ handle: string }>();
   const { addToCart, isAdding } = useCart();
   const { toast } = useToast();
-  const [selectedSize, setSelectedSize] = useState<string>("");
-  const [selectedColor, setSelectedColor] = useState<string>("");
-  const [displayImage, setDisplayImage] = useState<string>("");
+  const prerenderedProduct = typeof document === "undefined"
+    ? undefined
+    : readPrerenderedProduct(document, handle);
+  const initialParams = typeof window === "undefined" ? null : new URLSearchParams(window.location.search);
+  const initialVariant = prerenderedProduct
+    ? findRequestedVariant(
+        prerenderedProduct,
+        initialParams?.get("variant") ?? null,
+        initialParams?.get("color") ?? null,
+        initialParams?.get("size") ?? null,
+      ) ?? getDefaultVariant(prerenderedProduct)
+    : undefined;
+  const initialImage = prerenderedProduct
+    ? getVariantImage(prerenderedProduct, initialVariant)
+    : "";
+  const [selectedSize, setSelectedSize] = useState<string>(initialVariant?.size ?? "");
+  const [selectedColor, setSelectedColor] = useState<string>(initialVariant?.color ?? "");
+  const [displayImage, setDisplayImage] = useState<string>(
+    initialImage && initialImage !== prerenderedProduct?.imageUrl ? initialImage : "",
+  );
   const [imageFading, setImageFading] = useState(false);
   const [justAdded, setJustAdded] = useState(false);
   const [activeFit, setActiveFit] = useState<FitType | null>(null);
   const [fitProductId, setFitProductId] = useState<number | null>(null);
   const [transitioning, setTransitioning] = useState(false);
   const [secondaryProductId, setSecondaryProductId] = useState<number | null>(null);
-  const prerenderedProduct = typeof document === "undefined"
-    ? undefined
-    : readPrerenderedProduct(document, handle);
 
   const { data: product, isLoading } = useQuery<Product>({
     queryKey: ["/api/products", handle],
@@ -285,7 +304,42 @@ export default function ProductDetail() {
 
   const colorImages = colorImagesData?.colorImages || activeProduct?.colorImages || product?.colorImages || {};
 
-  usePdpHeroPreload(activeProduct?.imageUrl);
+  const selectedVariant = activeProduct?.shopifyVariants?.find(
+    (variant) =>
+      variant.size === selectedSize &&
+      variant.color === selectedColor,
+  );
+  const resolvedVariant = selectedVariant ?? (activeProduct ? getDefaultVariant(activeProduct) : undefined);
+  const resolvedSize = selectedSize || resolvedVariant?.size || "";
+  const resolvedColor = selectedColor || resolvedVariant?.color || "";
+  const resolvedImage = activeProduct ? getVariantImage(activeProduct, resolvedVariant) : "";
+  const selectedPrice = resolvedVariant
+    ? Number.parseFloat(resolvedVariant.price)
+    : activeProduct?.price;
+
+  usePdpHeroPreload(displayImage || resolvedImage || activeProduct?.imageUrl);
+
+  useEffect(() => {
+    if (!activeProduct) return;
+    const params = new URLSearchParams(window.location.search);
+    const requestedVariant = findRequestedVariant(
+      activeProduct,
+      params.get("variant"),
+      params.get("color"),
+      params.get("size"),
+    );
+    const initialVariant = requestedVariant ?? getDefaultVariant(activeProduct);
+    if (!initialVariant) {
+      setSelectedSize(activeProduct.sizes[0] ?? "");
+      setSelectedColor(activeProduct.colors[0] ?? "");
+      setDisplayImage("");
+      return;
+    }
+    setSelectedSize(initialVariant.size);
+    setSelectedColor(initialVariant.color);
+    const initialImage = getVariantImage(activeProduct, initialVariant);
+    setDisplayImage(initialImage === activeProduct.imageUrl ? "" : initialImage);
+  }, [activeProduct?.id]);
 
   useEffect(() => {
     if (!activeProduct) return;
@@ -299,32 +353,42 @@ export default function ProductDetail() {
   }, [activeProduct?.id]);
 
   useEffect(() => {
-    setSelectedSize("");
-    setSelectedColor("");
-    setDisplayImage("");
-  }, [activeFit, fitProductId]);
-
-  useEffect(() => {
     setActiveFit(null);
     setFitProductId(null);
-    setSelectedSize("");
-    setSelectedColor("");
-    setDisplayImage("");
   }, [handle]);
 
+  const selectVariant = (variant: NonNullable<Product["shopifyVariants"]>[number]) => {
+    if (!activeProduct) return;
+    setSelectedSize(variant.size);
+    setSelectedColor(variant.color);
+    const image = getVariantImage(activeProduct, variant);
+    setDisplayImage(image === activeProduct.imageUrl ? "" : image);
+    const params = new URLSearchParams(window.location.search);
+    params.set("variant", variant.variantId.split("/").pop() || variant.variantId);
+    if (variant.color && variant.color !== "Default") params.set("color", variant.color);
+    else params.delete("color");
+    if (variant.size && variant.size !== "One Size") params.set("size", variant.size);
+    else params.delete("size");
+    const query = params.toString();
+    window.history.replaceState(null, "", `${window.location.pathname}${query ? `?${query}` : ""}`);
+  };
+
   const handleColorSelect = (color: string) => {
-    setSelectedColor(color);
-    const colorImg = colorImages[color];
-    if (colorImg && colorImg !== displayImage) {
+    const matchingVariant = activeProduct?.shopifyVariants?.find(
+      (variant) => variant.color === color && variant.size === selectedSize,
+    ) ?? activeProduct?.shopifyVariants?.find((variant) => variant.color === color);
+    if (matchingVariant) {
       setImageFading(true);
       setTimeout(() => {
-        setDisplayImage(colorImg);
+        selectVariant(matchingVariant);
         setImageFading(false);
       }, 150);
-    } else if (!colorImg) {
+    } else {
+      setSelectedColor(color);
+      const colorImg = colorImages[color];
       setImageFading(true);
       setTimeout(() => {
-        setDisplayImage("");
+        setDisplayImage(colorImg && colorImg !== activeProduct?.imageUrl ? colorImg : "");
         setImageFading(false);
       }, 150);
     }
@@ -423,7 +487,7 @@ export default function ProductDetail() {
           <div className="w-full md:max-w-[320px] flex-shrink-0">
             <div className="relative aspect-square bg-card border border-card-border rounded-md overflow-hidden" data-testid="product-hero-image-container">
               <img
-                {...shopifyImageProps(displayImage || activeProduct.imageUrl, IMAGE_PRESETS.productDetail)}
+                {...shopifyImageProps(displayImage || resolvedImage || activeProduct.imageUrl, IMAGE_PRESETS.productDetail)}
                 alt={activeProduct.name}
                 className={`w-full h-full object-contain transition-opacity duration-150 ${imageFading ? "opacity-0" : "opacity-100"}`}
                 loading="eager"
@@ -450,7 +514,7 @@ export default function ProductDetail() {
               </h1>
               <div className="min-h-[44px] flex items-center" data-testid="product-price-container">
                 <p className="font-pixel text-sm text-neon-yellow neon-text-yellow" data-testid="text-product-price">
-                  ${activeProduct.price.toFixed(2)}
+                  ${(Number.isFinite(selectedPrice) ? selectedPrice : activeProduct.price)!.toFixed(2)}
                 </p>
               </div>
             </div>
@@ -490,10 +554,16 @@ export default function ProductDetail() {
                   {activeProduct.sizes.map((size) => (
                     <button
                       key={size}
-                      onClick={() => setSelectedSize(size)}
+                      onClick={() => {
+                        const matchingVariant = activeProduct.shopifyVariants?.find(
+                          (variant) => variant.size === size && variant.color === resolvedColor,
+                        ) ?? activeProduct.shopifyVariants?.find((variant) => variant.size === size);
+                        if (matchingVariant) selectVariant(matchingVariant);
+                        else setSelectedSize(size);
+                      }}
                       data-testid={`button-size-${size}`}
                       className={`font-display text-xs px-3 py-1.5 min-h-[44px] rounded-md border transition-all ${
-                        selectedSize === size
+                          resolvedSize === size
                           ? "bg-neon-blue/20 border-neon-blue text-neon-blue"
                           : "border-border text-muted-foreground"
                       }`}
@@ -516,7 +586,7 @@ export default function ProductDetail() {
                         onClick={() => handleColorSelect(color)}
                         data-testid={`button-color-${color}`}
                         className={`font-display text-xs px-3 py-1.5 min-h-[44px] rounded-md border transition-all flex items-center gap-1.5 ${
-                          selectedColor === color
+                          resolvedColor === color
                             ? "bg-neon-yellow/20 border-neon-yellow text-neon-yellow shadow-[0_0_8px_hsl(52_100%_50%/0.3)]"
                             : "border-border text-muted-foreground"
                         }`}

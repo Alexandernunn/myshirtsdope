@@ -10,6 +10,7 @@ import {
 } from "../server/shopify-catalog-webhook";
 import type { Product, ProductSummary } from "../shared/schema";
 import { POLICY_PAGES, PUBLIC_TRUST_PATHS, STORE_SUPPORT_EMAIL } from "../shared/store-pages";
+import { getDefaultVariant, getVariantImage, getVariantPath } from "../shared/product-variant";
 
 const OUTPUT_DIR = path.resolve("dist/public");
 
@@ -104,8 +105,10 @@ async function verifyPublishedCatalog(): Promise<void> {
       `product ${productHandle} leaks a numeric canonical URL`,
     );
     const graph = parseGraph(productHtml, `product ${productHandle}`);
-    const productSchema = nodeOfType(graph, "Product");
-    const offer = productSchema.offers;
+    const productSchema = graph.find((node) =>
+      node["@type"] === "ProductGroup" || node["@type"] === "Product"
+    );
+    assert(productSchema, `product ${productHandle} schema is missing its product entity`);
     const productPreload = productHtml.match(
       /<link rel="preload" as="image"[^>]*data-pdp-hero-preload="true"[^>]*>/,
     )?.[0];
@@ -120,31 +123,69 @@ async function verifyPublishedCatalog(): Promise<void> {
     assert(productPreload.includes("imagesrcset=") && productPreload.includes("imagesizes="));
     assert(productHero, `product ${productHandle} is missing an eager high-priority hero image`);
     assert(productHero.includes("srcset=") && productHero.includes("sizes="));
+    const defaultImage = getVariantImage(expectedProduct, getDefaultVariant(expectedProduct));
+    assert(productHero.includes(defaultImage.split("?")[0]), `product ${productHandle} hero does not match its default variant`);
+    assert(!productHtml.includes('itemscope itemtype="https://schema.org/Product"'), `product ${productHandle} has duplicate Product microdata`);
+    assert(!productHtml.includes('itemprop="offers"'), `product ${productHandle} has duplicate Offer microdata`);
     assert(productData, `product ${productHandle} is missing its hydration data`);
     const hydratedProduct = JSON.parse(productData) as Product;
     assert.equal(hydratedProduct.handle, productHandle, `product ${productHandle} hydration data mismatch`);
     assert(Array.isArray(hydratedProduct.imageUrls) && hydratedProduct.imageUrls.length > 0, `product ${productHandle} cached images are missing`);
-    assert.equal(productSchema["@type"], "Product", `product ${productHandle} schema type mismatch`);
     assert(productSchema.name, `product ${productHandle} schema name is missing`);
-    assert.equal(productSchema.sku, String(expectedProduct.id), `product ${productHandle} schema SKU mismatch`);
-    assert.equal(offer.url, `https://myshirtsdope.com/product/${productHandle}`, `product ${productHandle} schema URL mismatch`);
     assert(Array.isArray(productSchema.image) && productSchema.image.length > 0, `product ${productHandle} schema image is missing`);
-    assert.equal(offer.priceCurrency, "USD", `product ${productHandle} must use USD`);
-    assert.equal(offer["@type"], "Offer", `product ${productHandle} must use a merchant Offer`);
-    assert(offer.price, `product ${productHandle} schema price is missing`);
-    assert.equal(offer.itemCondition, "https://schema.org/NewCondition");
-    assert(offer.seller?.["@id"]?.endsWith("/#organization"));
-    assert.equal(
-      offer.hasMerchantReturnPolicy?.["@id"],
-      "https://myshirtsdope.com/returns-refunds#policy",
-    );
-    assert(
-      ["https://schema.org/InStock", "https://schema.org/OutOfStock"].includes(offer.availability),
-      `product ${productHandle} has invalid schema availability`,
-    );
     assert.equal(productSchema.mainEntityOfPage?.["@id"], `https://myshirtsdope.com/product/${productHandle}#webpage`);
-    assert(Array.isArray(productSchema.color) || expectedProduct.colors.length === 0);
-    assert(Array.isArray(productSchema.size) || expectedProduct.sizes.length === 0);
+    const usableVariants = (expectedProduct.shopifyVariants ?? []).filter((variant) =>
+      Number.isFinite(Number.parseFloat(variant.price)),
+    );
+    const uniqueSelections = new Set(
+      usableVariants.map((variant) => `${variant.color}\u0000${variant.size}`),
+    );
+    if (usableVariants.length > 1 && uniqueSelections.size === usableVariants.length) {
+      assert.equal(productSchema["@type"], "ProductGroup", `product ${productHandle} must use ProductGroup`);
+      assert.equal(
+        productSchema.productGroupID,
+        expectedProduct.shopifyProductId?.split("/").pop() || String(expectedProduct.id),
+      );
+      assert(Array.isArray(productSchema.hasVariant));
+      assert.equal(productSchema.hasVariant.length, usableVariants.length);
+      const webPage = nodeOfType(graph, "WebPage");
+      assert.equal(webPage.mainEntity?.["@id"], productSchema["@id"]);
+      for (const expectedVariant of usableVariants) {
+        const variantId = expectedVariant.variantId.split("/").pop();
+        const variant = productSchema.hasVariant.find(
+          (candidate: JsonLdNode) => candidate["@id"] === `https://myshirtsdope.com/product/${productHandle}#variant-${variantId}`,
+        );
+        assert(variant, `product ${productHandle} is missing variant ${variantId}`);
+        assert.equal(variant.name, `${expectedProduct.name} – ${expectedVariant.color} / ${expectedVariant.size}`);
+        if (expectedVariant.sku) assert.equal(variant.sku, expectedVariant.sku);
+        assert.equal(variant.color, expectedVariant.color);
+        assert.equal(variant.size, expectedVariant.size);
+        assert.equal(variant.url, `https://myshirtsdope.com${getVariantPath(expectedProduct, expectedVariant)}`);
+        assert(variant.url.includes(`variant=${variantId}`));
+        assert.equal(variant.isVariantOf?.["@id"], productSchema["@id"]);
+        assert(variant.image?.includes(getVariantImage(expectedProduct, expectedVariant)));
+        const offer = variant.offers;
+        assert.equal(offer.url, variant.url);
+        assert.equal(offer.price, Number.parseFloat(expectedVariant.price).toFixed(2));
+        assert.equal(offer.priceCurrency, "USD");
+        assert.equal(offer.itemCondition, "https://schema.org/NewCondition");
+        assert(offer.seller?.["@id"]?.endsWith("/#organization"));
+        assert.equal(offer.hasMerchantReturnPolicy?.["@id"], "https://myshirtsdope.com/returns-refunds#policy");
+        assert.equal(
+          offer.availability,
+          expectedVariant.availableForSale ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+        );
+      }
+    } else {
+      assert.equal(productSchema["@type"], "Product", `product ${productHandle} fallback schema type mismatch`);
+      const offer = productSchema.offers;
+      assert.equal(productSchema.sku, usableVariants[0]?.sku || String(expectedProduct.id));
+      assert.equal(offer.url, `https://myshirtsdope.com/product/${productHandle}`);
+      assert.equal(offer.priceCurrency, "USD");
+      assert.equal(offer["@type"], "Offer");
+      assert(offer.price);
+      assert.equal(offer.hasMerchantReturnPolicy?.["@id"], "https://myshirtsdope.com/returns-refunds#policy");
+    }
     nodeOfType(graph, "OnlineStore");
     nodeOfType(graph, "WebSite");
     nodeOfType(graph, "WebPage");
@@ -153,7 +194,7 @@ async function verifyPublishedCatalog(): Promise<void> {
     assert.equal(returnPolicy.applicableCountry, "US");
     assert.equal(returnPolicy.merchantReturnDays, 30);
     assert.equal(returnPolicy.returnMethod, "https://schema.org/ReturnByMail");
-    assert.equal(returnPolicy.returnFees, "https://schema.org/ReturnShippingFees");
+    assert.equal(returnPolicy.returnFees, "https://schema.org/ReturnFeesCustomerResponsibility");
     assert.equal(returnPolicy.merchantReturnLink, "https://myshirtsdope.com/returns-refunds");
     assert(
       !graph.some((node) => node["@type"] === "OfferShippingDetails"),
@@ -274,6 +315,9 @@ async function verifyPublishedCatalog(): Promise<void> {
   assert(shippingHtml.includes("1–20 business days"));
   const returnsHtml = await readFile(path.join(OUTPUT_DIR, "returns-refunds/index.html"), "utf8");
   assert(returnsHtml.includes("within 30 days after delivery"));
+  assert(returnsHtml.includes("Unused change-of-mind and wrong-size items may be returned"));
+  assert(returnsHtml.includes("responsible for return shipping on all approved returns"));
+  assert(returnsHtml.includes("does not provide prepaid return labels"));
   assert(returnsHtml.includes("within 30 business days"));
   assert(!returnsHtml.includes("within 15 days"));
   const privacyHtml = await readFile(path.join(OUTPUT_DIR, "privacy-policy/index.html"), "utf8");

@@ -58,7 +58,7 @@ export const POLICY_PAGES: StorePageDefinition[] = [
       {
         heading: "Requesting help",
         paragraphs: [
-          `Contact ${STORE_SUPPORT_EMAIL} within 30 days after delivery if an item arrives faulty, damaged, or incorrect. Include the order number, a description of the problem, and clear photos when relevant.`,
+          `Contact ${STORE_SUPPORT_EMAIL} within 30 days after delivery to request a return. Include the order number and reason for the request. If an item arrives faulty, damaged, or incorrect, also include a description of the problem and clear photos when relevant.`,
           "Do not send an item back before receiving return instructions. Unauthorized returns may not be accepted.",
         ],
       },
@@ -67,15 +67,16 @@ export const POLICY_PAGES: StorePageDefinition[] = [
         bullets: [
           "The item must be unused, in the condition received, and in its original packaging.",
           "Proof of purchase is required.",
-          "Change-of-mind, wrong-size, and cancellation requests are not eligible after production has begun.",
+          "Unused change-of-mind and wrong-size items may be returned when the request is made within 30 days after delivery and the return is authorized.",
+          "Cancellation requests are not guaranteed after production has begun.",
           "Sale items and gift cards are not eligible for return unless required by applicable law.",
         ],
       },
       {
         heading: "Exchanges, shipping, and refunds",
         paragraphs: [
-          "Exchanges are offered only to replace an item that is defective, damaged, or incorrect, subject to availability.",
-          "Customers are responsible for return shipping unless MyShirtsDope confirms otherwise in writing or applicable law requires otherwise. Original shipping charges are not refundable.",
+          "Eligible exchanges are subject to availability. A refund may be offered instead when a replacement is unavailable.",
+          "Customers are responsible for return shipping on all approved returns unless applicable law requires otherwise. MyShirtsDope does not provide prepaid return labels. Original shipping charges are not refundable.",
           "After an authorized return is received and inspected, MyShirtsDope will email the approval or denial. Approved refunds are submitted to the original payment method within 30 business days. The payment provider may need additional time to post the credit.",
         ],
       },

@@ -228,6 +228,7 @@ export function mapStorefrontProduct(product: AdminProduct) {
       variantId: variantGid,
       sku: variant.sku?.trim() || null,
       barcode: variant.barcode?.trim() || null,
+      imageUrl: variant.image_id ? imageMap.get(variant.image_id) ?? null : null,
       size,
       color,
       price: variant.price,

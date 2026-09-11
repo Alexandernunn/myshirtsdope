@@ -14,6 +14,7 @@ import {
   shopifyImageProps,
   type ShopifyImagePreset,
 } from "../shared/shopify-image";
+import { getDefaultVariant, getVariantImage } from "../shared/product-variant";
 import { productPath } from "../shared/product-url";
 import {
   POLICY_PAGES,
@@ -435,27 +436,31 @@ function renderShopContent(slimInitial: ProductSummary[]): string {
 }
 
 function renderProductContent(product: Product): string {
-  const image = product.imageUrl
-    ? `<link itemprop="image" href="${escapeHtml(product.imageUrl)}" />
-        <img ${responsiveImageAttributes(product.imageUrl, IMAGE_PRESETS.productDetail)} alt="${escapeHtml(product.name)}" loading="eager" fetchpriority="high" width="640" height="640" class="w-full h-full object-contain" />`
+  const defaultVariant = getDefaultVariant(product);
+  const defaultImage = getVariantImage(product, defaultVariant);
+  const defaultSize = defaultVariant?.size ?? product.sizes[0];
+  const defaultColor = defaultVariant?.color ?? product.colors[0];
+  const defaultPrice = Number.parseFloat(defaultVariant?.price ?? "") || product.price;
+  const image = defaultImage
+    ? `<img ${responsiveImageAttributes(defaultImage, IMAGE_PRESETS.productDetail)} alt="${escapeHtml(product.name)}" loading="eager" fetchpriority="high" width="640" height="640" class="w-full h-full object-contain" />`
     : "";
-  const sizeOptions = product.sizes.map((size, index) => `
-                <button type="button" class="min-w-10 h-10 px-3 rounded-md border font-display text-sm ${index === 0 ? "border-neon-blue bg-neon-blue/10 text-neon-blue" : "border-card-border text-muted-foreground"}">${escapeHtml(size)}</button>`).join("");
-  const colorOptions = product.colors.map((color, index) => `
-                <button type="button" class="h-10 px-3 rounded-md border font-display text-xs ${index === 0 ? "border-neon-blue bg-neon-blue/10 text-neon-blue" : "border-card-border text-muted-foreground"}">${escapeHtml(color)}</button>`).join("");
+  const sizeOptions = product.sizes.map((size) => `
+                <button type="button" class="min-w-10 h-10 px-3 rounded-md border font-display text-sm ${size === defaultSize ? "border-neon-blue bg-neon-blue/10 text-neon-blue" : "border-card-border text-muted-foreground"}">${escapeHtml(size)}</button>`).join("");
+  const colorOptions = product.colors.map((color) => `
+                <button type="button" class="h-10 px-3 rounded-md border font-display text-xs ${color === defaultColor ? "border-neon-blue bg-neon-blue/10 text-neon-blue" : "border-card-border text-muted-foreground"}">${escapeHtml(color)}</button>`).join("");
 
   return `
           <div class="min-h-screen" data-prerendered-page="product">
             <div class="retro-divider"></div>
             <div class="max-w-6xl mx-auto px-4 sm:px-6 py-8">
               <a href="/shop" class="inline-flex items-center gap-2 font-display text-sm text-muted-foreground hover:text-neon-blue mb-6">&#8592; Back to Shop</a>
-              <article itemscope itemtype="https://schema.org/Product" class="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
+              <article class="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
                 <div class="relative aspect-square max-w-xl mx-auto w-full rounded-md overflow-hidden bg-card border border-card-border">${image}</div>
                 <div class="max-w-xl">
                   <p class="font-pixel text-[9px] text-neon-green mb-3 tracking-widest">${escapeHtml(product.category.toUpperCase())}</p>
-                  <h1 itemprop="name" class="font-pixel text-xl sm:text-2xl text-neon-blue neon-text-blue leading-relaxed mb-4">${escapeHtml(product.name)}</h1>
-                  <div itemprop="offers" itemscope itemtype="https://schema.org/Offer" class="mb-6"><meta itemprop="priceCurrency" content="USD" /><data itemprop="price" value="${product.price.toFixed(2)}" class="font-pixel text-base text-neon-yellow">$${product.price.toFixed(2)}</data></div>
-                  <p itemprop="description" class="font-display text-base text-muted-foreground leading-relaxed mb-8">${escapeHtml(product.description)}</p>
+                  <h1 class="font-pixel text-xl sm:text-2xl text-neon-blue neon-text-blue leading-relaxed mb-4">${escapeHtml(product.name)}</h1>
+                  <div class="mb-6"><data value="${defaultPrice.toFixed(2)}" class="font-pixel text-base text-neon-yellow">$${defaultPrice.toFixed(2)}</data></div>
+                  <p class="font-display text-base text-muted-foreground leading-relaxed mb-8">${escapeHtml(product.description)}</p>
                   ${sizeOptions ? `<section class="mb-6"><h2 class="font-pixel text-[9px] text-foreground mb-3">SELECT SIZE</h2><div class="flex flex-wrap gap-2">${sizeOptions}</div></section>` : ""}
                   ${colorOptions ? `<section class="mb-8"><h2 class="font-pixel text-[9px] text-foreground mb-3">SELECT COLOR</h2><div class="flex flex-wrap gap-2">${colorOptions}</div></section>` : ""}
                   <button type="button" class="w-full font-pixel text-[10px] bg-neon-blue border-neon-blue text-white py-6 rounded-md">ADD TO CART</button>
@@ -495,17 +500,18 @@ function renderShopPage(
 
 function renderProductPage(template: string, product: Product): string {
   const canonicalUrl = `${SITE_URL}${productPath(product)}`;
+  const defaultImage = getVariantImage(product, getDefaultVariant(product));
   const html = applyPageMetadata(template, {
     title: `${product.name} | MyShirtsDope`,
     description: product.description || `${product.name} from MyShirtsDope`,
     canonicalUrl,
     ogType: "product",
-    imageUrl: product.imageUrl || `${SITE_URL}/favicon.png`,
+    imageUrl: defaultImage || `${SITE_URL}/favicon.png`,
     price: product.price,
     jsonLd: productPageSchema(SITE_URL, product),
-    preloadImage: product.imageUrl
+    preloadImage: defaultImage
       ? {
-          url: product.imageUrl,
+          url: defaultImage,
           preset: IMAGE_PRESETS.productDetail,
           attributes: 'data-pdp-hero-preload="true"',
         }
