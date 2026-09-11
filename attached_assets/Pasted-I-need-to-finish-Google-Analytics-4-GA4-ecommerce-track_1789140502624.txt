@@ -1,0 +1,39 @@
+I need to finish Google Analytics 4 (GA4) ecommerce tracking on this site. GA4 (measurement ID G-EV5P2LKEHE) and the Meta Pixel are already installed through our existing consent-gated marketing script loader. The Meta Pixel already fires ViewContent, AddToCart, InitiateCheckout, and Purchase. GA4 currently only receives page views. Add matching GA4 events without breaking anything that already works.
+
+## Ground rules
+- Reuse the existing tracking utility (the module that loads gtag/fbq and checks cookie consent). Every GA4 call must go through the same consent check the Meta events use. Do not load gtag before consent and do not change the consent banner logic.
+- Do not change or remove any existing Meta Pixel events, except for the duplicate guard described in section 3.
+- Create one helper for GA4 events (e.g. trackGA4Event(name, params)) and one shared function that converts a product or cart line into a GA4 item object, so every event formats items identically.
+- Item fields: item_id, item_name, item_category, item_variant (size/color when applicable), price (number), quantity (number). For item_id, use the same ID the Meta Pixel sends as content_ids. If Meta doesn't send one, use the numeric Shopify variant ID. Be consistent everywhere.
+- currency is always "USD". value is always a number (sum of price × quantity), never a string.
+
+## 1. Page views
+- Exactly one page_view per navigation, including the first page load.
+- Call gtag('config', 'G-EV5P2LKEHE', { send_page_view: false }) once when gtag initializes. Then, on every route change (and initial load), send gtag('event', 'page_view', { page_location: window.location.href, page_title: document.title }).
+- Remove the current page_path usage (it's an old Universal Analytics parameter).
+- Fire after the document title updates so page_title matches the new page.
+
+## 2. Ecommerce events
+- view_item_list on /shop, including category-filtered views. Set item_list_name to the category name or "All products". Include the visible products, capped at 50.
+- select_item when a product card in the shop grid is clicked.
+- view_item on the product detail page, in the same place ViewContent fires.
+- add_to_cart where AddToCart fires, with the selected variant and quantity.
+- remove_from_cart when an item is removed or its quantity is decreased in the cart.
+- view_cart when the cart page loads with items in it.
+- begin_checkout where InitiateCheckout fires, sent before redirecting to the Shopify checkoutUrl.
+
+## 3. Purchase (behind a flag)
+Purchase currently fires on /order-confirmation using value/currency/items from the URL. Make it reliable:
+- In the /api/checkout flow, add the Shopify cart or checkout ID to the return_url as a checkout_id parameter.
+- Before redirecting to Shopify, save the GA4 items array, value, and checkout_id to localStorage under a single key.
+- On /order-confirmation, fire GA4 purchase with transaction_id = checkout_id, plus value, currency, and items from localStorage. Fall back to the URL params if localStorage data is missing.
+- Deduplicate: store fired transaction IDs and never send purchase twice for the same ID (refresh, back button, revisit). Apply the same once-per-transaction guard to the existing Meta Purchase event. Clear the saved checkout data after firing.
+- Wrap the GA4 purchase event in a config constant GA4_SEND_PURCHASE = true, with the comment: "Set to false if purchases are tracked through Shopify's Google & YouTube app, to avoid double counting."
+
+## 4. Debugging
+- When the URL includes ?ga_debug=1, or in development, add debug_mode: true to GA4 events so they appear in GA4 DebugView, and console.log each event name with its params.
+
+## When you're done
+- List every file you changed.
+- Give me step-by-step instructions to test each event in GA4 DebugView.
+- Flag any assumptions or anything you couldn't implement (for example, if cart items don't store variant IDs, or /api/checkout can't return a checkout ID).
