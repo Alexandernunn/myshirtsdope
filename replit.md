@@ -11,6 +11,12 @@ MyShirtsDope is a vintage arcade / retro video game themed merch store web app. 
 - State: React Context (cart), TanStack Query (data fetching)
 - Fonts: Press Start 2P (pixel headings), Permanent Marker (display/subheadings), Inter (body text)
 
+## Running on Replit
+- The `Start application` workflow runs `npm run dev`.
+- The Express server binds to `0.0.0.0:5000` and serves the Vite app through the Replit web preview.
+- Shopify-backed product data requires `SHOPIFY_STORE_DOMAIN` and `SHOPIFY_ACCESS_TOKEN`.
+- Keep the Netlify deployment configured with the same Shopify variables plus `SITE_URL`; `npm run build:netlify` remains the Netlify build command.
+
 ## Architecture (No Database)
 - Products are fetched from Shopify Admin API and cached in server memory (5-min TTL)
 - Cart is stored in server memory per session (no database persistence)
