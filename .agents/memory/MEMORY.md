@@ -6,3 +6,4 @@
 - [Product URL identity](product-url-identity.md) — Shopify handles are public product URLs; numeric IDs remain internal and redirect permanently.
 - [Catalog build entrypoint](catalog-build-entrypoint.md) — use the isolated catalog builder; the legacy cache script can be restored as duplicated content by the merged baseline.
 - [Variant URL identity](variant-url-identity.md) — schema variant URLs must carry Shopify variant IDs; color and size alone may collide when products have other options.
+- [Portable npm lockfiles](portable-npm-lockfiles.md) — omit registry-specific resolved URLs so Netlify never depends on Replit's private package mirror.
