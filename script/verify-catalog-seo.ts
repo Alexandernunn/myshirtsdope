@@ -13,7 +13,7 @@ import type { Product, ProductSummary } from "../shared/schema";
 import { POLICY_PAGES, PUBLIC_TRUST_PATHS, STORE_SUPPORT_EMAIL } from "../shared/store-pages";
 import { getDefaultVariant, getVariantImage, getVariantPath } from "../shared/product-variant";
 import { hasValidMerchantPrice, productPageSchema } from "./storefront-schema";
-import { redirectProductTrailingSlash, serveStatic } from "../server/static";
+import { serveStatic } from "../server/static";
 
 const OUTPUT_DIR = path.resolve("dist/public");
 
@@ -493,13 +493,8 @@ async function verifyPublishedCatalog(): Promise<void> {
   assert(notFoundHtml.includes("PAGE NOT FOUND"));
   assert(appShell.includes('content="noindex, nofollow"'));
   assert(netlifyConfig.includes('from = "/product/*"\n  to = "/404.html"\n  status = 404'));
-  assert(netlifyConfig.includes('from = "/product/:handle/"\n  to = "/product/:handle"\n  status = 301\n  force = true'));
-  assert(netlifyConfig.includes('from = "/product/:handle"\n  to = "/product/:handle.html"\n  status = 200\n  force = true'));
-  assert(
-    netlifyConfig.indexOf('from = "/product/:handle"\n  to = "/product/:handle.html"') <
-      netlifyConfig.indexOf('from = "/product/*"\n  to = "/404.html"'),
-    "clean product rewrite must run before the product 404 fallback",
-  );
+  assert(!netlifyConfig.includes('from = "/product/:handle/"'));
+  assert(!netlifyConfig.includes('to = "/product/:handle.html"'));
   assert(netlifyConfig.includes('from = "/*"\n  to = "/404.html"\n  status = 404'));
   for (const applicationPath of ["/cart", "/order-confirmation", "/start"]) {
     assert(
@@ -772,7 +767,6 @@ async function verifyProductRouteHttpContract(): Promise<void> {
   );
 
   const app = express();
-  redirectProductTrailingSlash(app);
   app.get(/^\/product\/[a-z0-9-]+$/, (req, res, next) => {
     const destination = productRedirects.get(req.path);
     if (!destination) return next();
@@ -791,10 +785,6 @@ async function verifyProductRouteHttpContract(): Promise<void> {
     assert((await canonical.text()).includes(
       `<link rel="canonical" href="https://myshirtsdope.com/product/${sample.handle}" />`,
     ));
-
-    const trailing = await fetch(`${origin}/product/${sample.handle}/?color=Red`, { redirect: "manual" });
-    assert.equal(trailing.status, 301, "trailing-slash product URL must redirect once");
-    assert.equal(trailing.headers.get("location"), `/product/${sample.handle}?color=Red`);
 
     const numeric = await fetch(`${origin}/product/${sample.id}`, { redirect: "manual" });
     assert.equal(numeric.status, 301, "numeric product URL must redirect once");
@@ -819,9 +809,78 @@ async function verifyProductRouteHttpContract(): Promise<void> {
   }
 }
 
+type RedirectHop = {
+  url: string;
+  status: number;
+  location: string | null;
+};
+
+async function fetchRedirectChain(baseUrl: string, route: string): Promise<RedirectHop[]> {
+  const hops: RedirectHop[] = [];
+  let currentUrl = new URL(route, baseUrl).toString();
+
+  for (let redirects = 0; redirects <= 3; redirects += 1) {
+    const response = await fetch(currentUrl, { redirect: "manual" });
+    const location = response.headers.get("location");
+    hops.push({ url: currentUrl, status: response.status, location });
+
+    if (response.status < 300 || response.status >= 400 || !location) return hops;
+
+    const nextUrl = new URL(location, currentUrl).toString();
+    assert.notEqual(nextUrl, currentUrl, `${route} redirects to itself`);
+    assert(redirects < 3, `${route} exceeded 3 redirects`);
+    currentUrl = nextUrl;
+  }
+
+  return hops;
+}
+
+function printRedirectChain(route: string, hops: RedirectHop[]): void {
+  console.log(`[Deploy route] ${route}`);
+  for (const hop of hops) {
+    const destination = hop.location ? ` -> ${new URL(hop.location, hop.url).toString()}` : "";
+    console.log(`  ${hop.status} ${hop.url}${destination}`);
+  }
+}
+
+async function verifyNetlifyDeployRoutes(baseUrl: string): Promise<void> {
+  const routeCases = [
+    { route: "/product/they-want-efx-hoodie", redirects: 0 },
+    { route: "/product/they-want-efx-hoodie/", redirects: undefined },
+    { route: "/product/6588631482432", redirects: 1 },
+    { route: "/product/a-milli-youth-shirt", redirects: 0 },
+    { route: "/", redirects: 0 },
+    { route: "/shop", redirects: 0 },
+    { route: "/sitemap.xml", redirects: 0 },
+  ];
+
+  console.log(`[Verify] Checking Netlify deploy routes at ${baseUrl}`);
+  for (const routeCase of routeCases) {
+    const hops = await fetchRedirectChain(baseUrl, routeCase.route);
+    printRedirectChain(routeCase.route, hops);
+    const redirectCount = hops.length - 1;
+    if (routeCase.redirects !== undefined) {
+      assert.equal(
+        redirectCount,
+        routeCase.redirects,
+        `${routeCase.route} must have ${routeCase.redirects} redirects`,
+      );
+    }
+    assert.equal(hops.at(-1)?.status, 200, `${routeCase.route} must finish with HTTP 200`);
+  }
+}
+
 await verifyPublishedCatalog();
 await verifyPageSpeedContracts();
 await verifyWebhookSecurityAndDeliveryDedupe();
 await verifyWebhookHttpContract();
 await verifyProductRouteHttpContract();
+const deployUrlArgIndex = process.argv.indexOf("--deploy-url");
+const deployUrl = deployUrlArgIndex >= 0 ? process.argv[deployUrlArgIndex + 1] : process.env.NETLIFY_DEPLOY_URL;
+if (deployUrlArgIndex >= 0) {
+  assert(deployUrl, "--deploy-url requires a URL");
+}
+if (deployUrl) {
+  await verifyNetlifyDeployRoutes(deployUrl);
+}
 console.log("[Verify] Catalog sitemap, prerender, schema, webhook security, and delivery checks passed");

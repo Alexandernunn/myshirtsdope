@@ -48,18 +48,6 @@
   force = true
 
 [[redirects]]
-  from = "/product/:handle/"
-  to = "/product/:handle"
-  status = 301
-  force = true
-
-[[redirects]]
-  from = "/product/:handle"
-  to = "/product/:handle.html"
-  status = 200
-  force = true
-
-[[redirects]]
   from = "/product/*"
   to = "/404.html"
   status = 404
