@@ -1,10 +1,10 @@
 ---
 name: Variant URL identity
-description: Explains why merchant schema variant URLs use Shopify variant IDs in addition to readable option parameters.
+description: Defines when customer-facing and merchant schema variant URLs may safely use readable option slugs.
 ---
 
-Schema variant URLs must include the unique Shopify variant ID. Color and size parameters may remain for readability, but they are not sufficient identity.
+Customer-facing and schema variant URLs use lowercase color and size slugs only when those supported options uniquely identify every Shopify variant. Otherwise variants keep the clean product URL. Shopify IDs remain internal to cart and checkout, while legacy ID links are accepted and normalized in place.
 
-**Why:** Shopify products can have additional or unrecognized option dimensions, producing multiple SKUs with the same color and size. Publishing those variants at one URL makes the landing page ambiguous and can mismatch the advertised SKU, price, image, or availability.
+**Why:** Readable URLs improve shared links, but additional Shopify option dimensions or slug collisions can make color and size ambiguous. Ambiguous public URLs risk mismatching the SKU, price, image, or availability advertised to Merchant Center.
 
-**How to apply:** Resolve the variant ID before descriptive option parameters. Emit ProductGroup variants only when the storefront can represent each variant uniquely; otherwise publish a truthful single Product fallback.
+**How to apply:** Use one shared formatter for storefront and schema URLs, verify slug uniqueness per product, preserve sold-out selections, keep canonicals and sitemap entries clean, and retain unrelated attribution parameters during normalization.

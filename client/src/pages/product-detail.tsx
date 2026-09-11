@@ -17,6 +17,7 @@ import {
   findRequestedVariant,
   getDefaultVariant,
   getVariantImage,
+  updateVariantSearchParams,
 } from "@shared/product-variant";
 
 const COLOR_HEX_MAP: Record<string, string> = {
@@ -322,9 +323,12 @@ export default function ProductDetail() {
   useEffect(() => {
     if (!activeProduct) return;
     const params = new URLSearchParams(window.location.search);
+    const legacyVariantId = params.get("v") ?? params.get("variant");
+    const requestedAxes = (["color", "size"] as const).filter((axis) => params.has(axis));
+    const hasVariantRequest = Boolean(legacyVariantId) || requestedAxes.length > 0;
     const requestedVariant = findRequestedVariant(
       activeProduct,
-      params.get("v") ?? params.get("variant"),
+      legacyVariantId,
       params.get("color"),
       params.get("size"),
     );
@@ -339,6 +343,21 @@ export default function ProductDetail() {
     setSelectedColor(initialVariant.color);
     const initialImage = getVariantImage(activeProduct, initialVariant);
     setDisplayImage(initialImage === activeProduct.imageUrl ? "" : initialImage);
+
+    if (!hasVariantRequest) return;
+    const normalized = requestedVariant
+      ? updateVariantSearchParams(
+          activeProduct,
+          requestedVariant,
+          params,
+          legacyVariantId ? undefined : requestedAxes,
+        )
+      : updateVariantSearchParams(activeProduct, undefined, params);
+    const query = normalized.toString();
+    const normalizedUrl = `${window.location.pathname}${query ? `?${query}` : ""}`;
+    if (normalizedUrl !== `${window.location.pathname}${window.location.search}`) {
+      window.history.replaceState(null, "", normalizedUrl);
+    }
   }, [activeProduct?.id]);
 
   useEffect(() => {
@@ -363,11 +382,11 @@ export default function ProductDetail() {
     setSelectedColor(variant.color);
     const image = getVariantImage(activeProduct, variant);
     setDisplayImage(image === activeProduct.imageUrl ? "" : image);
-    const params = new URLSearchParams(window.location.search);
-    params.set("v", variant.variantId.split("/").pop() || variant.variantId);
-    params.delete("variant");
-    params.delete("color");
-    params.delete("size");
+    const params = updateVariantSearchParams(
+      activeProduct,
+      variant,
+      new URLSearchParams(window.location.search),
+    );
     const query = params.toString();
     window.history.replaceState(null, "", `${window.location.pathname}${query ? `?${query}` : ""}`);
   };
@@ -420,6 +439,14 @@ export default function ProductDetail() {
       toast({
         title: "SELECT OPTIONS",
         description: "Please select a size and color before adding to cart.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!resolvedVariant?.availableForSale) {
+      toast({
+        title: "SOLD OUT",
+        description: "This option is currently unavailable.",
         variant: "destructive",
       });
       return;
@@ -622,7 +649,7 @@ export default function ProductDetail() {
 
             <Button
               onClick={handleAddToCart}
-              disabled={isAdding || justAdded}
+              disabled={isAdding || justAdded || !resolvedVariant?.availableForSale}
               data-testid="button-add-to-cart"
               className={`font-pixel text-[10px] py-5 min-h-[44px] gap-3 no-default-hover-elevate no-default-active-elevate transition-all active:scale-[0.97] ${
                 justAdded
@@ -631,7 +658,7 @@ export default function ProductDetail() {
               }`}
             >
               {justAdded ? <Check className="w-4 h-4" /> : <ShoppingCart className="w-4 h-4" />}
-              {justAdded ? "ADDED!" : "ADD TO CART"}
+              {justAdded ? "ADDED!" : resolvedVariant?.availableForSale ? "ADD TO CART" : "SOLD OUT"}
             </Button>
           </div>
         </div>

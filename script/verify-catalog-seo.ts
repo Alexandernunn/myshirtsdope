@@ -11,7 +11,14 @@ import {
 } from "../server/shopify-catalog-webhook";
 import type { Product, ProductSummary } from "../shared/schema";
 import { POLICY_PAGES, PUBLIC_TRUST_PATHS, STORE_SUPPORT_EMAIL } from "../shared/store-pages";
-import { getDefaultVariant, getVariantImage, getVariantPath } from "../shared/product-variant";
+import {
+  findRequestedVariant,
+  getDefaultVariant,
+  getVariantImage,
+  getVariantPath,
+  updateVariantSearchParams,
+  variantValueSlug,
+} from "../shared/product-variant";
 import { hasValidMerchantPrice, productPageSchema } from "./storefront-schema";
 import { serveStatic } from "../server/static";
 
@@ -203,7 +210,8 @@ async function verifyPublishedCatalog(): Promise<void> {
         assert.equal(typeof variant.size, "string");
         assert.deepEqual(variant.brand, { "@type": "Brand", name: "MyShirtsDope" });
         assert.equal(variant.url, `https://myshirtsdope.com${getVariantPath(expectedProduct, expectedVariant)}`);
-        assert(variant.url.includes(`v=${variantId}`));
+        assert(!variant.url.includes("variant="));
+        assert(!variant.url.includes("v="));
         assert.equal(variant.isVariantOf?.["@id"], productSchema["@id"]);
         assert(variant.image?.includes(getVariantImage(expectedProduct, expectedVariant)));
         const offer = variant.offers;
@@ -352,6 +360,68 @@ async function verifyPublishedCatalog(): Promise<void> {
   const invalidGraph = (productPageSchema("https://myshirtsdope.com", invalidPriceProduct) as JsonLdNode)["@graph"] as JsonLdNode[];
   assert(!invalidGraph.some((node) => node["@type"] === "Product" || node["@type"] === "ProductGroup"));
   assert(!nodeOfType(invalidGraph, "WebPage").mainEntity);
+
+  const readableVariantProduct: Product = {
+    ...products[0],
+    handle: "readable-variant-test",
+    colors: ["Light Blue", "Black/White"],
+    sizes: ["S/M", "2XL"],
+    shopifyVariants: [
+      {
+        variantId: "gid://shopify/ProductVariant/101",
+        sku: null,
+        barcode: null,
+        imageUrl: null,
+        color: "Light Blue",
+        size: "S/M",
+        price: "20.00",
+        availableForSale: true,
+      },
+      {
+        variantId: "gid://shopify/ProductVariant/102",
+        sku: null,
+        barcode: null,
+        imageUrl: null,
+        color: "Black/White",
+        size: "2XL",
+        price: "20.00",
+        availableForSale: false,
+      },
+    ],
+  };
+  assert.equal(
+    getVariantPath(readableVariantProduct, readableVariantProduct.shopifyVariants![0]),
+    "/product/readable-variant-test?color=light-blue&size=s-m",
+  );
+  assert.equal(variantValueSlug("Black/White"), "black-white");
+  assert.equal(variantValueSlug("Heather Grey"), "heather-grey");
+  assert.equal(variantValueSlug("S/M"), "s-m");
+  assert.equal(
+    findRequestedVariant(readableVariantProduct, null, "black-white", "2xl")?.variantId,
+    "gid://shopify/ProductVariant/102",
+    "a valid sold-out readable variant must remain selected",
+  );
+  assert.equal(
+    findRequestedVariant(readableVariantProduct, "102", null, null)?.variantId,
+    "gid://shopify/ProductVariant/102",
+    "a legacy ID must select a sold-out variant",
+  );
+  assert.equal(
+    findRequestedVariant(readableVariantProduct, null, "light-blue", null)?.variantId,
+    "gid://shopify/ProductVariant/101",
+    "a partial readable request must preserve its valid selection",
+  );
+  assert.equal(findRequestedVariant(readableVariantProduct, null, "unknown", "2xl"), undefined);
+  const trackedParams = updateVariantSearchParams(
+    readableVariantProduct,
+    readableVariantProduct.shopifyVariants![1],
+    new URLSearchParams("utm_source=chatgpt.com&gclid=abc&v=102"),
+  );
+  assert.equal(
+    trackedParams.toString(),
+    "utm_source=chatgpt.com&gclid=abc&color=black-white&size=2xl",
+    "variant normalization must preserve attribution parameters",
+  );
 
   const youthHoodies = products
     .filter((product) => /\b(youth|kids?|children)\b/i.test(product.name) && /\bhoodie\b/i.test(product.name))
