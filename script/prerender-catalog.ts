@@ -21,6 +21,7 @@ import {
   STORE_SUPPORT_EMAIL,
   type StorePageDefinition,
 } from "../shared/store-pages";
+import type { CatalogAlias } from "../shared/catalog-consolidation";
 import {
   homePageSchema,
   productPageSchema,
@@ -672,6 +673,7 @@ export async function prerenderCatalog(
   products: Product[],
   slimInitial: ProductSummary[],
   deckProducts: ProductSummary[],
+  aliases: CatalogAlias[] = [],
 ): Promise<void> {
   if (products.length === 0) {
     throw new Error("Cannot prerender an empty product catalog");
@@ -725,12 +727,22 @@ export async function prerenderCatalog(
     );
   }
 
-  const redirects = uniqueProducts
-    .map((product) => `/product/${product.id}  ${productPath(product)}  301!`)
+  const redirectMap = new Map<string, string>();
+  for (const product of uniqueProducts) {
+    redirectMap.set(`/product/${product.id}`, productPath(product));
+  }
+  for (const alias of aliases) {
+    redirectMap.set(`/product/${alias.sourceId}`, `/product/${alias.targetHandle}`);
+    if (alias.sourceHandle !== alias.targetHandle) {
+      redirectMap.set(`/product/${alias.sourceHandle}`, `/product/${alias.targetHandle}`);
+    }
+  }
+  const redirects = [...redirectMap]
+    .map(([source, target]) => `${source}  ${target}  301!`)
     .join("\n");
   await writeFile(path.join(OUTPUT_DIR, "_redirects"), `${redirects}\n`);
 
   console.log(`[Prerender] Generated branded home, shop, ${PUBLIC_PAGES.length} trust pages, and ${uniqueProducts.length} product pages`);
-  console.log(`[Prerender] Generated ${uniqueProducts.length} permanent numeric product redirects`);
+  console.log(`[Prerender] Generated ${redirectMap.size} permanent product redirects`);
   console.log(`[Prerender] Canonical site URL: ${SITE_URL}`);
 }

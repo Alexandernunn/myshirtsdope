@@ -74,12 +74,21 @@ function productOutputPath(handle: string): string {
 }
 
 async function verifyPublishedCatalog(): Promise<void> {
-  const [sitemap, productsJson, redirects] = await Promise.all([
+  const [sitemap, productsJson, redirects, consolidationJson] = await Promise.all([
     readFile(path.join(OUTPUT_DIR, "sitemap.xml"), "utf8"),
     readFile(path.join(OUTPUT_DIR, "data/products.json"), "utf8"),
     readFile(path.join(OUTPUT_DIR, "_redirects"), "utf8"),
+    readFile(path.join(OUTPUT_DIR, "data/catalog-consolidation-report.json"), "utf8"),
   ]);
   const products = JSON.parse(productsJson) as Product[];
+  const consolidation = JSON.parse(consolidationJson) as {
+    groups: Array<{
+      normalizedTitle: string;
+      targetHandle: string;
+      backingProductId: number;
+      members: Array<{ id: number; handle: string }>;
+    }>;
+  };
   assert(products.length > 0, "cached product catalog is empty");
   assert(products.every((product) => /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(product.handle)));
   assert(products.every((product) => !/^\d+$/.test(product.handle)), "numeric-only handles are not readable URLs");
@@ -251,27 +260,55 @@ async function verifyPublishedCatalog(): Promise<void> {
   }
 
   const redirectLines = redirects.trim().split(/\r?\n/);
-  assert.equal(redirectLines.length, products.length, "numeric redirect count mismatch");
   const redirectsBySource = new Map<string, string>();
   for (const [index, line] of redirectLines.entries()) {
-    const match = line.match(/^\/product\/(\d+)\s+\/product\/([a-z0-9]+(?:-[a-z0-9]+)*)\s+301!$/);
+    const match = line.match(/^\/product\/([a-z0-9]+(?:-[a-z0-9]+)*)\s+\/product\/([a-z0-9]+(?:-[a-z0-9]+)*)\s+301!$/);
     assert(match, `invalid product redirect syntax at line ${index + 1}`);
-    const [, productId, productHandle] = match;
-    const source = `/product/${productId}`;
+    const [, productIdentifier, productHandle] = match;
+    const source = `/product/${productIdentifier}`;
     const destination = `/product/${productHandle}`;
     assert(!redirectsBySource.has(source), `duplicate redirect source ${source}`);
     assert.notEqual(source, destination, `redirect loop for ${source}`);
-    assert(!/\/product\/\d+$/.test(destination), `numeric redirect destination ${destination}`);
     redirectsBySource.set(source, destination);
   }
+  const expectedRedirects = new Map<string, string>();
   for (const product of products) {
     const source = `/product/${product.id}`;
     const destination = `/product/${product.handle}`;
+    expectedRedirects.set(source, destination);
+  }
+  for (const group of consolidation.groups) {
+    assert(productsByHandle.has(group.targetHandle), `consolidation target ${group.targetHandle} is missing`);
+    assert.equal(
+      productsByHandle.get(group.targetHandle)?.id,
+      group.backingProductId,
+      `consolidation target ${group.targetHandle} does not use its selected backing product`,
+    );
+    for (const member of group.members) {
+      expectedRedirects.set(`/product/${member.id}`, `/product/${group.targetHandle}`);
+      if (member.handle !== group.targetHandle) {
+        expectedRedirects.set(`/product/${member.handle}`, `/product/${group.targetHandle}`);
+        assert(
+          !productsByHandle.has(member.handle),
+          `duplicate handle ${member.handle} leaked into the public catalog`,
+        );
+        assert(
+          !sitemapProductHandles.has(member.handle),
+          `duplicate handle ${member.handle} leaked into the sitemap`,
+        );
+      }
+    }
+  }
+  assert.equal(redirectsBySource.size, expectedRedirects.size, "product redirect count mismatch");
+  for (const [source, destination] of expectedRedirects) {
     assert(
       redirectsBySource.get(source) === destination,
-      `missing permanent redirect for product ${product.id}`,
+      `missing permanent redirect ${source} -> ${destination}`,
     );
     assert(!redirectsBySource.has(destination), `redirect chain begins at ${destination}`);
+  }
+  for (const product of products) {
+    const destination = `/product/${product.handle}`;
     const destinationHtml = await readFile(
       productOutputPath(product.handle),
       "utf8",
@@ -327,20 +364,11 @@ async function verifyPublishedCatalog(): Promise<void> {
         allOutOfStock: variants.length > 0 && variants.every((variant) => !variant.availableForSale),
       };
     });
-  const productsByNormalizedTitle = new Map<string, Product[]>();
-  for (const product of products) {
-    const normalizedTitle = product.name.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
-    productsByNormalizedTitle.set(
-      normalizedTitle,
-      [...(productsByNormalizedTitle.get(normalizedTitle) ?? []), product],
-    );
-  }
-  const duplicateTitleGroups = [...productsByNormalizedTitle.entries()]
-    .filter(([, matches]) => matches.length > 1)
-    .map(([normalizedTitle, matches]) => ({
-      normalizedTitle,
-      handles: matches.map((product) => product.handle).sort(),
-    }));
+  const duplicateTitleGroups = consolidation.groups.map((group) => ({
+    normalizedTitle: group.normalizedTitle,
+    targetHandle: group.targetHandle,
+    handles: group.members.map((member) => member.handle).sort(),
+  }));
   const catalogAudit = {
     generatedAt: new Date().toISOString(),
     youthHoodies,
@@ -466,6 +494,12 @@ async function verifyPublishedCatalog(): Promise<void> {
   assert(appShell.includes('content="noindex, nofollow"'));
   assert(netlifyConfig.includes('from = "/product/*"\n  to = "/404.html"\n  status = 404'));
   assert(netlifyConfig.includes('from = "/product/:handle/"\n  to = "/product/:handle"\n  status = 301\n  force = true'));
+  assert(netlifyConfig.includes('from = "/product/:handle"\n  to = "/product/:handle.html"\n  status = 200\n  force = true'));
+  assert(
+    netlifyConfig.indexOf('from = "/product/:handle"\n  to = "/product/:handle.html"') <
+      netlifyConfig.indexOf('from = "/product/*"\n  to = "/404.html"'),
+    "clean product rewrite must run before the product 404 fallback",
+  );
   assert(netlifyConfig.includes('from = "/*"\n  to = "/404.html"\n  status = 404'));
   for (const applicationPath of ["/cart", "/order-confirmation", "/start"]) {
     assert(
@@ -729,9 +763,9 @@ async function verifyProductRouteHttpContract(): Promise<void> {
   const products = JSON.parse(productsJson) as Product[];
   const sample = products.find((product) => product.handle === "they-want-efx-hoodie") ?? products[0];
   assert(sample, "product route HTTP test requires a catalog product");
-  const numericRedirects = new Map(
+  const productRedirects = new Map(
     redirectsText.trim().split(/\r?\n/).map((line) => {
-      const match = line.match(/^(\/product\/\d+)\s+(\/product\/[a-z0-9-]+)\s+301!$/);
+      const match = line.match(/^(\/product\/[a-z0-9-]+)\s+(\/product\/[a-z0-9-]+)\s+301!$/);
       assert(match, `invalid generated redirect ${line}`);
       return [match[1], match[2]];
     }),
@@ -739,8 +773,8 @@ async function verifyProductRouteHttpContract(): Promise<void> {
 
   const app = express();
   redirectProductTrailingSlash(app);
-  app.get(/^\/product\/\d+$/, (req, res, next) => {
-    const destination = numericRedirects.get(req.path);
+  app.get(/^\/product\/[a-z0-9-]+$/, (req, res, next) => {
+    const destination = productRedirects.get(req.path);
     if (!destination) return next();
     return res.redirect(301, destination);
   });
@@ -767,6 +801,17 @@ async function verifyProductRouteHttpContract(): Promise<void> {
     assert.equal(numeric.headers.get("location"), `/product/${sample.handle}`);
     const numericDestination = await fetch(`${origin}${numeric.headers.get("location")}`, { redirect: "manual" });
     assert.equal(numericDestination.status, 200, "numeric redirect destination must return 200");
+
+    const duplicateRedirect = [...productRedirects].find(
+      ([source]) => !/^\/product\/\d+$/.test(source),
+    );
+    assert(duplicateRedirect, "duplicate handle redirect test requires a consolidated product");
+    const [duplicateSource, duplicateTarget] = duplicateRedirect;
+    const duplicate = await fetch(`${origin}${duplicateSource}`, { redirect: "manual" });
+    assert.equal(duplicate.status, 301, "duplicate handle URL must redirect once");
+    assert.equal(duplicate.headers.get("location"), duplicateTarget);
+    const duplicateDestination = await fetch(`${origin}${duplicateTarget}`, { redirect: "manual" });
+    assert.equal(duplicateDestination.status, 200, "duplicate handle redirect destination must return 200");
   } finally {
     await new Promise<void>((resolve, reject) =>
       server.close((error) => error ? reject(error) : resolve()),

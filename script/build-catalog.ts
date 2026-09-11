@@ -7,6 +7,7 @@ import { prerenderCatalog } from "./prerender-catalog";
 import { generateSitemap } from "./generate-sitemap";
 import { FEATURED_SHOP_PRODUCT_IDS } from "../client/src/lib/product-grouping";
 import { hasValidMerchantPrice } from "./storefront-schema";
+import { consolidateCatalog } from "../shared/catalog-consolidation";
 
 if (!process.env.SHOPIFY_ACCESS_TOKEN || !process.env.SHOPIFY_STORE_DOMAIN) {
   console.error("[Catalog] Build failed: missing Shopify catalog configuration");
@@ -16,7 +17,7 @@ if (!process.env.SHOPIFY_ACCESS_TOKEN || !process.env.SHOPIFY_STORE_DOMAIN) {
 async function buildCatalog() {
   console.log("[Catalog] Fetching products from Shopify...");
   const rawProducts = await fetchAllStorefrontProducts();
-  const products: Product[] = rawProducts.map((shopifyProduct) => {
+  const mappedProducts: Product[] = rawProducts.map((shopifyProduct) => {
     const data = mapStorefrontProduct(shopifyProduct);
     return {
       id: shopifyProduct.id,
@@ -38,6 +39,7 @@ async function buildCatalog() {
       shopifyVariants: data.shopifyVariants,
     };
   });
+  const { products, aliases, groups } = consolidateCatalog(mappedProducts);
 
   const invalidHandles = products.filter(
     (product) =>
@@ -113,10 +115,15 @@ async function buildCatalog() {
     writeFile(path.join(outDir, "products-slim-1.json"), JSON.stringify(slimInitial)),
     writeFile(path.join(outDir, "products-slim-rest.json"), JSON.stringify(slimRest)),
     writeFile(path.join(outDir, "products-deck.json"), JSON.stringify(deckProducts)),
+    writeFile(
+      path.join(outDir, "catalog-consolidation-report.json"),
+      `${JSON.stringify({ generatedAt: new Date().toISOString(), groups }, null, 2)}\n`,
+    ),
   ]);
-  await prerenderCatalog(products, slimInitial, deckProducts);
+  await prerenderCatalog(products, slimInitial, deckProducts, aliases);
   await generateSitemap(products);
 
+  console.log(`[Catalog] Consolidated ${groups.length} duplicate-title groups into ${products.length} public products`);
   console.log(`[Catalog] Cached and prerendered ${products.length} products`);
 }
 

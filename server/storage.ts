@@ -1,10 +1,12 @@
 import type { Product } from "../shared/schema";
 import { fetchAllStorefrontProducts, mapStorefrontProduct } from "./shopify-storefront";
+import { consolidateCatalog } from "../shared/catalog-consolidation";
 
 let productCache: Product[] = [];
 let productCacheTimestamp = 0;
 const CACHE_TTL_MS = 5 * 60 * 1000;
 let loadingPromise: Promise<Product[]> | null = null;
+let productAliases = new Map<string, string>();
 
 async function fetchAndCacheProducts(): Promise<Product[]> {
   console.log("[Storage] Fetching products from Shopify...");
@@ -32,10 +34,17 @@ async function fetchAndCacheProducts(): Promise<Product[]> {
     };
   });
 
-  productCache = mapped;
+  const consolidated = consolidateCatalog(mapped);
+  productCache = consolidated.products;
+  productAliases = new Map(
+    consolidated.aliases.flatMap((alias) => [
+      [alias.sourceHandle, alias.targetHandle],
+      [String(alias.sourceId), alias.targetHandle],
+    ]),
+  );
   productCacheTimestamp = Date.now();
-  console.log(`[Storage] Cached ${mapped.length} products from Shopify`);
-  return mapped;
+  console.log(`[Storage] Cached ${productCache.length} public products from ${mapped.length} Shopify products`);
+  return productCache;
 }
 
 export function startBackgroundLoad(): void {
@@ -81,13 +90,15 @@ export async function forceRefreshProducts(): Promise<Product[]> {
   loadingPromise = null;
   productCacheTimestamp = 0;
   productCache = [];
+  productAliases = new Map();
   return loadProducts();
 }
 
 export function getProduct(identifier: string | number): Product | undefined {
   const normalized = String(identifier).trim();
-  const numericId = /^\d+$/.test(normalized) ? Number(normalized) : null;
+  const canonicalIdentifier = productAliases.get(normalized) ?? normalized;
+  const numericId = /^\d+$/.test(canonicalIdentifier) ? Number(canonicalIdentifier) : null;
   return productCache.find((product) =>
-    product.handle === normalized || (numericId !== null && product.id === numericId)
+    product.handle === canonicalIdentifier || (numericId !== null && product.id === numericId)
   );
 }

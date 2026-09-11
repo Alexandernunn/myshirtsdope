@@ -6,6 +6,7 @@ import path from "path";
 import { prerenderCatalog } from "./prerender-catalog";
 import { generateSitemap } from "./generate-sitemap";
 import { FEATURED_SHOP_PRODUCT_IDS } from "../client/src/lib/product-grouping";
+import { consolidateCatalog } from "../shared/catalog-consolidation";
 
 if (!process.env.SHOPIFY_ACCESS_TOKEN || !process.env.SHOPIFY_STORE_DOMAIN) {
   console.error("[Cache] Build failed: missing SHOPIFY_ACCESS_TOKEN or SHOPIFY_STORE_DOMAIN");
@@ -17,7 +18,7 @@ async function cacheProducts() {
   console.log("[Cache] Fetching products from Shopify...");
   const rawProducts = await fetchAllStorefrontProducts();
 
-  const products: Product[] = rawProducts.map((sp) => {
+  const mappedProducts: Product[] = rawProducts.map((sp) => {
     const data = mapStorefrontProduct(sp);
     return {
       id: sp.id,
@@ -29,6 +30,7 @@ async function cacheProducts() {
       price: data.price,
       category: data.category,
       imageUrl: data.imageUrl,
+      imageUrls: data.imageUrls,
       badge: null,
       isNewDrop: data.isNewDrop,
       sizes: data.sizes,
@@ -38,6 +40,7 @@ async function cacheProducts() {
       shopifyVariants: data.shopifyVariants,
     };
   });
+  const { products, aliases, groups } = consolidateCatalog(mappedProducts);
 
   const invalidHandles = products.filter(
     (product) => !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(product.handle),
@@ -106,7 +109,11 @@ async function cacheProducts() {
   await writeFile(path.join(outDir, "products-slim-1.json"), JSON.stringify(slimInitial));
   await writeFile(path.join(outDir, "products-slim-rest.json"), JSON.stringify(slimRest));
   await writeFile(path.join(outDir, "products-deck.json"), JSON.stringify(deckProducts));
-  await prerenderCatalog(products, slimInitial, deckProducts);
+  await writeFile(
+    path.join(outDir, "catalog-consolidation-report.json"),
+    `${JSON.stringify({ generatedAt: new Date().toISOString(), groups }, null, 2)}\n`,
+  );
+  await prerenderCatalog(products, slimInitial, deckProducts, aliases);
   await generateSitemap(products);
 
   const fullSize = Buffer.byteLength(JSON.stringify(products)) / 1024;
@@ -116,6 +123,7 @@ async function cacheProducts() {
   const deckSize = Buffer.byteLength(JSON.stringify(deckProducts)) / 1024;
 
   console.log(`[Cache] Cached ${products.length} products`);
+  console.log(`[Cache] Consolidated ${groups.length} duplicate-title groups`);
   console.log(`[Cache] Full: ${fullSize.toFixed(1)}KB, Slim: ${slimSize.toFixed(1)}KB`);
   console.log(`[Cache] Chunked: Initial ${slimInitial.length} products (${initialSize.toFixed(1)}KB), Rest ${slimRest.length} products (${restSize.toFixed(1)}KB), Deck ${deckProducts.length} products (${deckSize.toFixed(1)}KB)`);
   console.log(`[Cache] Written to ${outDir}`);
