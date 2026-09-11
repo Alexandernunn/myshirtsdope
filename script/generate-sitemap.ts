@@ -1,4 +1,4 @@
-import { access, readdir, readFile, writeFile } from "fs/promises";
+import { readdir, readFile, writeFile } from "fs/promises";
 import path from "path";
 import { PUBLIC_TRUST_PATHS } from "../shared/store-pages";
 
@@ -35,11 +35,8 @@ async function verifyPrerenderedCatalog(productHandles: string[]): Promise<void>
   const prerenderedHandles = new Set<string>();
 
   for (const entry of entries) {
-    if (!entry.isDirectory()) continue;
-
-    const productPage = path.join(productRoot, entry.name, "index.html");
-    await access(productPage);
-    prerenderedHandles.add(entry.name);
+    if (!entry.isFile() || !entry.name.endsWith(".html")) continue;
+    prerenderedHandles.add(entry.name.slice(0, -".html".length));
   }
 
   const expectedHandles = new Set(productHandles);

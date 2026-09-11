@@ -1,0 +1,16 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "75zYSjv0GV7jqdbcfYtpy"
+uri = "file://reports/merchant-listing-audit-2026-09-11.txt"
+type = "text"
+title = "Merchant listing audit report"
+description = "PASS/FAIL results, youth hoodie Shopify availability, and all 44 near-duplicate title groups."
+logical_id = "a1909987-327e-4fa9-b344-14b2cf00082a"
+content_hash = "sha256:d9d253846b00de668aa571e27dd2dab5cfcb747e336aa22833f83985c52c3854"
+size = 5702
+mtime_ms = 1789138994599
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:18e8e77d-65c8-4f7e-a828-0db8031ec740/a1909987-327e-4fa9-b344-14b2cf00082a/ada4c407-2a26-4ede-88c4-29533378a3d0"
+storage_version_token = "1789138995476629"
+content_type = "text/plain"

@@ -1,0 +1,78 @@
+MyShirtsDope Merchant Listing Audit
+September 11, 2026
+
+SUMMARY
+- Active Shopify products verified: 2,744
+- Canonical sitemap URLs verified: 2,752
+- Youth hoodie products: 425
+- Youth hoodies entirely unavailable in Shopify: 420
+- Youth hoodies with available Shopify variants: 5
+- Near-duplicate title groups: 44
+
+PASS / FAIL TABLE
+1. Production slashless handle URL returns 200: FAIL before deployment (currently 301 to slash URL). Local final build: PASS.
+2. Production trailing-slash URL redirects once to slashless: FAIL before deployment (currently 200). Local final build: PASS, including query preservation.
+3. Numeric Shopify URL redirects once to a slashless handle returning 200: FAIL before deployment because the current destination redirects again. Local final build: PASS.
+4. Product HTML contains no itemscope, itemtype, or itemprop: PASS in current production sample and all 2,744 local product pages.
+5. Exactly one Product/ProductGroup; strict positive two-decimal Offer prices; availability and return policy on every Offer: PASS in current production sample and all 2,744 local product pages.
+6. Product brand is a Brand object: FAIL in current production sample (OnlineStore reference); PASS in final local build.
+7. Product color and size values are scalar: PASS across final local build.
+8. Reviews and aggregate ratings: INTENTIONALLY OMITTED because real visible reviews are not present.
+9. shippingDetails: INTENTIONALLY OMITTED because checkout rates vary; configure shipping in Merchant Center.
+10. Production Google validation: PENDING DEPLOYMENT and recrawl.
+
+YOUTH HOODIE AVAILABILITY
+The schema maps each variant directly from Shopify availableForSale. The all-OutOfStock result is catalog data, not a mapping bug.
+
+Products with available variants:
+- baby-baby-baby-youth-hoodie: 35/35 variants available
+- i-cant-live-w-o-my-radio-youth-hoodie-1: 12/12 variants available
+- mahogany-soul-youth-hoodie: 35/35 variants available
+- souls-of-mischief-youth-hoodie: 35/35 variants available
+- the-love-movement-youth-hoodie-1: 20/20 variants available
+
+NEAR-DUPLICATE PRODUCT TITLES (REPORT ONLY)
+1. 1 love shirt: 1-love-shirt, 1-love-shirt-1
+2. all for the money hoodie: all-for-the-money-hoodie, all-for-the-money-hoodie-1
+3. all i need loyalty shirt: all-i-need-loyalty-shirt, all-i-need-loyalty-shirt-1
+4. atlien hoodie: atlien-hoodie, atlien-hoodie-1
+5. atlien shirt: atlien-shirt, atlien-shirt-1
+6. atlien toddler shirt: atlien-toddler-shirt, atlien-toddler-shirt-1
+7. baby baby baby youth hoodie: baby-baby-baby-youth-hoodie, baby-baby-baby-youth-hoodie-1
+8. battle of the tigers shirt tsu jsu: battle-of-the-tigers-shirt-tsu-jsu, battle-of-the-tigers-shirt-tsu-jsu-1
+9. bone thugs toddler shirt: bone-thugs-toddler-shirt, bone-thugs-toddler-shirt-1
+10. do wop that thing onesie: do-wop-that-thing-onesie, do-wop-that-thing-onesie-1
+11. do wop that thing shirt: do-wop-that-thing-shirt, do-wop-that-thing-shirt-1
+12. dont believe the hype hoodie: dont-believe-the-hype-hoodie, dont-believe-the-hype-hoodie-1
+13. epmd strictly business hoodie: epmd-strictly-business-hoodie, epmd-strictly-business-hoodie-1
+14. free huey onesie: free-huey-onesie, free-huey-onesie-1
+15. get low hoodie: get-low-hoodie, get-low-hoodie-1
+16. guess whos bizzack youth shirt: guess-whos-bizzack-youth-shirt, guess-whos-bizzack-youth-shirt-1
+17. hieroglyphics onesie: hieroglyphics-onesie, hieroglyphics-onesie-1
+18. i cant live w o my radio youth hoodie: i-cant-live-w-o-my-radio-youth-hoodie, i-cant-live-w-o-my-radio-youth-hoodie-1
+19. little mike shirt: little-mike-shirt, little-mike-shirt-1
+20. lyrics 2 go shirt: lyrics-2-go-shirt, lyrics-2-go-shirt-1
+21. mic checka youth shirt: mic-checka-youth-shirt, mic-checka-youth-shirt-1
+22. new edition hoodie: new-edition-hoodie, new-edition-hoodie-1
+23. new edition onesie: new-edition-onesie, new-edition-onesie-1
+24. new edition shirt: new-edition-shirt, new-edition-shirt-1
+25. new edition youth hoodie: new-edition-youth-hoodie, new-edition-youth-hoodie-1
+26. new edition youth shirt: new-edition-youth-shirt, new-edition-youth-shirt-1
+27. on my block youth shirt: on-my-block-youth-shirt, on-my-block-youth-shirt-1
+28. poetic justice onesie: poetic-justice-onesie, poetic-justice-onesie-1
+29. poetic justice shirt: poetic-justice-shirt, poetic-justice-shirt-1
+30. shinin star youth shirt: shinin-star-youth-shirt, shinin-star-youth-shirt-1
+31. soul survivor youth shirt: soul-survivor-youth-shirt, soul-survivor-youth-shirt-1
+32. stay woke toddler shirt: stay-woke-toddler-shirt, stay-woke-toddler-shirt-1
+33. still ghetto toddler shirt: still-ghetto-toddler-shirt, still-ghetto-toddler-shirt-1
+34. the big payback shirt: the-big-payback-shirt, the-big-payback-shirt-1
+35. the love movement youth hoodie: the-love-movement-youth-hoodie, the-love-movement-youth-hoodie-1
+36. the most beautifulest thing hoodie: the-most-beautifulest-thing-hoodie, the-most-beautifulest-thing-hoodie-1
+37. the most beautifullest 94 hoodie: the-most-beautifullest-94-hoodie, the-most-beautifullest-94-hoodie-1
+38. the next movement youth shirt: the-next-movement-youth-shirt, the-next-movement-youth-shirt-1
+39. the world is yours nas shirt: the-world-is-yours-nas-shirt, the-world-is-yours-nas-shirt-1
+40. thug life 2pac toddler shirt: thug-life-2pac-toddler-shirt, thug-life-2pac-toddler-shirt-1
+41. toddler short sleeve tee: toddler-short-sleeve-tee, toddler-short-sleeve-tee-1, toddler-short-sleeve-tee-3
+42. u bout it bout it fool hoodie: u-bout-it-bout-it-fool-hoodie, u-bout-it-bout-it-fool-hoodie-1
+43. underground kingz youth shirt: underground-kingz-youth-shirt, underground-kingz-youth-shirt-1
+44. wu kitty mug: wu-kitty-mug, wu-kitty-mug-1

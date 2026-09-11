@@ -694,7 +694,10 @@ export async function prerenderCatalog(
     ...publicOutputDirs.map((outputDir) => rm(outputDir, { recursive: true, force: true })),
   ]);
 
-  await mkdir(shopOutputDir, { recursive: true });
+  await Promise.all([
+    mkdir(productOutputDir, { recursive: true }),
+    mkdir(shopOutputDir, { recursive: true }),
+  ]);
   await writeFile(path.join(OUTPUT_DIR, "index.html"), renderHomePage(template, deckProducts));
   await writeFile(
     path.join(shopOutputDir, "index.html"),
@@ -714,10 +717,8 @@ export async function prerenderCatalog(
     const batch = uniqueProducts.slice(index, index + PRODUCT_BATCH_SIZE);
     await Promise.all(
       batch.map(async (product) => {
-        const outputDir = path.join(productOutputDir, product.handle);
-        await mkdir(outputDir, { recursive: true });
         await writeFile(
-          path.join(outputDir, "index.html"),
+          path.join(productOutputDir, `${product.handle}.html`),
           renderProductPage(template, product),
         );
       }),

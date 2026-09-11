@@ -1,6 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
-import { serveStatic } from "./static";
+import { redirectProductTrailingSlash, serveStatic } from "./static";
 import { createServer } from "http";
 import { startBackgroundLoad } from "./storage";
 
@@ -63,6 +63,7 @@ app.use((req, res, next) => {
 (async () => {
   // startBackgroundLoad();
 
+  redirectProductTrailingSlash(app);
   registerRoutes(httpServer, app);
 
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {

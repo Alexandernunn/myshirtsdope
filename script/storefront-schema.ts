@@ -8,6 +8,32 @@ type JsonLdNode = Record<string, unknown>;
 const STORE_NAME = "MyShirtsDope";
 const STORE_DESCRIPTION =
   "Shirts, hoodies, onesies, and accessories for all ages inspired by music, culture, and love.";
+const PRODUCT_BRAND: JsonLdNode = {
+  "@type": "Brand",
+  name: STORE_NAME,
+};
+
+function parsePositivePrice(value: string | number): number | undefined {
+  if (typeof value === "string" && !/^\d+(?:\.\d+)?$/.test(value)) return undefined;
+  const price = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(price) && price > 0 ? price : undefined;
+}
+
+export function hasValidMerchantPrice(product: Product): boolean {
+  return (product.shopifyVariants ?? []).some(
+    (variant) => parsePositivePrice(variant.price) !== undefined,
+  ) || parsePositivePrice(product.price) !== undefined;
+}
+
+function validGtin(value: string | null): string | undefined {
+  if (!value || !/^(?:\d{8}|\d{12}|\d{13}|\d{14})$/.test(value)) return undefined;
+  const digits = [...value].map(Number);
+  const checkDigit = digits.pop();
+  const sum = digits
+    .reverse()
+    .reduce((total, digit, index) => total + digit * (index % 2 === 0 ? 3 : 1), 0);
+  return (10 - (sum % 10)) % 10 === checkDigit ? value : undefined;
+}
 
 function ids(siteUrl: string) {
   return {
@@ -142,13 +168,21 @@ function audienceFor(product: Product): JsonLdNode | undefined {
   return undefined;
 }
 
-function productOffer(siteUrl: string, product: Product, canonicalUrl: string): JsonLdNode {
+function productOffer(siteUrl: string, product: Product, canonicalUrl: string): JsonLdNode | undefined {
   const variants = product.shopifyVariants ?? [];
   const availableVariants = variants.filter((variant) => variant.availableForSale);
-  const pricedVariants = (availableVariants.length > 0 ? availableVariants : variants)
-    .map((variant) => Number.parseFloat(variant.price))
-    .filter(Number.isFinite);
-  const offerPrice = pricedVariants.length > 0 ? Math.min(...pricedVariants) : product.price;
+  const availablePrices = availableVariants
+    .map((variant) => parsePositivePrice(variant.price))
+    .filter((price): price is number => price !== undefined);
+  const allVariantPrices = variants
+    .map((variant) => parsePositivePrice(variant.price))
+    .filter((price): price is number => price !== undefined);
+  const offerPrice = availablePrices.length > 0
+    ? Math.min(...availablePrices)
+    : allVariantPrices.length > 0
+      ? Math.min(...allVariantPrices)
+    : parsePositivePrice(product.price);
+  if (offerPrice === undefined) return undefined;
 
   return {
     "@type": "Offer",
@@ -187,16 +221,16 @@ function variantOffer(
   };
 }
 
-function productNode(siteUrl: string, product: Product, canonicalUrl: string): JsonLdNode {
+function productNode(siteUrl: string, product: Product, canonicalUrl: string): JsonLdNode | undefined {
   const usableVariants = (product.shopifyVariants ?? []).filter((variant) =>
-    Number.isFinite(Number.parseFloat(variant.price)),
+    parsePositivePrice(variant.price) !== undefined,
   );
   const uniqueSelections = new Set(
     usableVariants.map((variant) => `${variant.color}\u0000${variant.size}`),
   );
   const barcodes = new Set(
     (product.shopifyVariants ?? [])
-      .map((variant) => variant.barcode)
+      .map((variant) => validGtin(variant.barcode))
       .filter((barcode): barcode is string => Boolean(barcode)),
   );
   const gtin = barcodes.size === 1 ? [...barcodes][0] : undefined;
@@ -219,7 +253,7 @@ function productNode(siteUrl: string, product: Product, canonicalUrl: string): J
       ...(variesBy.length > 0 ? { variesBy } : {}),
       image: product.imageUrls.length > 0 ? product.imageUrls : [product.imageUrl].filter(Boolean),
       category: product.category,
-      brand: reference(ids(siteUrl).organization),
+      brand: PRODUCT_BRAND,
       ...(audience ? { audience } : {}),
       hasVariant: usableVariants.map((variant) => {
         const variantId = variant.variantId.split("/").pop();
@@ -230,9 +264,10 @@ function productNode(siteUrl: string, product: Product, canonicalUrl: string): J
           name: `${product.name} – ${variant.color} / ${variant.size}`,
           url: `${siteUrl}${getVariantPath(product, variant)}`,
           ...(variant.sku ? { sku: variant.sku } : {}),
-          ...(variant.barcode ? { gtin: variant.barcode } : {}),
+          ...(validGtin(variant.barcode) ? { gtin: validGtin(variant.barcode) } : {}),
           color: variant.color,
           size: variant.size,
+          brand: PRODUCT_BRAND,
           ...(variantImage ? { image: [variantImage] } : {}),
           isVariantOf: reference(`${canonicalUrl}#product`),
           offers: variantOffer(siteUrl, product, canonicalUrl, variant),
@@ -241,6 +276,8 @@ function productNode(siteUrl: string, product: Product, canonicalUrl: string): J
     };
   }
   const onlyVariant = usableVariants[0];
+  const offer = productOffer(siteUrl, product, canonicalUrl);
+  if (!offer) return undefined;
 
   return {
     "@type": "Product",
@@ -253,11 +290,11 @@ function productNode(siteUrl: string, product: Product, canonicalUrl: string): J
     sku: onlyVariant?.sku || String(product.id),
     ...(gtin ? { gtin } : {}),
     category: product.category,
-    brand: reference(ids(siteUrl).organization),
+    brand: PRODUCT_BRAND,
     ...(audience ? { audience } : {}),
-    ...(product.colors.length > 0 ? { color: product.colors } : {}),
-    ...(product.sizes.length > 0 ? { size: product.sizes } : {}),
-    offers: productOffer(siteUrl, product, canonicalUrl),
+    ...(onlyVariant?.color ? { color: onlyVariant.color } : {}),
+    ...(onlyVariant?.size ? { size: onlyVariant.size } : {}),
+    offers: offer,
   };
 }
 
@@ -315,6 +352,7 @@ export function shopPageSchema(siteUrl: string, products: ProductSummary[]): Jso
 
 export function productPageSchema(siteUrl: string, product: Product): JsonLdNode {
   const canonicalUrl = `${siteUrl}${productPath(product)}`;
+  const productEntity = productNode(siteUrl, product, canonicalUrl);
   return graph([
     organizationNode(siteUrl),
     merchantReturnPolicyNode(siteUrl),
@@ -325,15 +363,15 @@ export function productPageSchema(siteUrl: string, product: Product): JsonLdNode
       "WebPage",
       `${product.name} | ${STORE_NAME}`,
       product.description,
-      { mainEntity: reference(`${canonicalUrl}#product`) },
+      productEntity ? { mainEntity: reference(`${canonicalUrl}#product`) } : undefined,
     ),
     breadcrumbNode(canonicalUrl, [
       { name: "Home", url: `${siteUrl}/` },
       { name: "Shop", url: `${siteUrl}/shop` },
       { name: product.name, url: canonicalUrl },
     ]),
-    productNode(siteUrl, product, canonicalUrl),
-  ]);
+    productEntity,
+  ].filter((node): node is JsonLdNode => Boolean(node)));
 }
 
 export function trustPageSchema(

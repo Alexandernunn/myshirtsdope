@@ -6,6 +6,7 @@ import path from "path";
 import { prerenderCatalog } from "./prerender-catalog";
 import { generateSitemap } from "./generate-sitemap";
 import { FEATURED_SHOP_PRODUCT_IDS } from "../client/src/lib/product-grouping";
+import { hasValidMerchantPrice } from "./storefront-schema";
 
 if (!process.env.SHOPIFY_ACCESS_TOKEN || !process.env.SHOPIFY_STORE_DOMAIN) {
   console.error("[Catalog] Build failed: missing Shopify catalog configuration");
@@ -53,6 +54,14 @@ async function buildCatalog() {
   }
   if (new Set(products.map((product) => product.handle)).size !== products.length) {
     throw new Error("Active Shopify products have duplicate handles");
+  }
+  const invalidPriceProducts = products.filter((product) => !hasValidMerchantPrice(product));
+  if (invalidPriceProducts.length > 0) {
+    throw new Error(
+      `Active Shopify products have no valid positive merchant price: ${invalidPriceProducts
+        .map((product) => product.handle)
+        .join(", ")}`,
+    );
   }
 
   const slim: ProductSummary[] = products.map((product) => {

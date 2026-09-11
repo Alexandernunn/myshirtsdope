@@ -1,8 +1,9 @@
 import { strict as assert } from "node:assert";
 import { createHmac } from "node:crypto";
 import { createServer } from "node:http";
-import { readdir, readFile } from "node:fs/promises";
+import { readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import express from "express";
 import {
   CatalogRebuildCoalescer,
   createShopifyCatalogWebhookApp,
@@ -11,13 +12,17 @@ import {
 import type { Product, ProductSummary } from "../shared/schema";
 import { POLICY_PAGES, PUBLIC_TRUST_PATHS, STORE_SUPPORT_EMAIL } from "../shared/store-pages";
 import { getDefaultVariant, getVariantImage, getVariantPath } from "../shared/product-variant";
+import { hasValidMerchantPrice, productPageSchema } from "./storefront-schema";
+import { redirectProductTrailingSlash, serveStatic } from "../server/static";
 
 const OUTPUT_DIR = path.resolve("dist/public");
 
 type JsonLdNode = Record<string, any>;
 
 function parseGraph(html: string, label: string): JsonLdNode[] {
-  const jsonLd = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)?.[1];
+  const jsonLdBlocks = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)];
+  assert.equal(jsonLdBlocks.length, 1, `${label} must contain exactly one JSON-LD graph`);
+  const jsonLd = jsonLdBlocks[0]?.[1];
   assert(jsonLd, `${label} is missing JSON-LD`);
   const document = JSON.parse(jsonLd);
   assert.equal(document["@context"], "https://schema.org", `${label} has an invalid schema context`);
@@ -54,6 +59,20 @@ function nodeOfType(nodes: JsonLdNode[], type: string): JsonLdNode {
   return node;
 }
 
+function nestedNodesOfType(value: unknown, type: string): JsonLdNode[] {
+  if (!value || typeof value !== "object") return [];
+  if (Array.isArray(value)) return value.flatMap((item) => nestedNodesOfType(item, type));
+  const node = value as JsonLdNode;
+  return [
+    ...(node["@type"] === type ? [node] : []),
+    ...Object.values(node).flatMap((item) => nestedNodesOfType(item, type)),
+  ];
+}
+
+function productOutputPath(handle: string): string {
+  return path.join(OUTPUT_DIR, "product", `${handle}.html`);
+}
+
 async function verifyPublishedCatalog(): Promise<void> {
   const [sitemap, productsJson, redirects] = await Promise.all([
     readFile(path.join(OUTPUT_DIR, "sitemap.xml"), "utf8"),
@@ -72,8 +91,17 @@ async function verifyPublishedCatalog(): Promise<void> {
   assert(sitemapLocs.includes("https://myshirtsdope.com/shop"));
 
   const productEntries = (await readdir(path.join(OUTPUT_DIR, "product"), { withFileTypes: true }))
-    .filter((entry) => entry.isDirectory());
+    .filter((entry) => entry.isFile() && entry.name.endsWith(".html"));
   const productUrls = sitemapLocs.filter((url) => url.startsWith("https://myshirtsdope.com/product/"));
+  const sitemapProductHandles = new Set(
+    productUrls.map((url) => new URL(url).pathname.split("/").pop()).filter(Boolean),
+  );
+  const catalogHandles = new Set(products.map((product) => product.handle));
+  assert.deepEqual(
+    [...sitemapProductHandles].sort(),
+    [...catalogHandles].sort(),
+    "sitemap product handles do not exactly match the active catalog",
+  );
   assert.equal(productUrls.length, productEntries.length, "sitemap/prerender product count mismatch");
   assert.equal(productEntries.length, products.length, "catalog/prerender product count mismatch");
   assert.equal(
@@ -89,11 +117,11 @@ async function verifyPublishedCatalog(): Promise<void> {
   );
 
   for (const entry of productEntries) {
-    const productHandle = entry.name;
+    const productHandle = entry.name.slice(0, -".html".length);
     const expectedProduct = productsByHandle.get(productHandle);
     assert(expectedProduct, `unexpected prerendered product handle ${productHandle}`);
     const productHtml = await readFile(
-      path.join(OUTPUT_DIR, "product", productHandle, "index.html"),
+      productOutputPath(productHandle),
       "utf8",
     );
     assert(
@@ -105,9 +133,11 @@ async function verifyPublishedCatalog(): Promise<void> {
       `product ${productHandle} leaks a numeric canonical URL`,
     );
     const graph = parseGraph(productHtml, `product ${productHandle}`);
-    const productSchema = graph.find((node) =>
+    const productEntities = graph.filter((node) =>
       node["@type"] === "ProductGroup" || node["@type"] === "Product"
     );
+    assert.equal(productEntities.length, 1, `product ${productHandle} must have exactly one top-level product entity`);
+    const productSchema = productEntities[0];
     assert(productSchema, `product ${productHandle} schema is missing its product entity`);
     const productPreload = productHtml.match(
       /<link rel="preload" as="image"[^>]*data-pdp-hero-preload="true"[^>]*>/,
@@ -125,17 +155,17 @@ async function verifyPublishedCatalog(): Promise<void> {
     assert(productHero.includes("srcset=") && productHero.includes("sizes="));
     const defaultImage = getVariantImage(expectedProduct, getDefaultVariant(expectedProduct));
     assert(productHero.includes(defaultImage.split("?")[0]), `product ${productHandle} hero does not match its default variant`);
-    assert(!productHtml.includes('itemscope itemtype="https://schema.org/Product"'), `product ${productHandle} has duplicate Product microdata`);
-    assert(!productHtml.includes('itemprop="offers"'), `product ${productHandle} has duplicate Offer microdata`);
+    assert(!/\s(?:itemscope|itemtype|itemprop)(?:=|\s|>)/i.test(productHtml), `product ${productHandle} has duplicate microdata attributes`);
     assert(productData, `product ${productHandle} is missing its hydration data`);
     const hydratedProduct = JSON.parse(productData) as Product;
     assert.equal(hydratedProduct.handle, productHandle, `product ${productHandle} hydration data mismatch`);
     assert(Array.isArray(hydratedProduct.imageUrls) && hydratedProduct.imageUrls.length > 0, `product ${productHandle} cached images are missing`);
     assert(productSchema.name, `product ${productHandle} schema name is missing`);
     assert(Array.isArray(productSchema.image) && productSchema.image.length > 0, `product ${productHandle} schema image is missing`);
+    assert.deepEqual(productSchema.brand, { "@type": "Brand", name: "MyShirtsDope" });
     assert.equal(productSchema.mainEntityOfPage?.["@id"], `https://myshirtsdope.com/product/${productHandle}#webpage`);
     const usableVariants = (expectedProduct.shopifyVariants ?? []).filter((variant) =>
-      Number.isFinite(Number.parseFloat(variant.price)),
+      Number.isFinite(Number.parseFloat(variant.price)) && Number.parseFloat(variant.price) > 0,
     );
     const uniqueSelections = new Set(
       usableVariants.map((variant) => `${variant.color}\u0000${variant.size}`),
@@ -160,6 +190,9 @@ async function verifyPublishedCatalog(): Promise<void> {
         if (expectedVariant.sku) assert.equal(variant.sku, expectedVariant.sku);
         assert.equal(variant.color, expectedVariant.color);
         assert.equal(variant.size, expectedVariant.size);
+        assert.equal(typeof variant.color, "string");
+        assert.equal(typeof variant.size, "string");
+        assert.deepEqual(variant.brand, { "@type": "Brand", name: "MyShirtsDope" });
         assert.equal(variant.url, `https://myshirtsdope.com${getVariantPath(expectedProduct, expectedVariant)}`);
         assert(variant.url.includes(`variant=${variantId}`));
         assert.equal(variant.isVariantOf?.["@id"], productSchema["@id"]);
@@ -180,11 +213,26 @@ async function verifyPublishedCatalog(): Promise<void> {
       assert.equal(productSchema["@type"], "Product", `product ${productHandle} fallback schema type mismatch`);
       const offer = productSchema.offers;
       assert.equal(productSchema.sku, usableVariants[0]?.sku || String(expectedProduct.id));
+      if (productSchema.color !== undefined) assert.equal(typeof productSchema.color, "string");
+      if (productSchema.size !== undefined) assert.equal(typeof productSchema.size, "string");
       assert.equal(offer.url, `https://myshirtsdope.com/product/${productHandle}`);
       assert.equal(offer.priceCurrency, "USD");
       assert.equal(offer["@type"], "Offer");
       assert(offer.price);
       assert.equal(offer.hasMerchantReturnPolicy?.["@id"], "https://myshirtsdope.com/returns-refunds#policy");
+    }
+    for (const offer of nestedNodesOfType(productSchema, "Offer")) {
+      assert.match(offer.price, /^\d+\.\d{2}$/, `product ${productHandle} has an invalid Offer price`);
+      assert(Number.parseFloat(offer.price) > 0, `product ${productHandle} has a non-positive Offer price`);
+      assert(
+        ["https://schema.org/InStock", "https://schema.org/OutOfStock"].includes(offer.availability),
+        `product ${productHandle} Offer is missing availability`,
+      );
+      assert.equal(
+        offer.hasMerchantReturnPolicy?.["@id"],
+        "https://myshirtsdope.com/returns-refunds#policy",
+      );
+      assert.equal(offer.seller?.["@id"], "https://myshirtsdope.com/#organization");
     }
     nodeOfType(graph, "OnlineStore");
     nodeOfType(graph, "WebSite");
@@ -225,7 +273,7 @@ async function verifyPublishedCatalog(): Promise<void> {
     );
     assert(!redirectsBySource.has(destination), `redirect chain begins at ${destination}`);
     const destinationHtml = await readFile(
-      path.join(OUTPUT_DIR, "product", product.handle, "index.html"),
+      productOutputPath(product.handle),
       "utf8",
     );
     assert(
@@ -235,6 +283,77 @@ async function verifyPublishedCatalog(): Promise<void> {
       `redirect destination ${destination} does not self-canonicalize`,
     );
   }
+
+  const invalidPriceProduct: Product = {
+    ...products[0],
+    price: 0,
+    shopifyVariants: (products[0].shopifyVariants ?? []).map((variant) => ({
+      ...variant,
+      price: "not-a-price",
+    })),
+  };
+  assert.equal(hasValidMerchantPrice(invalidPriceProduct), false);
+  for (const malformedPrice of ["12.99junk", "1e3", "$50.00", "1,000.00", "", "-1.00", "0.00"]) {
+    const malformedProduct: Product = {
+      ...invalidPriceProduct,
+      shopifyVariants: [{ ...(products[0].shopifyVariants?.[0] ?? {
+        variantId: "gid://shopify/ProductVariant/1",
+        sku: null,
+        barcode: null,
+        imageUrl: null,
+        size: "One Size",
+        color: "Default",
+        availableForSale: true,
+      }), price: malformedPrice }],
+    };
+    assert.equal(
+      hasValidMerchantPrice(malformedProduct),
+      false,
+      `malformed merchant price ${JSON.stringify(malformedPrice)} must be rejected`,
+    );
+  }
+  const invalidGraph = (productPageSchema("https://myshirtsdope.com", invalidPriceProduct) as JsonLdNode)["@graph"] as JsonLdNode[];
+  assert(!invalidGraph.some((node) => node["@type"] === "Product" || node["@type"] === "ProductGroup"));
+  assert(!nodeOfType(invalidGraph, "WebPage").mainEntity);
+
+  const youthHoodies = products
+    .filter((product) => /\b(youth|kids?|children)\b/i.test(product.name) && /\bhoodie\b/i.test(product.name))
+    .map((product) => {
+      const variants = product.shopifyVariants ?? [];
+      return {
+        handle: product.handle,
+        totalVariants: variants.length,
+        availableVariants: variants.filter((variant) => variant.availableForSale).length,
+        allOutOfStock: variants.length > 0 && variants.every((variant) => !variant.availableForSale),
+      };
+    });
+  const productsByNormalizedTitle = new Map<string, Product[]>();
+  for (const product of products) {
+    const normalizedTitle = product.name.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+    productsByNormalizedTitle.set(
+      normalizedTitle,
+      [...(productsByNormalizedTitle.get(normalizedTitle) ?? []), product],
+    );
+  }
+  const duplicateTitleGroups = [...productsByNormalizedTitle.entries()]
+    .filter(([, matches]) => matches.length > 1)
+    .map(([normalizedTitle, matches]) => ({
+      normalizedTitle,
+      handles: matches.map((product) => product.handle).sort(),
+    }));
+  const catalogAudit = {
+    generatedAt: new Date().toISOString(),
+    youthHoodies,
+    nearDuplicateTitles: duplicateTitleGroups,
+  };
+  await writeFile(
+    path.join(OUTPUT_DIR, "catalog-audit-report.json"),
+    `${JSON.stringify(catalogAudit, null, 2)}\n`,
+  );
+  console.log(
+    `[Audit] Youth hoodies: ${youthHoodies.length} products; ${youthHoodies.filter((product) => product.allOutOfStock).length} entirely out of stock`,
+  );
+  console.log(`[Audit] Near-duplicate title groups: ${duplicateTitleGroups.length}`);
 
   const [homeHtml, shopHtml] = await Promise.all([
     readFile(path.join(OUTPUT_DIR, "index.html"), "utf8"),
@@ -345,6 +464,7 @@ async function verifyPublishedCatalog(): Promise<void> {
   assert(notFoundHtml.includes("PAGE NOT FOUND"));
   assert(appShell.includes('content="noindex, nofollow"'));
   assert(netlifyConfig.includes('from = "/product/*"\n  to = "/404.html"\n  status = 404'));
+  assert(netlifyConfig.includes('from = "/product/:handle/"\n  to = "/product/:handle"\n  status = 301\n  force = true'));
   assert(netlifyConfig.includes('from = "/*"\n  to = "/404.html"\n  status = 404'));
   for (const applicationPath of ["/cart", "/order-confirmation", "/start"]) {
     assert(
@@ -480,7 +600,7 @@ async function verifyPageSpeedContracts(): Promise<void> {
   const [homeHtml, shopHtml, firstProduct] = await Promise.all([
     readFile(path.join(OUTPUT_DIR, "index.html"), "utf8"),
     readFile(path.join(OUTPUT_DIR, "shop/index.html"), "utf8"),
-    readFile(path.join(OUTPUT_DIR, "product", (await readdir(path.join(OUTPUT_DIR, "product")))[0], "index.html"), "utf8"),
+    readFile(productOutputPath((await readdir(path.join(OUTPUT_DIR, "product")))[0].replace(/\.html$/, "")), "utf8"),
   ]);
   for (const [name, html] of [["home", homeHtml], ["shop", shopHtml], ["product", firstProduct]] as const) {
     assert(html.includes('<div id="root" data-prerendered="true">'), `${name} must retain a static-first root`);
@@ -598,8 +718,62 @@ async function verifyWebhookHttpContract(): Promise<void> {
   }
 }
 
+async function verifyProductRouteHttpContract(): Promise<void> {
+  const [productsJson, redirectsText] = await Promise.all([
+    readFile(path.join(OUTPUT_DIR, "data/products.json"), "utf8"),
+    readFile(path.join(OUTPUT_DIR, "_redirects"), "utf8"),
+  ]);
+  const products = JSON.parse(productsJson) as Product[];
+  const sample = products.find((product) => product.handle === "they-want-efx-hoodie") ?? products[0];
+  assert(sample, "product route HTTP test requires a catalog product");
+  const numericRedirects = new Map(
+    redirectsText.trim().split(/\r?\n/).map((line) => {
+      const match = line.match(/^(\/product\/\d+)\s+(\/product\/[a-z0-9-]+)\s+301!$/);
+      assert(match, `invalid generated redirect ${line}`);
+      return [match[1], match[2]];
+    }),
+  );
+
+  const app = express();
+  redirectProductTrailingSlash(app);
+  app.get(/^\/product\/\d+$/, (req, res, next) => {
+    const destination = numericRedirects.get(req.path);
+    if (!destination) return next();
+    return res.redirect(301, destination);
+  });
+  serveStatic(app, OUTPUT_DIR);
+
+  const server = createServer(app);
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const address = server.address();
+  assert(address && typeof address !== "string", "product route test server did not open");
+  const origin = `http://127.0.0.1:${address.port}`;
+  try {
+    const canonical = await fetch(`${origin}/product/${sample.handle}`, { redirect: "manual" });
+    assert.equal(canonical.status, 200, "slashless product URL must return 200");
+    assert((await canonical.text()).includes(
+      `<link rel="canonical" href="https://myshirtsdope.com/product/${sample.handle}" />`,
+    ));
+
+    const trailing = await fetch(`${origin}/product/${sample.handle}/?color=Red`, { redirect: "manual" });
+    assert.equal(trailing.status, 301, "trailing-slash product URL must redirect once");
+    assert.equal(trailing.headers.get("location"), `/product/${sample.handle}?color=Red`);
+
+    const numeric = await fetch(`${origin}/product/${sample.id}`, { redirect: "manual" });
+    assert.equal(numeric.status, 301, "numeric product URL must redirect once");
+    assert.equal(numeric.headers.get("location"), `/product/${sample.handle}`);
+    const numericDestination = await fetch(`${origin}${numeric.headers.get("location")}`, { redirect: "manual" });
+    assert.equal(numericDestination.status, 200, "numeric redirect destination must return 200");
+  } finally {
+    await new Promise<void>((resolve, reject) =>
+      server.close((error) => error ? reject(error) : resolve()),
+    );
+  }
+}
+
 await verifyPublishedCatalog();
 await verifyPageSpeedContracts();
 await verifyWebhookSecurityAndDeliveryDedupe();
 await verifyWebhookHttpContract();
+await verifyProductRouteHttpContract();
 console.log("[Verify] Catalog sitemap, prerender, schema, webhook security, and delivery checks passed");
