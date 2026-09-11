@@ -1,14 +1,12 @@
-import { advertisingDataAllowed, PRIVACY_CHOICE_EVENT } from "@/lib/privacy-choices";
-
 const GA_MEASUREMENT_ID = "G-EV5P2LKEHE";
 const META_PIXEL_ID = "1085522715399637";
 const MAX_SCRIPT_ATTEMPTS = 2;
 const MAX_QUEUED_COMMANDS = 100;
 const SCRIPT_LOAD_TIMEOUT_MS = 8_000;
-const RETRY_LISTENER_DELAY_MS = 250;
+const SCRIPT_RETRY_DELAY_MS = 250;
 
 type GtagFunction = (...args: any[]) => void;
-type ScriptStatus = "idle" | "loading" | "loaded" | "failed" | "disabled";
+type ScriptStatus = "idle" | "loading" | "loaded" | "failed";
 
 interface FbqFunction {
   (...args: any[]): void;
@@ -49,21 +47,15 @@ const metaScript: MarketingScriptState = {
   attempts: 0,
 };
 
-const interactionEvents = ["pointerdown", "touchstart", "mousedown", "keydown", "click"] as const;
-
 let googleQueuePrepared = false;
 let metaQueuePrepared = false;
-let interactionListenersAttached = false;
-let activeDeferrals = 0;
-let retryListenerTimer: number | undefined;
 
 function prepareGoogleQueue() {
-  if (typeof window === "undefined" || googleQueuePrepared || !advertisingDataAllowed()) return;
+  if (typeof window === "undefined" || googleQueuePrepared) return;
 
   window.dataLayer = window.dataLayer || [];
   if (!window.gtag) {
     window.gtag = function (..._args: any[]) {
-      if (googleScript.status === "disabled") return;
       window.dataLayer?.push(arguments);
       if (
         googleScript.status !== "loaded" &&
@@ -76,15 +68,19 @@ function prepareGoogleQueue() {
   }
 
   window.gtag("js", new Date());
+  window.gtag("config", GA_MEASUREMENT_ID, {
+    send_page_view: false,
+    allow_google_signals: false,
+    allow_ad_personalization_signals: false,
+  });
   googleQueuePrepared = true;
 }
 
 function prepareMetaQueue() {
-  if (typeof window === "undefined" || metaQueuePrepared || !advertisingDataAllowed()) return;
+  if (typeof window === "undefined" || metaQueuePrepared) return;
 
   if (!window.fbq) {
     const fbq = function (...args: any[]) {
-      if (metaScript.status === "disabled") return;
       if (fbq.callMethod) {
         fbq.callMethod(...args);
       } else {
@@ -112,72 +108,15 @@ function prepareMarketingQueues() {
   prepareMetaQueue();
 }
 
-function isTerminal(status: ScriptStatus) {
-  return status === "loaded" || status === "disabled";
-}
-
-function allScriptsTerminal() {
-  return isTerminal(googleScript.status) && isTerminal(metaScript.status);
-}
-
-function disableBrowserQueue(state: MarketingScriptState) {
-  if (state === googleScript) {
-    window.dataLayer?.splice(0);
-  } else if (window.fbq) {
-    window.fbq.queue.length = 0;
-  }
-}
-
-function removeInteractionListeners() {
-  if (!interactionListenersAttached) return;
-
-  for (const eventName of interactionEvents) {
-    document.removeEventListener(eventName, handleInteraction, true);
-  }
-  interactionListenersAttached = false;
-}
-
-function addInteractionListeners() {
-  if (
-    interactionListenersAttached ||
-    activeDeferrals === 0 ||
-    allScriptsTerminal()
-  ) {
-    return;
-  }
-
-  for (const eventName of interactionEvents) {
-    document.addEventListener(eventName, handleInteraction, {
-      capture: true,
-      passive: true,
-    });
-  }
-  interactionListenersAttached = true;
-}
-
-function scheduleRetryListeners() {
-  if (activeDeferrals === 0 || allScriptsTerminal() || retryListenerTimer !== undefined) {
-    return;
-  }
-
-  retryListenerTimer = window.setTimeout(() => {
-    retryListenerTimer = undefined;
-    addInteractionListeners();
-  }, RETRY_LISTENER_DELAY_MS);
-}
-
 function appendMarketingScript(state: MarketingScriptState) {
   if (
     state.status === "loading" ||
-    state.status === "loaded" ||
-    state.status === "disabled"
+    state.status === "loaded"
   ) {
     return;
   }
 
   if (state.attempts >= MAX_SCRIPT_ATTEMPTS) {
-    state.status = "disabled";
-    disableBrowserQueue(state);
     return;
   }
 
@@ -202,16 +141,10 @@ function appendMarketingScript(state: MarketingScriptState) {
       state.status = "loaded";
     } else {
       script.remove();
-      state.status = state.attempts >= MAX_SCRIPT_ATTEMPTS ? "disabled" : "failed";
-      if (state.status === "disabled") {
-        disableBrowserQueue(state);
+      state.status = "failed";
+      if (state.attempts < MAX_SCRIPT_ATTEMPTS) {
+        window.setTimeout(() => appendMarketingScript(state), SCRIPT_RETRY_DELAY_MS);
       }
-    }
-
-    if (allScriptsTerminal()) {
-      removeInteractionListeners();
-    } else if (!loaded) {
-      scheduleRetryListeners();
     }
   };
 
@@ -220,82 +153,19 @@ function appendMarketingScript(state: MarketingScriptState) {
   document.head.appendChild(script);
 }
 
-function loadMarketingScripts() {
-  if (typeof document === "undefined" || !advertisingDataAllowed()) return;
+export function initializeMarketingScripts() {
+  if (typeof document === "undefined") return;
 
   prepareMarketingQueues();
   appendMarketingScript(googleScript);
   appendMarketingScript(metaScript);
 }
 
-function handleInteraction() {
-  removeInteractionListeners();
-  loadMarketingScripts();
-}
-
-export function deferMarketingScriptsUntilInteraction() {
-  if (typeof document === "undefined") return () => {};
-
-  const handlePrivacyChoice = () => {
-    if (advertisingDataAllowed()) {
-      for (const state of [googleScript, metaScript]) {
-        if (state.status === "disabled") {
-          state.status = "idle";
-          state.attempts = 0;
-        }
-      }
-      window.gtag?.("consent", "update", {
-        ad_storage: "granted",
-        analytics_storage: "granted",
-        ad_user_data: "granted",
-        ad_personalization: "granted",
-      });
-      window.fbq?.("consent", "grant");
-      prepareMarketingQueues();
-      addInteractionListeners();
-    } else {
-      window.gtag?.("consent", "update", {
-        ad_storage: "denied",
-        analytics_storage: "denied",
-        ad_user_data: "denied",
-        ad_personalization: "denied",
-      });
-      window.fbq?.("consent", "revoke");
-      removeInteractionListeners();
-      googleScript.status = "disabled";
-      metaScript.status = "disabled";
-      document.getElementById(googleScript.id)?.remove();
-      document.getElementById(metaScript.id)?.remove();
-      disableBrowserQueue(googleScript);
-      disableBrowserQueue(metaScript);
-    }
-  };
-  window.addEventListener(PRIVACY_CHOICE_EVENT, handlePrivacyChoice);
-  if (advertisingDataAllowed()) prepareMarketingQueues();
-  activeDeferrals += 1;
-  addInteractionListeners();
-
-  let active = true;
-  return () => {
-    if (!active) return;
-    active = false;
-    activeDeferrals = Math.max(0, activeDeferrals - 1);
-    if (activeDeferrals === 0) {
-      removeInteractionListeners();
-      if (retryListenerTimer !== undefined) {
-        window.clearTimeout(retryListenerTimer);
-        retryListenerTimer = undefined;
-      }
-      window.removeEventListener(PRIVACY_CHOICE_EVENT, handlePrivacyChoice);
-    }
-  };
-}
-
 export function queueGooglePageView(path: string) {
-  if (!advertisingDataAllowed()) return;
   prepareGoogleQueue();
-  window.gtag?.("config", GA_MEASUREMENT_ID, {
-    page_path: path,
+  window.gtag?.("event", "page_view", {
+    page_location: new URL(path, window.location.href).href,
+    page_title: document.title,
   });
 }
 
@@ -304,7 +174,6 @@ export function queueMetaPixelEvent(
   params: Record<string, any>,
   eventId: string,
 ) {
-  if (!advertisingDataAllowed()) return;
   prepareMetaQueue();
   window.fbq?.("track", eventName, params, { eventID: eventId });
 }

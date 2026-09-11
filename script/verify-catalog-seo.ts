@@ -442,8 +442,9 @@ async function verifyPublishedCatalog(): Promise<void> {
   const privacyHtml = await readFile(path.join(OUTPUT_DIR, "privacy-policy/index.html"), "utf8");
   assert(privacyHtml.includes("sale or sharing of personal information"));
   assert(privacyHtml.includes("Do Not Sell or Share My Personal Information"));
-  assert(privacyHtml.includes("Privacy Choices"));
-  assert(privacyHtml.includes("Global Privacy Control"));
+  assert(privacyHtml.includes("Google Analytics and Meta advertising services begin processing storefront activity when the site loads"));
+  assert(!privacyHtml.includes("Privacy Choices"));
+  assert(!privacyHtml.includes("Global Privacy Control"));
 
   for (const policyPage of POLICY_PAGES) {
     assert(
@@ -543,17 +544,19 @@ async function verifyPageSpeedContracts(): Promise<void> {
   );
   assert(footer.includes('className="storefront-footer border-t border-border bg-background min-h-[300px]"'));
   assert(footer.includes('style={{ contain: "layout style", contentVisibility: "auto" }}'));
-  assert(footer.includes("Privacy Choices"));
-  assert(app.includes("<PrivacyChoices />"));
+  assert(!footer.includes("Privacy Choices"));
+  assert(!app.includes("<PrivacyChoices />"));
   const marketingScripts = await readFile(path.resolve("client/src/lib/marketing-scripts.ts"), "utf8");
   const metaCapi = await readFile(path.resolve("client/src/lib/meta-capi.ts"), "utf8");
   const trackFunction = await readFile(path.resolve("netlify/functions/track.ts"), "utf8");
-  assert(marketingScripts.includes("advertisingDataAllowed()"));
-  assert(marketingScripts.includes("PRIVACY_CHOICE_EVENT"));
-  assert(marketingScripts.includes('if (state.status === "disabled")'));
-  assert(marketingScripts.includes('state.status = "idle"'));
-  assert(metaCapi.includes("advertisingConsent: true"));
-  assert(trackFunction.includes('event.headers["sec-gpc"] === "1"'));
+  assert(marketingScripts.includes("export function initializeMarketingScripts()"));
+  assert(main.includes("initializeMarketingScripts();"));
+  assert(!marketingScripts.includes("advertisingDataAllowed"));
+  assert(!marketingScripts.includes("PRIVACY_CHOICE_EVENT"));
+  assert(!marketingScripts.includes("pointerdown"));
+  assert(!metaCapi.includes("advertisingConsent"));
+  assert(!trackFunction.includes("advertisingConsent"));
+  assert(!trackFunction.includes('event.headers["sec-gpc"]'));
   for (const policyPage of POLICY_PAGES) {
     assert(footer.includes(`href="${policyPage.path}"`), `interactive footer is missing ${policyPage.path}`);
   }

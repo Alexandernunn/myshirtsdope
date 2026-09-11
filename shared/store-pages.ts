@@ -1,5 +1,5 @@
 export const STORE_SUPPORT_EMAIL = "info@myshirtsdope.com";
-export const STORE_LAST_UPDATED = "September 10, 2026";
+export const STORE_LAST_UPDATED = "September 11, 2026";
 
 export interface StorePageSection {
   heading: string;
@@ -103,14 +103,14 @@ export const POLICY_PAGES: StorePageDefinition[] = [
           "To operate, secure, measure, and improve the storefront.",
           "To respond to questions and prevent fraud or misuse.",
           "To comply with legal, tax, accounting, and regulatory duties.",
-          "To measure advertising and marketing performance where consent or applicable law permits.",
+          "To measure advertising and marketing performance.",
         ],
       },
       {
         heading: "Service providers and choices",
         paragraphs: [
           "MyShirtsDope uses service providers to operate the store, including Shopify for commerce and checkout, Formspree for contact-form delivery, and analytics or advertising providers such as Google and Meta. These providers process information under their own terms and privacy practices.",
-          "Use the Privacy Choices control in the website footer to allow or refuse advertising data sharing. MyShirtsDope also honors supported Global Privacy Control browser signals as a refusal. Depending on where you live, you may have rights to request access, correction, deletion, or restriction of personal information.",
+          "Google Analytics and Meta advertising services begin processing storefront activity when the site loads. Depending on where you live, you may have rights to request access, correction, deletion, or restriction of personal information.",
           `To make a privacy request, email ${STORE_SUPPORT_EMAIL}. MyShirtsDope may need to verify the request before acting on it.`,
         ],
       },
@@ -118,7 +118,7 @@ export const POLICY_PAGES: StorePageDefinition[] = [
         heading: "Sale or sharing and opt-out requests",
         paragraphs: [
           "MyShirtsDope uses advertising and analytics services, including Google and Meta. Providing identifiers and storefront activity to these services for advertising measurement or personalized advertising may be considered a sale or sharing of personal information under some privacy laws.",
-          `Use the Privacy Choices control in the website footer to refuse advertising data sharing. You may also email ${STORE_SUPPORT_EMAIL} with the subject “Do Not Sell or Share My Personal Information.” MyShirtsDope will process verified requests as required by applicable law.`,
+          `You may email ${STORE_SUPPORT_EMAIL} with the subject “Do Not Sell or Share My Personal Information.” MyShirtsDope will process verified requests as required by applicable law.`,
         ],
       },
       {

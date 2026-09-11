@@ -1,5 +1,4 @@
 import { queueMetaPixelEvent } from "@/lib/marketing-scripts";
-import { advertisingDataAllowed } from "@/lib/privacy-choices";
 
 function getCookie(name: string): string {
   const match = document.cookie.match(new RegExp("(?:^|; )" + name + "=([^;]*)"));
@@ -20,7 +19,6 @@ interface TrackOptions {
 }
 
 export function trackEvent(eventName: string, options: TrackOptions = {}) {
-  if (!advertisingDataAllowed()) return;
   const eventId = genEventId();
   const fbpCookie = getCookie("_fbp");
   const fbcCookie = getCookie("_fbc");
@@ -40,6 +38,6 @@ export function trackEvent(eventName: string, options: TrackOptions = {}) {
   fetch("/.netlify/functions/track", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ eventName, eventData: capiData, advertisingConsent: true }),
+    body: JSON.stringify({ eventName, eventData: capiData }),
   }).catch(() => {});
 }

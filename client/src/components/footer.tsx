@@ -1,5 +1,4 @@
 import { Link } from "wouter";
-import { openPrivacyChoices } from "@/components/privacy-choices";
 
 export default function Footer() {
   return (
@@ -23,13 +22,6 @@ export default function Footer() {
               <Link href="/shipping-policy"><span className="font-display text-base text-muted-foreground">Shipping</span></Link>
               <Link href="/returns-refunds"><span className="font-display text-base text-muted-foreground">Returns &amp; Refunds</span></Link>
               <Link href="/privacy-policy"><span className="font-display text-base text-muted-foreground">Privacy</span></Link>
-              <button
-                type="button"
-                onClick={openPrivacyChoices}
-                className="w-fit text-left font-display text-base text-muted-foreground hover:text-foreground"
-              >
-                Privacy Choices
-              </button>
               <Link href="/terms-of-service"><span className="font-display text-base text-muted-foreground">Terms</span></Link>
             </div>
           </div>

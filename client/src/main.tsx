@@ -1,7 +1,7 @@
 import { createRoot } from "react-dom/client";
 import { flushSync } from "react-dom";
 import App, { preloadCurrentRoute, trackInitialPageView } from "./App";
-import { deferMarketingScriptsUntilInteraction } from "./lib/marketing-scripts";
+import { initializeMarketingScripts } from "./lib/marketing-scripts";
 import "./index.css";
 
 const rootElement = document.getElementById("root");
@@ -10,7 +10,7 @@ if (!rootElement) {
   throw new Error("Missing #root element");
 }
 
-deferMarketingScriptsUntilInteraction();
+initializeMarketingScripts();
 trackInitialPageView(window.location.pathname);
 
 async function mountApp(root: HTMLElement) {

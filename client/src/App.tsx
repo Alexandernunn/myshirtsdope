@@ -5,7 +5,6 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { CartProvider } from "@/lib/cart-context";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
-import PrivacyChoices from "@/components/privacy-choices";
 import Home, { Start } from "@/pages/home";
 import { Volume2, VolumeX } from "lucide-react";
 import { queueGooglePageView } from "@/lib/marketing-scripts";
@@ -245,7 +244,6 @@ function App() {
           <Footer />
         </div>
         <BackgroundMusic />
-        <PrivacyChoices />
         <AppToaster />
       </CartProvider>
     </QueryClientProvider>
