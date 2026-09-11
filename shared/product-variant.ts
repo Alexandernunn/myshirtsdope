@@ -13,9 +13,7 @@ export function getVariantImage(product: Product, variant: ShopifyVariantMapping
 
 export function getVariantPath(product: Product, variant: ShopifyVariantMapping): string {
   const params = new URLSearchParams();
-  params.set("variant", variant.variantId.split("/").pop() || variant.variantId);
-  if (variant.color && variant.color !== "Default") params.set("color", variant.color);
-  if (variant.size && variant.size !== "One Size") params.set("size", variant.size);
+  params.set("v", variant.variantId.split("/").pop() || variant.variantId);
   const query = params.toString();
   return `${productPath(product)}${query ? `?${query}` : ""}`;
 }

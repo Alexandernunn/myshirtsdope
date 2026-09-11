@@ -153,7 +153,7 @@ export default function ProductDetail() {
   const initialVariant = prerenderedProduct
     ? findRequestedVariant(
         prerenderedProduct,
-        initialParams?.get("variant") ?? null,
+         initialParams?.get("v") ?? initialParams?.get("variant") ?? null,
         initialParams?.get("color") ?? null,
         initialParams?.get("size") ?? null,
       ) ?? getDefaultVariant(prerenderedProduct)
@@ -324,7 +324,7 @@ export default function ProductDetail() {
     const params = new URLSearchParams(window.location.search);
     const requestedVariant = findRequestedVariant(
       activeProduct,
-      params.get("variant"),
+      params.get("v") ?? params.get("variant"),
       params.get("color"),
       params.get("size"),
     );
@@ -364,11 +364,10 @@ export default function ProductDetail() {
     const image = getVariantImage(activeProduct, variant);
     setDisplayImage(image === activeProduct.imageUrl ? "" : image);
     const params = new URLSearchParams(window.location.search);
-    params.set("variant", variant.variantId.split("/").pop() || variant.variantId);
-    if (variant.color && variant.color !== "Default") params.set("color", variant.color);
-    else params.delete("color");
-    if (variant.size && variant.size !== "One Size") params.set("size", variant.size);
-    else params.delete("size");
+    params.set("v", variant.variantId.split("/").pop() || variant.variantId);
+    params.delete("variant");
+    params.delete("color");
+    params.delete("size");
     const query = params.toString();
     window.history.replaceState(null, "", `${window.location.pathname}${query ? `?${query}` : ""}`);
   };

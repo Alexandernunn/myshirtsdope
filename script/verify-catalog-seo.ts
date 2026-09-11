@@ -203,7 +203,7 @@ async function verifyPublishedCatalog(): Promise<void> {
         assert.equal(typeof variant.size, "string");
         assert.deepEqual(variant.brand, { "@type": "Brand", name: "MyShirtsDope" });
         assert.equal(variant.url, `https://myshirtsdope.com${getVariantPath(expectedProduct, expectedVariant)}`);
-        assert(variant.url.includes(`variant=${variantId}`));
+        assert(variant.url.includes(`v=${variantId}`));
         assert.equal(variant.isVariantOf?.["@id"], productSchema["@id"]);
         assert(variant.image?.includes(getVariantImage(expectedProduct, expectedVariant)));
         const offer = variant.offers;
