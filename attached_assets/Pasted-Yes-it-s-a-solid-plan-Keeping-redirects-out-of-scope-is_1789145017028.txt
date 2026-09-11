@@ -1,0 +1,31 @@
+Yes, it's a solid plan. Keeping redirects out of scope is the right call after the Netlify loop. Before it runs, fix one mistake, which was my own, and add four edits.
+
+**1. Fix the sold-out rule. My earlier advice here was wrong.**
+I said a sold-out combination should load the default variant, and the plan copied that. But your schema lists sold-out variants too, each with its own URL and `OutOfStock` availability. If Google clicks the Red / S offer marked out of stock, and the page switches to Blue / M in stock and rewrites the URL, that's the landing-page mismatch Merchant Center flags. The rule should be:
+
+> A **valid** combination that's sold out stays selected, shows "Sold out," disables Add to Cart, and keeps its URL. Only **unknown, invalid, or ambiguous** parameters fall back to the default variant. Legacy `?variant=` and `?v=` IDs select that exact variant even if it's sold out. If every variant is sold out, the default is the first variant.
+
+**2. Don't add parameters to clean URLs.**
+The plan normalizes "incomplete" requests to the default variant's readable URL, which could mean every visit to `/product/they-want-efx-hoodie` gets rewritten to `?color=red&size=s`. A URL without parameters should stay clean until the shopper actually picks an option. Partial URLs should also keep what's valid: `?color=light-blue` should select light blue with its first available size, not throw away the color.
+
+**3. Keep tracking parameters.**
+This one matters most for sales attribution. `replaceState` must only change `color`, `size`, `v`, and `variant`, and leave everything else exactly as it was. Google adds `srsltid` to clicks from merchant listings, ChatGPT adds `utm_source=chatgpt.com`, and ads add `gclid` and `fbclid`. If normalization runs on page load and wipes those, your analytics lose track of where sales came from. Add a test that `?utm_source=chatgpt.com&v=39484699836480` becomes `?utm_source=chatgpt.com&color=...&size=...`.
+
+**4. Handle products that don't use color and size.**
+Some accessories and single-variant products may have only one option, a different option like "Style," or no options at all. Define the behavior for each: single-variant products get no parameters; products with only size get only `size`; other options either get their own slugged parameter in a fixed order, or those products keep the clean URL. Also, the parser should match against that product's own slugged option values, so tricky names like "Black/White," "Heather Grey," or "S/M" can't collide.
+
+**5. Test in a real browser on a deploy preview.**
+Variant preselection happens in JavaScript after the page loads, and curl can't see JavaScript. Step 5 needs a headless browser test, such as Playwright, run against a Netlify deploy preview before production. It should confirm the right swatch is selected, the price and availability match, the URL is normalized, the canonical is still clean, and a real Add to Cart sends the correct Shopify variant ID.
+
+**Replacement lines for "Done looks like":**
+
+```
+* Valid sold-out combinations (readable or legacy ID) stay selected, show Sold out, and keep their URL; only unknown, invalid, or ambiguous params fall back to the default variant.
+* A product URL with no variant params is never rewritten until the shopper selects an option.
+* Partial params keep valid selections (e.g., color only selects that color's first available size).
+* URL normalization preserves all unrelated query params (utm_*, srsltid, gclid, fbclid).
+* Products with one variant, one option, or non-color/size options have defined, tested URL behavior.
+* Playwright tests pass on a Netlify deploy preview before production publish, including Add to Cart sending the correct Shopify variant ID.
+```
+
+With those changes, it's ready to approve. When the deploy preview is up, send me the URL and I'll run the server-side checks while Replit runs the browser tests.
