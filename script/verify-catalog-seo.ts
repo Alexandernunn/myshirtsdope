@@ -20,7 +20,7 @@ import {
   variantValueSlug,
 } from "../shared/product-variant";
 import { hasValidMerchantPrice, productPageSchema } from "./storefront-schema";
-import { serveStatic } from "../server/static";
+import { redirectLegacyProductRoutes, serveStatic } from "../server/static";
 
 const OUTPUT_DIR = path.resolve("dist/public");
 
@@ -563,6 +563,7 @@ async function verifyPublishedCatalog(): Promise<void> {
   assert(notFoundHtml.includes("PAGE NOT FOUND"));
   assert(appShell.includes('content="noindex, nofollow"'));
   assert(netlifyConfig.includes('from = "/product/*"\n  to = "/404.html"\n  status = 404'));
+  assert(netlifyConfig.includes('from = "/products/:handle"\n  to = "/product/:handle"\n  status = 301'));
   assert(!netlifyConfig.includes('from = "/product/:handle/"'));
   assert(!netlifyConfig.includes('to = "/product/:handle.html"'));
   assert(netlifyConfig.includes('from = "/*"\n  to = "/404.html"\n  status = 404'));
@@ -837,6 +838,7 @@ async function verifyProductRouteHttpContract(): Promise<void> {
   );
 
   const app = express();
+  redirectLegacyProductRoutes(app);
   app.get(/^\/product\/[a-z0-9-]+$/, (req, res, next) => {
     const destination = productRedirects.get(req.path);
     if (!destination) return next();
@@ -872,6 +874,50 @@ async function verifyProductRouteHttpContract(): Promise<void> {
     assert.equal(duplicate.headers.get("location"), duplicateTarget);
     const duplicateDestination = await fetch(`${origin}${duplicateTarget}`, { redirect: "manual" });
     assert.equal(duplicateDestination.status, 200, "duplicate handle redirect destination must return 200");
+
+    const googleRoutes = [
+      {
+        handle: "dillatroit-shirt",
+        variantId: "39728143073344",
+        expectedColor: "Navy",
+        expectedSize: "2XL",
+      },
+      {
+        handle: "what-means-the-world-to-you-onesie",
+        variantId: "39383740383296",
+        expectedColor: "Pink",
+        expectedSize: "12-18m",
+      },
+    ];
+    for (const route of googleRoutes) {
+      const product = products.find((candidate) => candidate.handle === route.handle);
+      assert(product, `Google Shopping test product ${route.handle} is missing`);
+      const variant = findRequestedVariant(product, route.variantId, null, null);
+      assert.equal(variant?.color, route.expectedColor);
+      assert.equal(variant?.size, route.expectedSize);
+
+      const query = `variant=${route.variantId}&country=US&currency=USD&utm_medium=product_sync&utm_source=google&utm_content=sag_organic&utm_campaign=sag_organic&srsltid=test&future_parameter=kept`;
+      const legacy = await fetch(`${origin}/products/${route.handle}?${query}`, { redirect: "manual" });
+      assert.equal(legacy.status, 301, "plural Shopify product URL must redirect once");
+      assert.equal(
+        legacy.headers.get("location"),
+        `/product/${route.handle}?${query}`,
+        "plural Shopify redirect must preserve the complete query string",
+      );
+      const destination = await fetch(`${origin}${legacy.headers.get("location")}`, { redirect: "manual" });
+      assert.equal(destination.status, 200, "plural Shopify redirect destination must return 200");
+
+      const normalized = updateVariantSearchParams(product, variant, new URLSearchParams(query));
+      assert(!normalized.has("variant"));
+      assert(!normalized.has("v"));
+      assert.equal(normalized.get("color"), variantValueSlug(route.expectedColor));
+      assert.equal(normalized.get("size"), variantValueSlug(route.expectedSize));
+      for (const [key, value] of new URLSearchParams(query)) {
+        if (key !== "variant" && key !== "v" && key !== "color" && key !== "size") {
+          assert.equal(normalized.get(key), value, `normalization lost ${key}`);
+        }
+      }
+    }
   } finally {
     await new Promise<void>((resolve, reject) =>
       server.close((error) => error ? reject(error) : resolve()),
@@ -919,6 +965,14 @@ async function verifyNetlifyDeployRoutes(baseUrl: string): Promise<void> {
     { route: "/product/they-want-efx-hoodie/", redirects: undefined },
     { route: "/product/6588631482432", redirects: 1 },
     { route: "/product/a-milli-youth-shirt", redirects: 0 },
+    {
+      route: "/products/dillatroit-shirt?variant=39728143073344&country=US&currency=USD&utm_source=google&utm_campaign=sag_organic",
+      redirects: 1,
+    },
+    {
+      route: "/products/what-means-the-world-to-you-onesie?variant=39383740383296&country=US&currency=USD&utm_source=google&utm_campaign=sag_organic",
+      redirects: 1,
+    },
     { route: "/", redirects: 0 },
     { route: "/shop", redirects: 0 },
     { route: "/sitemap.xml", redirects: 0 },

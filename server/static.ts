@@ -2,6 +2,14 @@ import express, { type Express } from "express";
 import fs from "fs";
 import path from "path";
 
+export function redirectLegacyProductRoutes(app: Express) {
+  app.get("/products/:handle", (req, res) => {
+    const queryStart = req.originalUrl.indexOf("?");
+    const query = queryStart >= 0 ? req.originalUrl.slice(queryStart) : "";
+    return res.redirect(301, `/product/${encodeURIComponent(req.params.handle)}${query}`);
+  });
+}
+
 export function serveStatic(app: Express, publicPath?: string) {
   const distPath = publicPath ?? path.resolve(__dirname, "public");
   if (!fs.existsSync(distPath)) {
