@@ -221,6 +221,32 @@ function variantOffer(
   };
 }
 
+function aggregateVariantOffer(
+  siteUrl: string,
+  canonicalUrl: string,
+  variants: ShopifyVariantMapping[],
+): JsonLdNode | undefined {
+  const prices = variants
+    .map((variant) => parsePositivePrice(variant.price))
+    .filter((price): price is number => price !== undefined);
+  if (prices.length === 0) return undefined;
+
+  return {
+    "@type": "AggregateOffer",
+    "@id": `${canonicalUrl}#aggregate-offer`,
+    url: canonicalUrl,
+    priceCurrency: "USD",
+    lowPrice: Math.min(...prices).toFixed(2),
+    highPrice: Math.max(...prices).toFixed(2),
+    offerCount: prices.length,
+    availability: variants.some((variant) => variant.availableForSale)
+      ? "https://schema.org/InStock"
+      : "https://schema.org/OutOfStock",
+    seller: reference(ids(siteUrl).organization),
+    hasMerchantReturnPolicy: reference(`${siteUrl}/returns-refunds#policy`),
+  };
+}
+
 function productNode(siteUrl: string, product: Product, canonicalUrl: string): JsonLdNode | undefined {
   const usableVariants = (product.shopifyVariants ?? []).filter((variant) =>
     parsePositivePrice(variant.price) !== undefined,
@@ -255,6 +281,7 @@ function productNode(siteUrl: string, product: Product, canonicalUrl: string): J
       category: product.category,
       brand: PRODUCT_BRAND,
       ...(audience ? { audience } : {}),
+      offers: aggregateVariantOffer(siteUrl, canonicalUrl, usableVariants),
       hasVariant: usableVariants.map((variant) => {
         const variantId = variant.variantId.split("/").pop();
         const variantImage = getVariantImage(product, variant);

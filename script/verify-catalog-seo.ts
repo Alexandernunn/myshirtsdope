@@ -194,6 +194,26 @@ async function verifyPublishedCatalog(): Promise<void> {
       );
       assert(Array.isArray(productSchema.hasVariant));
       assert.equal(productSchema.hasVariant.length, usableVariants.length);
+      const aggregateOffer = productSchema.offers;
+      const prices = usableVariants.map((variant) => Number.parseFloat(variant.price));
+      assert.equal(aggregateOffer["@type"], "AggregateOffer");
+      assert.equal(aggregateOffer["@id"], `https://myshirtsdope.com/product/${productHandle}#aggregate-offer`);
+      assert.equal(aggregateOffer.url, `https://myshirtsdope.com/product/${productHandle}`);
+      assert.equal(aggregateOffer.priceCurrency, "USD");
+      assert.equal(aggregateOffer.lowPrice, Math.min(...prices).toFixed(2));
+      assert.equal(aggregateOffer.highPrice, Math.max(...prices).toFixed(2));
+      assert.equal(aggregateOffer.offerCount, usableVariants.length);
+      assert.equal(
+        aggregateOffer.availability,
+        usableVariants.some((variant) => variant.availableForSale)
+          ? "https://schema.org/InStock"
+          : "https://schema.org/OutOfStock",
+      );
+      assert(aggregateOffer.seller?.["@id"]?.endsWith("/#organization"));
+      assert.equal(
+        aggregateOffer.hasMerchantReturnPolicy?.["@id"],
+        "https://myshirtsdope.com/returns-refunds#policy",
+      );
       const webPage = nodeOfType(graph, "WebPage");
       assert.equal(webPage.mainEntity?.["@id"], productSchema["@id"]);
       for (const expectedVariant of usableVariants) {
@@ -250,6 +270,13 @@ async function verifyPublishedCatalog(): Promise<void> {
         "https://myshirtsdope.com/returns-refunds#policy",
       );
       assert.equal(offer.seller?.["@id"], "https://myshirtsdope.com/#organization");
+    }
+    for (const aggregateOffer of nestedNodesOfType(productSchema, "AggregateOffer")) {
+      assert.match(aggregateOffer.lowPrice, /^\d+\.\d{2}$/);
+      assert.match(aggregateOffer.highPrice, /^\d+\.\d{2}$/);
+      assert(Number.parseFloat(aggregateOffer.lowPrice) > 0);
+      assert(Number.parseFloat(aggregateOffer.highPrice) >= Number.parseFloat(aggregateOffer.lowPrice));
+      assert(Number.isInteger(aggregateOffer.offerCount) && aggregateOffer.offerCount > 1);
     }
     nodeOfType(graph, "OnlineStore");
     nodeOfType(graph, "WebSite");
