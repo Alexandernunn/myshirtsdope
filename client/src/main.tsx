@@ -1,5 +1,4 @@
 import { createRoot } from "react-dom/client";
-import { flushSync } from "react-dom";
 import App, { preloadCurrentRoute, trackInitialPageView } from "./App";
 import { initializeMarketingScripts } from "./lib/marketing-scripts";
 import "./index.css";
@@ -25,9 +24,7 @@ async function mountApp(root: HTMLElement) {
   }
 
   const appRoot = createRoot(root);
-  flushSync(() => {
-    appRoot.render(<App />);
-  });
+  appRoot.render(<App />);
   if (hasPrerenderedContent) delete root.dataset.prerendered;
 }
 

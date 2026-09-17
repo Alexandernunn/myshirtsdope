@@ -49,6 +49,7 @@ const metaScript: MarketingScriptState = {
 
 let googleQueuePrepared = false;
 let metaQueuePrepared = false;
+let vendorLoadScheduled = false;
 
 function prepareGoogleQueue() {
   if (typeof window === "undefined" || googleQueuePrepared) return;
@@ -157,8 +158,27 @@ export function initializeMarketingScripts() {
   if (typeof document === "undefined") return;
 
   prepareMarketingQueues();
-  appendMarketingScript(googleScript);
-  appendMarketingScript(metaScript);
+  if (vendorLoadScheduled) return;
+  vendorLoadScheduled = true;
+
+  const loadVendors = () => {
+    appendMarketingScript(googleScript);
+    appendMarketingScript(metaScript);
+  };
+  const interactionEvents: Array<keyof WindowEventMap> = ["pointerdown", "keydown", "touchstart"];
+  const loadAfterInteraction = () => {
+    for (const eventName of interactionEvents) {
+      window.removeEventListener(eventName, loadAfterInteraction);
+    }
+    loadVendors();
+  };
+  for (const eventName of interactionEvents) {
+    window.addEventListener(eventName, loadAfterInteraction, { once: true, passive: true });
+  }
+
+  const loadAfterPageSettles = () => window.setTimeout(loadVendors, 15_000);
+  if (document.readyState === "complete") loadAfterPageSettles();
+  else window.addEventListener("load", loadAfterPageSettles, { once: true });
 }
 
 export function queueGooglePageView(path: string) {

@@ -680,7 +680,9 @@ async function verifyPageSpeedContracts(): Promise<void> {
   assert(main.includes("initializeMarketingScripts();"));
   assert(!marketingScripts.includes("advertisingDataAllowed"));
   assert(!marketingScripts.includes("PRIVACY_CHOICE_EVENT"));
-  assert(!marketingScripts.includes("pointerdown"));
+  assert(marketingScripts.includes('"pointerdown", "keydown", "touchstart"'));
+  assert(marketingScripts.includes("prepareMarketingQueues();"));
+  assert(marketingScripts.includes("window.setTimeout(loadVendors, 15_000)"));
   assert(!metaCapi.includes("advertisingConsent"));
   assert(!trackFunction.includes("advertisingConsent"));
   assert(!trackFunction.includes('event.headers["sec-gpc"]'));
@@ -692,7 +694,7 @@ async function verifyPageSpeedContracts(): Promise<void> {
   assert(app.includes('<Route path="/privacy-policy" component={PolicyPage} />'));
   assert(app.includes('<Route path="/terms-of-service" component={PolicyPage} />'));
   assert(!main.includes("replaceChildren"), "prerendered content must not be cleared before React commits");
-  assert(main.includes("flushSync"), "the interactive storefront must commit in one synchronous paint");
+  assert(!main.includes("flushSync"), "initial activation must not force a synchronous React commit");
   assert(home.includes("isPrerenderedDocument() ? tagline : \"\""));
   assert(shop.includes("PRERENDERED_SHOP_DATA_SELECTOR"));
   assert(prerenderCatalog.includes('data-prerendered-deck="true"'));

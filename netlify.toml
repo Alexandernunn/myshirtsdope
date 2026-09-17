@@ -27,6 +27,11 @@
     Cache-Control = "public, max-age=300, stale-while-revalidate=60"
 
 [[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
   for = "/cart"
   [headers.values]
     X-Robots-Tag = "noindex, nofollow"

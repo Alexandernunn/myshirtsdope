@@ -5,14 +5,24 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { CartProvider } from "@/lib/cart-context";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
-import Home, { Start } from "@/pages/home";
 import { Volume2, VolumeX } from "lucide-react";
 import { queueGooglePageView } from "@/lib/marketing-scripts";
 import { trackEvent } from "@/lib/meta-capi";
 
 let preloadedShop: ComponentType | null = null;
 let preloadedProductDetail: ComponentType | null = null;
+let preloadedHome: ComponentType | null = null;
+let preloadedStart: ComponentType | null = null;
 
+const loadHomeModule = () => import("@/pages/home");
+const loadHome = () => loadHomeModule().then((module) => {
+  preloadedHome = module.default;
+  return { default: module.default };
+});
+const loadStart = () => loadHomeModule().then((module) => {
+  preloadedStart = module.Start;
+  return { default: module.Start };
+});
 const loadShop = () => import("@/pages/shop").then((module) => {
   preloadedShop = module.default;
   return module;
@@ -28,6 +38,8 @@ const loadPolicyPage = () => import("@/pages/policy-page");
 const loadOrderConfirmation = () => import("@/pages/order-confirmation");
 const loadNotFound = () => import("@/pages/not-found");
 
+const Home = lazy(loadHome);
+const Start = lazy(loadStart);
 const Shop = lazy(loadShop);
 const ProductDetail = lazy(loadProductDetail);
 const CartPage = lazy(loadCart);
@@ -57,7 +69,11 @@ export function trackInitialPageView(pathname: string): void {
 export async function preloadCurrentRoute(pathname: string): Promise<void> {
   const normalizedPath = normalizePathname(pathname);
 
-  if (normalizedPath === "/shop") {
+  if (normalizedPath === "/") {
+    await loadHome();
+  } else if (normalizedPath === "/start") {
+    await loadStart();
+  } else if (normalizedPath === "/shop") {
     await loadShop();
   } else if (normalizedPath.startsWith("/product/")) {
     await loadProductDetail();
@@ -114,6 +130,14 @@ function Router() {
   if (normalizedPath === "/shop" && preloadedShop) {
     const PreloadedShop = preloadedShop;
     return <PreloadedShop />;
+  }
+  if (normalizedPath === "/" && preloadedHome) {
+    const PreloadedHome = preloadedHome;
+    return <PreloadedHome />;
+  }
+  if (normalizedPath === "/start" && preloadedStart) {
+    const PreloadedStart = preloadedStart;
+    return <PreloadedStart />;
   }
 
   return (

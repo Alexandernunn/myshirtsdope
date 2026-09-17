@@ -138,8 +138,7 @@ function upsertPdpHeroPreload(imageUrl: string | undefined): HTMLLinkElement | n
 
 function usePdpHeroPreload(imageUrl: string | undefined): void {
   useEffect(() => {
-    const preload = upsertPdpHeroPreload(imageUrl);
-    return () => preload?.remove();
+    upsertPdpHeroPreload(imageUrl);
   }, [imageUrl]);
 }
 
@@ -177,6 +176,7 @@ export default function ProductDetail() {
   const { data: product, isLoading } = useQuery<Product>({
     queryKey: ["/api/products", handle],
     initialData: prerenderedProduct,
+    staleTime: prerenderedProduct ? Number.POSITIVE_INFINITY : 0,
     queryFn: async () => {
       if (!import.meta.env.DEV) {
         const staticProduct = await fetchPrerenderedProduct(handle);
@@ -207,13 +207,18 @@ export default function ProductDetail() {
       cancelIdleCallback?: (handle: number) => void;
     };
 
-    if (browserWindow.requestIdleCallback) {
-      const idleHandle = browserWindow.requestIdleCallback(loadSecondaryContent, { timeout: 1000 });
-      return () => browserWindow.cancelIdleCallback?.(idleHandle);
-    }
-
-    const timeoutHandle = window.setTimeout(loadSecondaryContent, 250);
-    return () => window.clearTimeout(timeoutHandle);
+    let idleHandle: number | undefined;
+    const timeoutHandle = window.setTimeout(() => {
+      if (browserWindow.requestIdleCallback) {
+        idleHandle = browserWindow.requestIdleCallback(loadSecondaryContent, { timeout: 5000 });
+      } else {
+        loadSecondaryContent();
+      }
+    }, 3000);
+    return () => {
+      window.clearTimeout(timeoutHandle);
+      if (idleHandle !== undefined) browserWindow.cancelIdleCallback?.(idleHandle);
+    };
   }, [product?.id]);
 
   const secondaryContentEnabled = secondaryProductId === product?.id;
