@@ -1,0 +1,28 @@
+Yes, but the two halves of Task #7 help in different ways, and one important item is still missing from the list.
+
+**What each part does for you**
+
+- **The `_fbc` work is the bigger win for sales.** It lets Meta tie each purchase back to the ad click. Right now your ad sets have zero conversions and are stuck learning. The more purchases Meta can credit correctly, the faster it learns who buys and the cheaper each sale gets.
+- **The speed work is mostly done.** You went from 60 to 90. Going further (hydration, render-blocking CSS) is worth finishing so the score holds steady, but it won't move sales nearly as much as the jump you already made.
+
+**Add this to Task #7: Purchase through Shopify checkout**
+
+Your list says to reuse `_fbc` for checkout and Purchase, but checkout runs on Shopify's domain and can't read your cookie. Add these items:
+
+- Before sending shoppers to checkout, attach `fbc`, `fbp`, and your visitor/event ID to the Shopify cart as **cart attributes**.
+- Send Purchase from a **Shopify order webhook** that reads those attributes, **or** let Shopify's Facebook & Instagram app send it. Use one or the other, not both.
+- Confirm each order shows up in Events Manager **once**, with `fbc` present.
+
+Without this, Purchase, the event your ads optimize for, is the one most likely to lose credit.
+
+**Order to do it in**
+
+1. **Implement `_fbc`:** set it once from the first `fbclid`, keep it 90 days on `.myshirtsdope.com`, and reuse it for every event.
+2. **Fix the Purchase path** through Shopify checkout, as above.
+3. **Deploy preview:** run PageSpeed on `/shop` and the four ad pages, and check **element render delay** in the LCP breakdown. Switch to `hydrateRoot` only if it's large.
+4. **Test Events:** open a preview product page with a test `fbclid` and confirm PageView, ViewContent, and AddToCart arrive from both Browser and Server, deduplicated, with `fbc` present.
+5. **Deploy to production**, then place one real test order and confirm Purchase shows up once, with `fbc`.
+6. **Monitor:** watch the Netlify function logs for 503s or Meta errors for the first day or two.
+7. **Leave the ads alone for 3–4 days**, then I'll pull the numbers and tell you which concepts to cut and which to scale.
+
+The "next level" comes from step 7: once tracking is accurate, you can move money into whichever concept is actually producing sales.
