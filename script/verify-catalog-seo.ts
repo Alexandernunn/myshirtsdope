@@ -21,6 +21,7 @@ import {
 } from "../shared/product-variant";
 import { hasValidMerchantPrice, productPageSchema } from "./storefront-schema";
 import { redirectLegacyProductRoutes, serveStatic } from "../server/static";
+import { buildFbcFromUrl } from "../netlify/functions/track";
 
 const OUTPUT_DIR = path.resolve("dist/public");
 
@@ -682,7 +683,17 @@ async function verifyPageSpeedContracts(): Promise<void> {
   assert(!marketingScripts.includes("PRIVACY_CHOICE_EVENT"));
   assert(marketingScripts.includes('"pointerdown", "keydown", "touchstart"'));
   assert(marketingScripts.includes("prepareMarketingQueues();"));
-  assert(marketingScripts.includes("window.setTimeout(loadVendors, 15_000)"));
+  assert(marketingScripts.includes("window.setTimeout(loadGoogle, 15_000)"));
+  assert(marketingScripts.includes("browserWindow.requestIdleCallback(loadMeta, { timeout: 500 })"));
+  assert(marketingScripts.includes("}, 1_000);"));
+  assert.equal(
+    buildFbcFromUrl("https://myshirtsdope.com/product/example?utm_source=meta&fbclid=test-click-id", 1_726_590_000_000),
+    "fb.1.1726590000000.test-click-id",
+  );
+  assert.equal(buildFbcFromUrl("https://myshirtsdope.com/product/example?utm_source=meta"), undefined);
+  assert.equal(buildFbcFromUrl("not a URL"), undefined);
+  assert(trackFunction.includes('statusCode: 503, body: JSON.stringify({ ok: false, reason: "no token" })'));
+  assert(trackFunction.includes("Number(json.events_received) < 1"));
   assert(!metaCapi.includes("advertisingConsent"));
   assert(!trackFunction.includes("advertisingConsent"));
   assert(!trackFunction.includes('event.headers["sec-gpc"]'));

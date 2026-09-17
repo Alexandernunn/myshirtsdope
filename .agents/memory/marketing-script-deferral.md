@@ -3,8 +3,8 @@ name: Marketing script deferral
 description: Decision for balancing initial-load performance with reliable Google and Meta event tracking.
 ---
 
-Queue Google and Meta browser commands immediately, but load their external vendor scripts only after intentional user interaction. Keep Meta Conversions API requests immediate and preserve the same event ID for browser/server deduplication.
+Queue Google and Meta browser commands immediately. Meta must load automatically about 1–2 seconds after `load` (or sooner on interaction), while Google may wait for interaction or a longer fallback. Keep Meta Conversions API requests immediate, derive `fbc` from `fbclid` when `_fbc` is absent, and preserve the same event ID for browser/server deduplication.
 
-**Why:** Eager vendor scripts add initial main-thread and network cost. Deferring only the downloads preserves early event intent without delaying server-side measurement, while bounded retries prevent blocked scripts from growing browser queues indefinitely.
+**Why:** Eager vendor scripts add initial main-thread and network cost, but delaying Meta for many seconds loses landing-page and ViewContent coverage from short ad visits. CAPI cannot reliably attribute those visits unless it can connect `fbclid` to `fbc`.
 
-**How to apply:** Send all browser marketing events through the shared deferred queues, enqueue route PageView before route-specific events, and never reintroduce Google or Meta vendor URLs directly into the base HTML.
+**How to apply:** Send browser events through the shared queues, enqueue PageView before route-specific events, keep Meta and Google load timers separate, and treat missing CAPI credentials or rejected events as readiness failures rather than successful no-ops.

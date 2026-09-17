@@ -161,9 +161,11 @@ export function initializeMarketingScripts() {
   if (vendorLoadScheduled) return;
   vendorLoadScheduled = true;
 
+  const loadGoogle = () => appendMarketingScript(googleScript);
+  const loadMeta = () => appendMarketingScript(metaScript);
   const loadVendors = () => {
-    appendMarketingScript(googleScript);
-    appendMarketingScript(metaScript);
+    loadGoogle();
+    loadMeta();
   };
   const interactionEvents: Array<keyof WindowEventMap> = ["pointerdown", "keydown", "touchstart"];
   const loadAfterInteraction = () => {
@@ -176,9 +178,25 @@ export function initializeMarketingScripts() {
     window.addEventListener(eventName, loadAfterInteraction, { once: true, passive: true });
   }
 
-  const loadAfterPageSettles = () => window.setTimeout(loadVendors, 15_000);
-  if (document.readyState === "complete") loadAfterPageSettles();
-  else window.addEventListener("load", loadAfterPageSettles, { once: true });
+  const browserWindow = window as Window & {
+    requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number;
+  };
+  const loadMetaAfterPageSettles = () => {
+    window.setTimeout(() => {
+      if (browserWindow.requestIdleCallback) {
+        browserWindow.requestIdleCallback(loadMeta, { timeout: 500 });
+      } else {
+        loadMeta();
+      }
+    }, 1_000);
+  };
+  const loadGoogleAfterPageSettles = () => window.setTimeout(loadGoogle, 15_000);
+  const scheduleAfterLoad = () => {
+    loadMetaAfterPageSettles();
+    loadGoogleAfterPageSettles();
+  };
+  if (document.readyState === "complete") scheduleAfterLoad();
+  else window.addEventListener("load", scheduleAfterLoad, { once: true });
 }
 
 export function queueGooglePageView(path: string) {

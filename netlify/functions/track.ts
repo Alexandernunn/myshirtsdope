@@ -2,6 +2,17 @@ import type { Handler } from "@netlify/functions";
 
 const PIXEL_ID = process.env.META_PIXEL_ID || "1085522715399637";
 
+export function buildFbcFromUrl(url: string | undefined, timestampMs = Date.now()): string | undefined {
+  if (!url) return undefined;
+  try {
+    const fbclid = new URL(url).searchParams.get("fbclid")?.trim();
+    if (!fbclid) return undefined;
+    return `fb.1.${Math.floor(timestampMs)}.${fbclid}`;
+  } catch {
+    return undefined;
+  }
+}
+
 function buildCustomData(eventName: string, d: Record<string, any>): Record<string, any> | undefined {
   const base: Record<string, any> = {};
 
@@ -26,7 +37,7 @@ export const handler: Handler = async (event) => {
 
   const accessToken = process.env.META_ACCESS_TOKEN;
   if (!accessToken) {
-    return { statusCode: 200, body: JSON.stringify({ ok: false, reason: "no token" }) };
+    return { statusCode: 503, body: JSON.stringify({ ok: false, reason: "no token" }) };
   }
 
   let eventName: string;
@@ -49,7 +60,8 @@ export const handler: Handler = async (event) => {
   if (ip) userData.client_ip_address = ip;
   if (ua) userData.client_user_agent = ua;
   if (eventData?.fbp) userData.fbp = eventData.fbp;
-  if (eventData?.fbc) userData.fbc = eventData.fbc;
+  const fbc = eventData?.fbc || buildFbcFromUrl(eventData?.url);
+  if (fbc) userData.fbc = fbc;
 
   const payload: Record<string, any> = {
     event_name: eventName,
@@ -76,9 +88,16 @@ export const handler: Handler = async (event) => {
       }
     );
     const json = await res.json() as any;
+    if (!res.ok || Number(json.events_received) < 1) {
+      console.error("Meta CAPI rejected event:", res.status, json);
+      return {
+        statusCode: 502,
+        body: JSON.stringify({ ok: false, status: res.status, error: json.error?.message || "event not accepted" }),
+      };
+    }
     return { statusCode: 200, body: JSON.stringify({ ok: true, events_received: json.events_received }) };
   } catch (err: any) {
     console.error("Meta CAPI error:", err);
-    return { statusCode: 200, body: JSON.stringify({ ok: false, error: err.message }) };
+    return { statusCode: 502, body: JSON.stringify({ ok: false, error: err.message }) };
   }
 };
