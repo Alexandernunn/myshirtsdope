@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
 import type { CartItemWithProduct, Product, ShopifyVariantMapping } from "@shared/schema";
+import { findArchivedProductMerge } from "@shared/product-merges";
 
 const CART_KEY = "msd_cart";
 
@@ -17,12 +18,65 @@ interface StoredCartItem {
   shopifyVariants: ShopifyVariantMapping[] | null;
 }
 
-function loadCart(): StoredCartItem[] {
+function loadCart(): { items: StoredCartItem[]; notice: string | null } {
   try {
     const raw = localStorage.getItem(CART_KEY);
-    return raw ? JSON.parse(raw) : [];
+    const parsed: StoredCartItem[] = raw ? JSON.parse(raw) : [];
+    let removed = 0;
+    let remapped = 0;
+    const migrated = parsed.flatMap((item) => {
+      const merge = findArchivedProductMerge(item.productId, item.productHandle);
+      if (!merge) return [item];
+      const variantIds = new Map(
+        merge.archive.variantMappings.map((variant) => [
+          variant.archiveVariantId,
+          variant.keeperVariantId,
+        ]),
+      );
+      const mappedVariants = item.shopifyVariants?.flatMap((variant) => {
+        const oldId = variant.variantId.split("/").pop() || variant.variantId;
+        const keeperVariantId = variantIds.get(oldId);
+        const gidPrefix = variant.variantId.includes("/")
+          ? variant.variantId.slice(0, variant.variantId.lastIndexOf("/") + 1)
+          : "gid://shopify/ProductVariant/";
+        return keeperVariantId
+          ? [{ ...variant, variantId: `${gidPrefix}${keeperVariantId}` }]
+          : [];
+      }) ?? [];
+      const selected = mappedVariants.find((variant) =>
+        variant.size === item.size && variant.color === item.color
+      );
+      if (!selected) {
+        removed += 1;
+        return [];
+      }
+      remapped += 1;
+      return [{
+        ...item,
+        productId: Number(merge.keeper.id),
+        productHandle: merge.keeper.handle,
+        productName: merge.keeper.title,
+        shopifyVariants: mappedVariants,
+      }];
+    });
+    const combined = migrated.reduce<StoredCartItem[]>((items, item) => {
+      const existing = items.find((candidate) =>
+        candidate.productId === item.productId &&
+        candidate.size === item.size &&
+        candidate.color === item.color
+      );
+      if (existing) existing.quantity += item.quantity;
+      else items.push(item);
+      return items;
+    }, []);
+    const notice = removed
+      ? `${removed} saved cart item${removed === 1 ? "" : "s"} could not be remapped and were removed.`
+      : remapped
+        ? `${remapped} saved cart item${remapped === 1 ? "" : "s"} were updated to current products.`
+        : null;
+    return { items: combined, notice };
   } catch {
-    return [];
+    return { items: [], notice: "Your saved cart could not be restored and was cleared." };
   }
 }
 
@@ -70,12 +124,14 @@ interface CartContextType {
   updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
   isAdding: boolean;
+  migrationNotice: string | null;
 }
 
 const CartContext = createContext<CartContextType | null>(null);
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [stored, setStored] = useState<StoredCartItem[]>(() => loadCart());
+  const [{ items: initialItems, notice: migrationNotice }] = useState(() => loadCart());
+  const [stored, setStored] = useState<StoredCartItem[]>(initialItems);
   const [isAdding, setIsAdding] = useState(false);
 
   useEffect(() => {
@@ -146,6 +202,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       updateQuantity,
       clearCart,
       isAdding,
+      migrationNotice,
     }}>
       {children}
     </CartContext.Provider>

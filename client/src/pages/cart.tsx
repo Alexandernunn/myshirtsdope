@@ -13,7 +13,7 @@ import { trackEvent } from "@/lib/meta-capi";
 
 export default function Cart() {
   usePageTitle("Cart");
-  const { items, isLoading, totalItems, totalPrice, removeFromCart, updateQuantity, clearCart } = useCart();
+  const { items, isLoading, totalItems, totalPrice, removeFromCart, updateQuantity, clearCart, migrationNotice } = useCart();
   const { toast } = useToast();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
 
@@ -29,10 +29,7 @@ export default function Cart() {
           unmapped.push(item.product.name);
           continue;
         }
-        const variant =
-          variants.find((v) => v.size === item.size && v.color === item.color) ||
-          variants.find((v) => v.size === item.size) ||
-          variants[0];
+        const variant = variants.find((v) => v.size === item.size && v.color === item.color);
         if (variant) {
           lineItems.push({ variantId: variant.variantId, quantity: item.quantity });
         } else {
@@ -42,6 +39,14 @@ export default function Cart() {
 
       if (lineItems.length === 0) {
         toast({ title: "Error", description: "No items could be matched for checkout.", variant: "destructive" });
+        return;
+      }
+      if (unmapped.length > 0) {
+        toast({
+          title: "Cart needs review",
+          description: `Remove and re-add: ${unmapped.join(", ")}`,
+          variant: "destructive",
+        });
         return;
       }
 
@@ -95,6 +100,11 @@ export default function Cart() {
             {totalItems} {totalItems === 1 ? "Item" : "Items"}
           </span>
         </div>
+        {migrationNotice && (
+          <div className="mb-6 rounded-md border border-neon-yellow/50 bg-neon-yellow/10 px-4 py-3 font-display text-sm text-neon-yellow">
+            {migrationNotice}
+          </div>
+        )}
 
         {items.length === 0 ? (
           <div className="text-center py-20 bg-card border border-card-border rounded-md">
