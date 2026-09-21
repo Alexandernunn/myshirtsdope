@@ -84,7 +84,7 @@ MyShirtsDope is a vintage arcade / retro video game themed merch store web app. 
 - Max limit capped at 100 per request
 
 ## Environment Variables / Secrets
-- `SHOPIFY_STORE_DOMAIN` - Shopify store domain (e.g., `store.myshopify.com`)
+- `SHOPIFY_STORE_DOMAIN` - Shopify store domain, configured through environment variables
 - `SHOPIFY_ACCESS_TOKEN` - Shopify Admin API access token (`shpat_...`)
 - `SITE_URL` - Production site URL for CORS (e.g., `https://myshirtsdope.netlify.app`)
 - `API_APP_TOKEN` - (optional) Custom app token for API verification; set matching value in `VITE_APP_TOKEN` for frontend
