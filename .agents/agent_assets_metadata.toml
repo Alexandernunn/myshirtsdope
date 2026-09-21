@@ -33,12 +33,40 @@ content_type = "text/csv"
 id = "YYvFyWX99LA-mmfIw3Jon"
 uri = "file://audit/duplicate-review.csv"
 type = "table"
-title = "Duplicate Product Review"
-description = "Side-by-side review of all 44 near-duplicate groups with sales, inventory, variants, SKUs, pricing, images, sitemap/redirect presence, and MERGE or KEEP BOTH recommendations."
+title = "Updated Duplicate Review"
+description = "Updated review with Shinin Star Youth Shirt held as KEEP BOTH pending manual confirmation."
 logical_id = "2eefb860-e42a-4d89-8551-adf15a031fad"
-content_hash = "sha256:b0a01266f7d0534a325a5a9f2fd45b234b87079c0532a8870ced7221b59deed8"
-size = 153854
-mtime_ms = 1790008602874
-storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:67965259-0abb-46bb-a615-10b6eab7d8ee/2eefb860-e42a-4d89-8551-adf15a031fad/4e4a3d66-5111-4446-8752-f5133d7f72f3"
-storage_version_token = "1790008710626806"
+content_hash = "sha256:f16599c73487374b7994013f583a8aef07d5114a65e1dbf6e7aaf2ce39bd01c1"
+size = 153743
+mtime_ms = 1790009196122
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:67965259-0abb-46bb-a615-10b6eab7d8ee/2eefb860-e42a-4d89-8551-adf15a031fad/58cac8f1-5ee2-4a62-a213-abc5163662f6"
+storage_version_token = "1790009256529176"
+content_type = "text/csv"
+
+[[outputs]]
+id = "NFpGjTqOllz1RF5E9Ur5s"
+uri = "file://audit/duplicate-contact-sheet.html"
+type = "html"
+title = "Duplicate Product Contact Sheet"
+description = "Local side-by-side visual review of all 44 duplicate groups, with the 7 current MERGE candidates first and Shopify Admin links."
+logical_id = "5b6b9961-bf92-4415-83a8-b3c4c27ff9f0"
+content_hash = "sha256:6a1303fcde98c7f0630d23a5551e1c4807d7dac006ff9c79aef6b47108d62600"
+size = 108991
+mtime_ms = 1790009196126
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:67965259-0abb-46bb-a615-10b6eab7d8ee/5b6b9961-bf92-4415-83a8-b3c4c27ff9f0/2e8888d4-8bc0-4b5a-bfbd-d3a7dc769cff"
+storage_version_token = "1790009255443012"
+content_type = "text/html"
+
+[[outputs]]
+id = "UrLFIVuEdVZHxZYUkd-oH"
+uri = "file://audit/catalog-data-issues.csv"
+type = "table"
+title = "Catalog Data Issues"
+description = "Read-only scan of all 2,744 products for age/size mismatches and garment-type price outliers."
+logical_id = "f0f714aa-4be3-4acd-95e1-ace6422ca8cb"
+content_hash = "sha256:78daeaa796c41f3b1ae6971de3f3dad96c0f7248c9ce8764f931a93105c559d7"
+size = 17355
+mtime_ms = 1790009196154
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:67965259-0abb-46bb-a615-10b6eab7d8ee/f0f714aa-4be3-4acd-95e1-ace6422ca8cb/b3128655-6905-44eb-93ee-fe5073b1baeb"
+storage_version_token = "1790009255990733"
 content_type = "text/csv"
