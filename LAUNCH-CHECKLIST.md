@@ -19,12 +19,12 @@ No step should delete a Shopify product. Keep the catalog export and the pre-lau
 
 ## 3. Archive approved duplicates
 
-Before live mode, confirm the Admin API token has `read_publications` and `write_publications`. The script blocks `--apply` when it cannot enumerate every current sales-channel publication.
-
 1. Review: `npx tsx scripts/archive-duplicates.ts --dry-run`.
 2. Apply interactively: `npx tsx scripts/archive-duplicates.ts --apply`.
 
-**Rollback:** change affected products from Archived to Active and republish them to their recorded sales channels. The script attempts this automatically if an individual archive operation fails.
+The script sets product status to `ARCHIVED` only, then requires Shopify's public storefront product endpoint to return no product for each archived handle.
+
+**Rollback:** change affected products from Archived to Active. The script attempts this automatically if an individual archive operation or storefront verification fails.
 
 ## 4. Trigger a fresh catalog build
 
@@ -56,4 +56,4 @@ Also open a saved cart containing an archived product and confirm it maps to the
 
 ## 7. Final rollback decision
 
-If redirects, saved carts, checkout, sitemap, or product pages fail, stop launch activity. Restore archived products and their publications, reverse catalog fixes, and republish the previous deployment before investigating.
+If redirects, saved carts, checkout, sitemap, or product pages fail, stop launch activity. Restore archived products to Active, reverse catalog fixes, and republish the previous deployment before investigating.

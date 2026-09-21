@@ -12,7 +12,6 @@ type Product = {
   status: string;
   variants: { nodes: Array<{ id: string; selectedOptions: Array<{ name: string; value: string }> }> };
 };
-type Publication = { id: string; name: string };
 
 function config() {
   const domain = (process.env.SHOPIFY_STORE_DOMAIN || "").replace(/^https?:\/\//, "").replace(/\/$/, "");
@@ -52,39 +51,6 @@ async function fetchProduct(handle: string): Promise<Product> {
   return product;
 }
 
-async function fetchPublications(productId: string): Promise<Publication[] | null> {
-  try {
-    const data = await graphql<{
-      product: {
-        resourcePublications: {
-          nodes: Array<{ publication: Publication }>;
-          pageInfo: { hasNextPage: boolean };
-        };
-      } | null;
-    }>(
-      `query DuplicatePublications($id: ID!) {
-        product: node(id: $id) {
-          ... on Product {
-            resourcePublications(first: 100) {
-              nodes { publication { id name } }
-              pageInfo { hasNextPage }
-            }
-          }
-        }
-      }`,
-      { id: productId },
-    );
-    if (!data.product) throw new Error(`Product not found by ID: ${productId}`);
-    if (data.product.resourcePublications.pageInfo.hasNextPage) {
-      throw new Error(`${productId} has more than 100 publications; refusing a partial unpublish.`);
-    }
-    return data.product.resourcePublications.nodes.map(({ publication }) => publication);
-  } catch (error) {
-    if (String(error).includes("read_publications")) return null;
-    throw error;
-  }
-}
-
 function option(variant: Product["variants"]["nodes"][number], name: string) {
   return variant.selectedOptions.find((candidate) => candidate.name.toLowerCase() === name)?.value || "";
 }
@@ -99,17 +65,27 @@ async function setStatus(product: Product, status: "ACTIVE" | "ARCHIVED") {
   if (data.productUpdate.userErrors.length) throw new Error(JSON.stringify(data.productUpdate.userErrors));
 }
 
-async function setPublications(product: Product, publicationIds: string[], action: "publish" | "unpublish") {
-  const publications = publicationIds.map((publicationId) => ({ publicationId }));
-  if (!publications.length) return;
-  const field = action === "publish" ? "publishablePublish" : "publishableUnpublish";
-  const data = await graphql<Record<string, { userErrors: Array<{ message: string }> }>>(
-    `mutation SetDuplicatePublications($id: ID!, $input: [PublicationInput!]!) {
-      ${field}(id: $id, input: $input) { userErrors { message } }
-    }`,
-    { id: product.id, input: publications },
+async function verifyUnavailableOnStorefront(handle: string): Promise<void> {
+  const { domain } = config();
+  const url = `https://${domain}/products/${encodeURIComponent(handle)}.js`;
+  let lastStatus = 0;
+
+  for (let attempt = 1; attempt <= 10; attempt += 1) {
+    const response = await fetch(`${url}?archive_check=${Date.now()}`, {
+      redirect: "follow",
+      headers: {
+        Accept: "application/json",
+        "Cache-Control": "no-cache",
+      },
+    });
+    lastStatus = response.status;
+    if (response.status === 404 || response.status === 410) return;
+    if (attempt < 10) await new Promise((resolve) => setTimeout(resolve, 3000));
+  }
+
+  throw new Error(
+    `Storefront still returned HTTP ${lastStatus} for ${handle} after 10 checks.`,
   );
-  if (data[field].userErrors.length) throw new Error(JSON.stringify(data[field].userErrors));
 }
 
 async function main() {
@@ -123,7 +99,6 @@ async function main() {
       fetchProduct(keeper.handle),
       fetchProduct(archive.handle),
     ]);
-    const publications = await fetchPublications(archiveProduct.id);
     if (keeperProduct.id.split("/").pop() !== keeper.id || archiveProduct.id.split("/").pop() !== archive.id) {
       throw new Error(`Manifest ID mismatch for ${archive.handle}`);
     }
@@ -140,18 +115,19 @@ async function main() {
       handle: archive.handle,
       keeper: keeper.handle,
       status: archiveProduct.status,
-      publications: publications?.map((publication) => publication.name) ?? null,
-      publicationIds: publications?.map((publication) => publication.id) ?? null,
       archiveProduct,
     });
   }
 
-  console.log(JSON.stringify(prepared.map(({ archiveProduct: _, publicationIds: __, ...diff }) => ({
+  console.log(JSON.stringify(prepared.map(({ archiveProduct: _, ...diff }) => ({
     ...diff,
-    after: { status: "ARCHIVED", publications: [] },
+    after: {
+      status: "ARCHIVED",
+      storefrontProduct: null,
+    },
   })), null, 2));
   if (dryRun) {
-    console.log(`\nDry run complete. ${prepared.length} products would be unpublished and archived; Shopify was not modified.`);
+    console.log(`\nDry run complete. ${prepared.length} products would be archived and checked on the public storefront; Shopify was not modified.`);
     return;
   }
   if (!stdin.isTTY || !stdout.isTTY) throw new Error("--apply requires an interactive terminal.");
@@ -160,31 +136,29 @@ async function main() {
   prompt.close();
   if (answer !== CONFIRMATION) throw new Error("Confirmation did not match. No Shopify updates were made.");
 
-  if (prepared.some(({ publicationIds }) => publicationIds === null)) {
-    throw new Error("--apply requires read_publications/write_publications access so every sales channel can be verified and unpublished.");
-  }
-
-  for (const { archiveProduct, publicationIds } of prepared) {
+  for (const { archiveProduct } of prepared) {
     const current = await fetchProduct(archiveProduct.handle);
-    const currentPublications = await fetchPublications(current.id);
-    if (current.status !== archiveProduct.status ||
-      currentPublications?.map((publication) => publication.id).sort().join() !==
-        publicationIds!.slice().sort().join()) {
+    if (current.status !== archiveProduct.status) {
       throw new Error(`${archiveProduct.handle} changed after dry-run preparation; stopping before write.`);
     }
     try {
-      await setPublications(current, publicationIds!, "unpublish");
       await setStatus(current, "ARCHIVED");
       const verified = await fetchProduct(current.handle);
-      const verifiedPublications = await fetchPublications(verified.id);
-      if (verified.status !== "ARCHIVED" || verifiedPublications?.length) {
+      if (verified.status !== "ARCHIVED") {
         throw new Error(`Post-write verification failed for ${current.handle}`);
       }
+      await verifyUnavailableOnStorefront(current.handle);
       console.log(`Archived ${current.handle}`);
     } catch (error) {
       const failures: string[] = [];
-      try { await setStatus(current, "ACTIVE"); } catch (rollback) { failures.push(String(rollback)); }
-      try { await setPublications(current, publicationIds!, "publish"); } catch (rollback) { failures.push(String(rollback)); }
+      try {
+        await setStatus(
+          current,
+          current.status === "ARCHIVED" ? "ARCHIVED" : "ACTIVE",
+        );
+      } catch (rollback) {
+        failures.push(String(rollback));
+      }
       throw new Error(`${String(error)}${failures.length ? `; rollback failures: ${failures.join("; ")}` : "; original state restored"}`);
     }
   }
