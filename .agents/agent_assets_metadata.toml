@@ -61,12 +61,40 @@ content_type = "text/html"
 id = "UrLFIVuEdVZHxZYUkd-oH"
 uri = "file://audit/catalog-data-issues.csv"
 type = "table"
-title = "Catalog Data Issues"
-description = "Read-only scan of all 2,744 products for age/size mismatches and garment-type price outliers."
+title = "Updated Catalog Data Issues"
+description = "All 63 issue rows, with the 11 confirmed title-phrase false positives explicitly marked FALSE_POSITIVE and excluded from prepared fixes."
 logical_id = "f0f714aa-4be3-4acd-95e1-ace6422ca8cb"
-content_hash = "sha256:78daeaa796c41f3b1ae6971de3f3dad96c0f7248c9ce8764f931a93105c559d7"
-size = 17355
-mtime_ms = 1790009196154
-storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:67965259-0abb-46bb-a615-10b6eab7d8ee/f0f714aa-4be3-4acd-95e1-ace6422ca8cb/b3128655-6905-44eb-93ee-fe5073b1baeb"
-storage_version_token = "1790009255990733"
+content_hash = "sha256:4b2218675bd68ffcc05e0c1cf0e6ae7497525662431d084f91a29c9181bec02b"
+size = 17428
+mtime_ms = 1790009644694
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:67965259-0abb-46bb-a615-10b6eab7d8ee/f0f714aa-4be3-4acd-95e1-ace6422ca8cb/0c6b0a99-2ab7-4ab8-aacd-0718e41c9027"
+storage_version_token = "1790009910188166"
+content_type = "text/csv"
+
+[[outputs]]
+id = "uEMhXsuKzsVeSrDubjsOs"
+uri = "file://audit/garment-fix-review.html"
+type = "html"
+title = "Garment Fix Review"
+description = "Local visual review of 32 remaining flagged products with images, catalog evidence, best-guess garment type, Shopify Admin links, and blank decision columns."
+logical_id = "29e45f52-5f89-4fb6-9876-1b52c89fdf98"
+content_hash = "sha256:827aeffc240043a9375f46a748d0c736ef3039e97e355e6ab03a43432586a455"
+size = 52194
+mtime_ms = 1790009644702
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:67965259-0abb-46bb-a615-10b6eab7d8ee/29e45f52-5f89-4fb6-9876-1b52c89fdf98/5b00e362-7f46-4304-99f6-7b27da16b097"
+storage_version_token = "1790009909680830"
+content_type = "text/html"
+
+[[outputs]]
+id = "LTbdHgCIOkyemcg0Dtwbm"
+uri = "file://audit/catalog-fixes.csv"
+type = "table"
+title = "Prepared Catalog Fixes"
+description = "Four certain title corrections are populated; the remaining 28 products are blank for manual decisions."
+logical_id = "ccc6d147-e42d-4b24-ae17-c502dd958da5"
+content_hash = "sha256:1b4cd3604a1a04a011b7c972ff8de0d89ee42f2533b856cd8d60830608ddf62a"
+size = 1411
+mtime_ms = 1790009644702
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:67965259-0abb-46bb-a615-10b6eab7d8ee/ccc6d147-e42d-4b24-ae17-c502dd958da5/8837e4c3-abeb-4ec0-a7f0-0243f84c8d5a"
+storage_version_token = "1790009910825056"
 content_type = "text/csv"
