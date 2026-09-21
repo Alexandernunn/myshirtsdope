@@ -1,0 +1,20 @@
+You are working on myshirtsdope.com: a headless storefront built in React + TypeScript, deployed on Netlify, using the Shopify Storefront API for products/cart (Shopify variant IDs), with Meta Pixel + Conversions API (CAPI) tracking.
+
+PROJECT GOAL (context for later tasks, do not do it yet): Consolidate standalone per-color/per-size product pages into single master product pages that use a ?variant=<numeric Shopify variant ID> URL parameter, without breaking Meta Ads, Google Merchant Center, or SEO.
+
+GROUND RULES FOR THIS ENTIRE PROJECT:
+- Do not delete any Shopify products, redirects, or tracking code at any point.
+- Do not deploy to production unless I explicitly say "deploy."
+- Work on a new git branch: feature/variant-consolidation.
+- After each task, give me a short summary of what changed and anything that needs my manual action.
+
+THIS TASK IS READ-ONLY. Do not modify any files. Investigate and report back:
+1. Routing: How are product pages routed (React Router version, route path pattern, how the handle is read)? Is there prerendering/SSR for SEO (e.g., Netlify prerender, react-snap, Vite SSG), or is it client-rendered only?
+2. Head management: What sets <title>, meta tags, canonical, and JSON-LD schema on product pages? Paste the relevant code.
+3. Variant selection: How does the product page currently pick and switch variants? Does the URL change when a swatch is clicked? Paste the selector component.
+4. Tracking: Find every place Meta Pixel events fire (PageView, ViewContent, AddToCart, InitiateCheckout, Purchase) and the CAPI function(s). For each, tell me exactly what value goes into content_ids (product ID, variant ID, GID, SKU?) and whether event_id is shared between Pixel and CAPI for deduplication.
+5. Redirects: Show me the current Netlify redirect config (_redirects file and/or netlify.toml).
+6. Product inventory: Using the Storefront API (or Admin API if credentials exist in env), list every product with its handle, title, product ID, and each variant's ID, SKU, barcode, options, and price. Save it as audit/products-current.csv. Flag which products look like standalone color/size pages that should be merged (e.g., "Dope Tee - Black" and "Dope Tee - White" as separate products).
+7. List any environment variables related to Shopify, Meta, or Google (names only, never values).
+
+End with a list of risks or blockers you found.
