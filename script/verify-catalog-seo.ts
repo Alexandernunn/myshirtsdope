@@ -22,6 +22,7 @@ import {
 import { hasValidMerchantPrice, productPageSchema } from "./storefront-schema";
 import { redirectLegacyProductRoutes, serveStatic } from "../server/static";
 import { buildFbcFromUrl } from "../netlify/functions/track";
+import { ARCHIVED_PRODUCT_MERGES } from "../shared/product-merges";
 
 const OUTPUT_DIR = path.resolve("dist/public");
 
@@ -354,6 +355,10 @@ async function verifyPublishedCatalog(): Promise<void> {
         );
       }
     }
+  }
+  for (const { keeper, archive } of ARCHIVED_PRODUCT_MERGES) {
+    expectedRedirects.set(`/product/${archive.id}`, `/product/${keeper.handle}`);
+    expectedRedirects.set(`/product/${archive.handle}`, `/product/${keeper.handle}`);
   }
   assert.equal(redirectsBySource.size, expectedRedirects.size, "product redirect count mismatch");
   for (const [source, destination] of expectedRedirects) {
