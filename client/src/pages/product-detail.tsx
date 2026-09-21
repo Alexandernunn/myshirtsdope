@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { findGroupForProduct, groupProducts, getProductForFit, getFitLabel, type FitType } from "@/lib/product-grouping";
 import { IMAGE_PRESETS, shopifyImageProps, shopifyImageUrl } from "@shared/shopify-image";
-import { trackEvent } from "@/lib/meta-capi";
+import { getShopifyVariantTrackingData, trackEvent } from "@/lib/meta-capi";
 import type { Product } from "@shared/schema";
 import { productPath } from "@shared/product-url";
 import {
@@ -367,11 +367,24 @@ export default function ProductDetail() {
 
   useEffect(() => {
     if (!activeProduct) return;
+    const params = new URLSearchParams(window.location.search);
+    const trackingVariant = findRequestedVariant(
+      activeProduct,
+      params.get("v") ?? params.get("variant"),
+      params.get("color"),
+      params.get("size"),
+    ) ?? getDefaultVariant(activeProduct);
+    if (!trackingVariant) return;
+    const trackingData = getShopifyVariantTrackingData(
+      trackingVariant.variantId,
+      trackingVariant.price,
+    );
+    if (!trackingData) return;
     trackEvent("ViewContent", {
-      content_ids: [String(activeProduct.id)],
+      content_ids: [trackingData.contentId],
       content_name: activeProduct.name,
       content_type: "product",
-      value: activeProduct.price,
+      value: trackingData.value,
       currency: "USD",
     });
   }, [activeProduct?.id]);
@@ -463,13 +476,19 @@ export default function ProductDetail() {
       description: `${activeProduct.name} has been added to your cart.`,
     });
     setTimeout(() => setJustAdded(false), 2000);
-    trackEvent("AddToCart", {
-      content_name: activeProduct.name,
-      content_ids: [String(activeProduct.id)],
-      content_type: "product",
-      value: activeProduct.price,
-      currency: "USD",
-    });
+    const trackingData = getShopifyVariantTrackingData(
+      resolvedVariant.variantId,
+      resolvedVariant.price,
+    );
+    if (trackingData) {
+      trackEvent("AddToCart", {
+        content_name: activeProduct.name,
+        content_ids: [trackingData.contentId],
+        content_type: "product",
+        value: trackingData.value,
+        currency: "USD",
+      });
+    }
   };
 
   if (isLoading) {

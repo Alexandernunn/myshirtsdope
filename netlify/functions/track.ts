@@ -23,7 +23,7 @@ function buildCustomData(eventName: string, d: Record<string, any>): Record<stri
   if (d.currency) base.currency = d.currency;
   if (d.num_items !== undefined) base.num_items = d.num_items;
 
-  if (["Purchase", "AddToCart", "ViewContent", "InitiateCheckout"].includes(eventName) && !base.content_type) {
+  if (["AddToCart", "ViewContent", "InitiateCheckout"].includes(eventName) && !base.content_type) {
     base.content_type = "product";
   }
 
@@ -51,6 +51,12 @@ export const handler: Handler = async (event) => {
 
   if (!eventName) {
     return { statusCode: 400, body: "Missing eventName" };
+  }
+  if (eventName === "Purchase") {
+    return { statusCode: 204, body: "" };
+  }
+  if (!eventData?.fbp) {
+    return { statusCode: 400, body: "Missing fbp" };
   }
 
   const ip = event.headers["x-forwarded-for"]?.split(",")[0]?.trim() ?? "";

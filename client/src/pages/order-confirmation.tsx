@@ -1,10 +1,8 @@
-import { useEffect, useRef } from "react";
 import { useSearch } from "wouter";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { ShoppingBag, CheckCircle } from "lucide-react";
-import { trackEvent } from "@/lib/meta-capi";
 
 export default function OrderConfirmation() {
   usePageTitle("Order Confirmed");
@@ -12,20 +10,6 @@ export default function OrderConfirmation() {
   const params = new URLSearchParams(searchString);
   const value = parseFloat(params.get("value") || "0");
   const currency = params.get("currency") || "USD";
-  const items = parseInt(params.get("items") || "0", 10);
-  const firedRef = useRef(false);
-
-  useEffect(() => {
-    if (firedRef.current) return;
-    firedRef.current = true;
-
-    trackEvent("Purchase", {
-      value: value || undefined,
-      currency,
-      content_type: "product",
-      num_items: items || undefined,
-    });
-  }, []);
 
   return (
     <div className="min-h-screen flex items-center justify-center">

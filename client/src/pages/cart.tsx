@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { IMAGE_PRESETS, shopifyImageProps } from "@shared/shopify-image";
 import { productPath } from "@shared/product-url";
-import { trackEvent } from "@/lib/meta-capi";
+import { getShopifyVariantTrackingData, trackEvent } from "@/lib/meta-capi";
 
 export default function Cart() {
   usePageTitle("Cart");
@@ -20,7 +20,11 @@ export default function Cart() {
   const handleCheckout = async () => {
     setIsCheckingOut(true);
     try {
-      const lineItems: { variantId: string; quantity: number }[] = [];
+      const lineItems: {
+        variantId: string;
+        quantity: number;
+        tracking: ReturnType<typeof getShopifyVariantTrackingData>;
+      }[] = [];
       const unmapped: string[] = [];
 
       for (const item of items) {
@@ -31,7 +35,11 @@ export default function Cart() {
         }
         const variant = variants.find((v) => v.size === item.size && v.color === item.color);
         if (variant) {
-          lineItems.push({ variantId: variant.variantId, quantity: item.quantity });
+          lineItems.push({
+            variantId: variant.variantId,
+            quantity: item.quantity,
+            tracking: getShopifyVariantTrackingData(variant.variantId, variant.price),
+          });
         } else {
           unmapped.push(`${item.product.name} (${item.size}/${item.color})`);
         }
@@ -50,17 +58,27 @@ export default function Cart() {
         return;
       }
 
-      const cartValue = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
-      const cartIds = items.map((item) => String(item.product.id));
-      trackEvent("InitiateCheckout", {
-        content_ids: cartIds,
-        content_type: "product",
-        value: cartValue,
-        currency: "USD",
-        num_items: items.reduce((s, i) => s + i.quantity, 0),
-      });
+      const allTrackingDataValid = lineItems.every((item) => item.tracking !== null);
+      const cartValue = lineItems.reduce(
+        (sum, item) => sum + (item.tracking?.value ?? 0) * item.quantity,
+        0,
+      );
+      const cartIds = lineItems.flatMap((item) =>
+        item.tracking ? [item.tracking.contentId] : [],
+      );
+      if (allTrackingDataValid) {
+        trackEvent("InitiateCheckout", {
+          content_ids: cartIds,
+          content_type: "product",
+          value: cartValue,
+          currency: "USD",
+          num_items: items.reduce((s, i) => s + i.quantity, 0),
+        });
+      }
 
-      const res = await apiRequest("POST", "/api/checkout", { lineItems });
+      const res = await apiRequest("POST", "/api/checkout", {
+        lineItems: lineItems.map(({ variantId, quantity }) => ({ variantId, quantity })),
+      });
       const data = await res.json();
       if (data.checkoutUrl) {
         const returnUrl = `${window.location.origin}/order-confirmation?value=${cartValue.toFixed(2)}&currency=USD&items=${cartIds.length}`;

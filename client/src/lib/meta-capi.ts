@@ -5,6 +5,37 @@ function getCookie(name: string): string {
   return match ? decodeURIComponent(match[1]) : "";
 }
 
+function setMetaCookie(name: "_fbp" | "_fbc", value: string): string {
+  const secure = window.location.protocol === "https:" ? "; Secure" : "";
+  document.cookie = `${name}=${encodeURIComponent(value)}; Path=/; Max-Age=7776000; SameSite=Lax${secure}`;
+  return value;
+}
+
+function getOrCreateFbp(): string {
+  const existing = getCookie("_fbp");
+  if (existing) return existing;
+  const random = Math.floor(Math.random() * 1_000_000_000_000);
+  return setMetaCookie("_fbp", `fb.1.${Date.now()}.${random}`);
+}
+
+function getOrCreateFbc(): string {
+  const existing = getCookie("_fbc");
+  if (existing) return existing;
+  const fbclid = new URLSearchParams(window.location.search).get("fbclid")?.trim();
+  return fbclid ? setMetaCookie("_fbc", `fb.1.${Date.now()}.${fbclid}`) : "";
+}
+
+export function getShopifyVariantTrackingData(
+  variantId: string,
+  price: string,
+): { contentId: string; value: number } | null {
+  const contentId = variantId.split("/").pop() || "";
+  const value = Number.parseFloat(price);
+  return /^\d+$/.test(contentId) && Number.isFinite(value)
+    ? { contentId, value }
+    : null;
+}
+
 function genEventId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
@@ -20,8 +51,8 @@ interface TrackOptions {
 
 export function trackEvent(eventName: string, options: TrackOptions = {}) {
   const eventId = genEventId();
-  const fbpCookie = getCookie("_fbp");
-  const fbcCookie = getCookie("_fbc");
+  const fbpCookie = getOrCreateFbp();
+  const fbcCookie = getOrCreateFbc();
 
   const pixelParams: Record<string, any> = { ...options };
   const capiData: Record<string, any> = {
@@ -30,7 +61,7 @@ export function trackEvent(eventName: string, options: TrackOptions = {}) {
     ...options,
   };
 
-  if (fbpCookie) capiData.fbp = fbpCookie;
+  capiData.fbp = fbpCookie;
   if (fbcCookie) capiData.fbc = fbcCookie;
 
   queueMetaPixelEvent(eventName, pixelParams, eventId);
