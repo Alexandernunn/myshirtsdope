@@ -1,4 +1,5 @@
 import type { Product } from "./schema";
+import { PRODUCT_MERGES } from "./product-merges";
 
 export interface CatalogAlias {
   sourceId: number;
@@ -74,15 +75,46 @@ function mergeSafeMetadata(backing: Product, members: Product[], targetHandle: s
 }
 
 export function consolidateCatalog(products: Product[]): ConsolidatedCatalog {
+  const productsByHandle = new Map(products.map((product) => [product.handle, product]));
+  const archivedHandles = new Set(
+    PRODUCT_MERGES.flatMap((rule) => rule.archives.map((archive) => archive.handle)),
+  );
+  const forcedAliases: CatalogAlias[] = [];
+  const forcedGroups: CatalogConsolidationGroup[] = [];
+
+  for (const rule of PRODUCT_MERGES) {
+    const keeper = productsByHandle.get(rule.keeper.handle);
+    if (!keeper) throw new Error(`Merge keeper is missing from the active catalog: ${rule.keeper.handle}`);
+    const activeArchives = rule.archives
+      .map((archive) => productsByHandle.get(archive.handle))
+      .filter((product): product is Product => Boolean(product));
+    forcedAliases.push(...rule.archives.map((archive) => ({
+      sourceId: Number(archive.id),
+      sourceHandle: archive.handle,
+      targetHandle: rule.keeper.handle,
+    })));
+    forcedGroups.push({
+      normalizedTitle: normalizeCatalogTitle(rule.keeper.title),
+      targetHandle: rule.keeper.handle,
+      backingProductId: keeper.id,
+      members: [keeper, ...activeArchives].map((member) => ({
+        id: member.id,
+        handle: member.handle,
+        availableVariants: availableVariantCount(member),
+        totalVariants: member.shopifyVariants?.length ?? 0,
+      })),
+    });
+  }
+
   const grouped = new Map<string, Product[]>();
-  for (const product of products) {
+  for (const product of products.filter((candidate) => !archivedHandles.has(candidate.handle))) {
     const key = normalizeCatalogTitle(product.name);
     grouped.set(key, [...(grouped.get(key) ?? []), product]);
   }
 
   const consolidated: Product[] = [];
-  const aliases: CatalogAlias[] = [];
-  const groups: CatalogConsolidationGroup[] = [];
+  const aliases: CatalogAlias[] = [...forcedAliases];
+  const groups: CatalogConsolidationGroup[] = [...forcedGroups];
 
   grouped.forEach((members: Product[], normalizedTitle: string) => {
     if (members.length === 1) {

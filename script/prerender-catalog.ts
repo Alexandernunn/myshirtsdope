@@ -728,6 +728,7 @@ export async function prerenderCatalog(
   }
 
   const redirectMap = new Map<string, string>();
+  const variantRedirects: string[] = [];
   for (const product of uniqueProducts) {
     redirectMap.set(`/product/${product.id}`, productPath(product));
   }
@@ -735,10 +736,28 @@ export async function prerenderCatalog(
     redirectMap.set(`/product/${alias.sourceId}`, `/product/${alias.targetHandle}`);
     if (alias.sourceHandle !== alias.targetHandle) {
       redirectMap.set(`/product/${alias.sourceHandle}`, `/product/${alias.targetHandle}`);
+      redirectMap.set(`/products/${alias.sourceHandle}`, `/product/${alias.targetHandle}`);
     }
   }
-  const redirects = [...redirectMap]
-    .map(([source, target]) => `${source}  ${target}  301!`)
+  const { PRODUCT_MERGES } = await import("../shared/product-merges");
+  for (const rule of PRODUCT_MERGES) {
+    for (const archive of rule.archives) {
+      variantRedirects.push(
+        `/product/${archive.handle} color=:color size=:size  /product/${rule.keeper.handle}?color=:color&size=:size  301!`,
+        `/products/${archive.handle} color=:color size=:size  /product/${rule.keeper.handle}?color=:color&size=:size  301!`,
+      );
+      for (const variant of archive.variantMappings) {
+        variantRedirects.push(
+          `/product/${archive.handle} variant=${variant.archiveVariantId}  /product/${rule.keeper.handle}?variant=${variant.keeperVariantId}  301!`,
+          `/products/${archive.handle} variant=${variant.archiveVariantId}  /product/${rule.keeper.handle}?variant=${variant.keeperVariantId}  301!`,
+        );
+      }
+    }
+  }
+  const redirects = [
+    ...variantRedirects,
+    ...[...redirectMap].map(([source, target]) => `${source}  ${target}  301!`),
+  ]
     .join("\n");
   await writeFile(path.join(OUTPUT_DIR, "_redirects"), `${redirects}\n`);
 

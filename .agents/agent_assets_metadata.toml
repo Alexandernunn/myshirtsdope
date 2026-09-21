@@ -14,3 +14,101 @@ mtime_ms = 1789138994599
 storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:18e8e77d-65c8-4f7e-a828-0db8031ec740/a1909987-327e-4fa9-b344-14b2cf00082a/ada4c407-2a26-4ede-88c4-29533378a3d0"
 storage_version_token = "1789138995476629"
 content_type = "text/plain"
+
+[[outputs]]
+id = "Fjk9VdgipFl2Ras4zTa1S"
+uri = "file://audit/products-current.csv"
+type = "table"
+title = "Current Shopify Product Inventory"
+description = "Read-only export of 2,744 active products and 61,924 variants, including IDs, SKUs, options, prices, status, dates, vendor, and fulfillment service."
+logical_id = "2cafc256-0a47-4eed-b4a6-a2a0ed9cfb3a"
+content_hash = "sha256:17f94f5e779c6eb03f6ac8fbdcd73362dfafccbda453a3b0e4ff62e39b26239c"
+size = 15146297
+mtime_ms = 1790008602754
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:67965259-0abb-46bb-a615-10b6eab7d8ee/2cafc256-0a47-4eed-b4a6-a2a0ed9cfb3a/efa206a3-614a-43ee-a494-53c55a59b428"
+storage_version_token = "1790008709566742"
+content_type = "text/csv"
+
+[[outputs]]
+id = "YYvFyWX99LA-mmfIw3Jon"
+uri = "file://audit/duplicate-review.csv"
+type = "table"
+title = "Updated Duplicate Review"
+description = "Updated review with Shinin Star Youth Shirt held as KEEP BOTH pending manual confirmation."
+logical_id = "2eefb860-e42a-4d89-8551-adf15a031fad"
+content_hash = "sha256:f16599c73487374b7994013f583a8aef07d5114a65e1dbf6e7aaf2ce39bd01c1"
+size = 153743
+mtime_ms = 1790009196122
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:67965259-0abb-46bb-a615-10b6eab7d8ee/2eefb860-e42a-4d89-8551-adf15a031fad/58cac8f1-5ee2-4a62-a213-abc5163662f6"
+storage_version_token = "1790009256529176"
+content_type = "text/csv"
+
+[[outputs]]
+id = "NFpGjTqOllz1RF5E9Ur5s"
+uri = "file://audit/duplicate-contact-sheet.html"
+type = "html"
+title = "Duplicate Product Contact Sheet"
+description = "Local side-by-side visual review of all 44 duplicate groups, with the 7 current MERGE candidates first and Shopify Admin links."
+logical_id = "5b6b9961-bf92-4415-83a8-b3c4c27ff9f0"
+content_hash = "sha256:6a1303fcde98c7f0630d23a5551e1c4807d7dac006ff9c79aef6b47108d62600"
+size = 108991
+mtime_ms = 1790009196126
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:67965259-0abb-46bb-a615-10b6eab7d8ee/5b6b9961-bf92-4415-83a8-b3c4c27ff9f0/2e8888d4-8bc0-4b5a-bfbd-d3a7dc769cff"
+storage_version_token = "1790009255443012"
+content_type = "text/html"
+
+[[outputs]]
+id = "UrLFIVuEdVZHxZYUkd-oH"
+uri = "file://audit/catalog-data-issues.csv"
+type = "table"
+title = "Updated Catalog Data Issues"
+description = "All 63 issue rows, with the 11 confirmed title-phrase false positives explicitly marked FALSE_POSITIVE and excluded from prepared fixes."
+logical_id = "f0f714aa-4be3-4acd-95e1-ace6422ca8cb"
+content_hash = "sha256:4b2218675bd68ffcc05e0c1cf0e6ae7497525662431d084f91a29c9181bec02b"
+size = 17428
+mtime_ms = 1790009644694
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:67965259-0abb-46bb-a615-10b6eab7d8ee/f0f714aa-4be3-4acd-95e1-ace6422ca8cb/0c6b0a99-2ab7-4ab8-aacd-0718e41c9027"
+storage_version_token = "1790009910188166"
+content_type = "text/csv"
+
+[[outputs]]
+id = "uEMhXsuKzsVeSrDubjsOs"
+uri = "file://audit/garment-fix-review.html"
+type = "html"
+title = "Garment Fix Review"
+description = "Local visual review of 32 remaining flagged products with images, catalog evidence, best-guess garment type, Shopify Admin links, and blank decision columns."
+logical_id = "29e45f52-5f89-4fb6-9876-1b52c89fdf98"
+content_hash = "sha256:827aeffc240043a9375f46a748d0c736ef3039e97e355e6ab03a43432586a455"
+size = 52194
+mtime_ms = 1790009644702
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:67965259-0abb-46bb-a615-10b6eab7d8ee/29e45f52-5f89-4fb6-9876-1b52c89fdf98/5b00e362-7f46-4304-99f6-7b27da16b097"
+storage_version_token = "1790009909680830"
+content_type = "text/html"
+
+[[outputs]]
+id = "LTbdHgCIOkyemcg0Dtwbm"
+uri = "file://audit/catalog-fixes.csv"
+type = "table"
+title = "Launch-Ready Catalog Fixes"
+description = "Prepared title, price, and product-type changes; Mahogany Soul title held back because it collides with an existing product."
+logical_id = "ccc6d147-e42d-4b24-ae17-c502dd958da5"
+content_hash = "sha256:a3a6e837007e7ccf39ca4e12f0ea16de4833dc14559a29798510a1838007abe3"
+size = 1990
+mtime_ms = 1790011130114
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:67965259-0abb-46bb-a615-10b6eab7d8ee/ccc6d147-e42d-4b24-ae17-c502dd958da5/aeb606ab-c45a-4034-803e-adeef29d4db5"
+storage_version_token = "1790011437207444"
+content_type = "text/csv"
+
+[[outputs]]
+id = "9UYQEEIGHQtGeDK7nEZN9"
+uri = "file://LAUNCH-CHECKLIST.md"
+type = "text"
+title = "Catalog Cleanup Launch Checklist"
+description = "Ordered deploy, catalog-fix, archive, rebuild, production redirect verification, spot-check, and rollback steps."
+logical_id = "825ff89f-9a45-4e2a-abf4-b205e76c0772"
+content_hash = "sha256:357735d985ff2cf8eb915ab9bdadc80290d868ea882dcd7ec958604627018a3f"
+size = 2876
+mtime_ms = 1790011128818
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:67965259-0abb-46bb-a615-10b6eab7d8ee/825ff89f-9a45-4e2a-abf4-b205e76c0772/c38dc237-685e-496c-af58-1177217d9a92"
+storage_version_token = "1790011436685505"
+content_type = "text/markdown"

@@ -1,0 +1,1726 @@
+{
+  "version": 1,
+  "merges": [
+    {
+      "keeper": {
+        "id": "7281451270208",
+        "handle": "battle-of-the-tigers-shirt-tsu-jsu",
+        "title": "Battle of the Tigers shirt TSU JSU"
+      },
+      "archives": [
+        {
+          "id": "7281451434048",
+          "handle": "battle-of-the-tigers-shirt-tsu-jsu-1",
+          "title": "Battle of the Tigers shirt TSU JSU",
+          "variantMappings": [
+            {
+              "color": "Black",
+              "size": "XS",
+              "archiveVariantId": "41349604081728",
+              "keeperVariantId": "41349602705472"
+            },
+            {
+              "color": "Black",
+              "size": "S",
+              "archiveVariantId": "41349604114496",
+              "keeperVariantId": "41349602738240"
+            },
+            {
+              "color": "Black",
+              "size": "M",
+              "archiveVariantId": "41349604147264",
+              "keeperVariantId": "41349602771008"
+            },
+            {
+              "color": "Black",
+              "size": "L",
+              "archiveVariantId": "41349604180032",
+              "keeperVariantId": "41349602803776"
+            },
+            {
+              "color": "Black",
+              "size": "XL",
+              "archiveVariantId": "41349604212800",
+              "keeperVariantId": "41349602836544"
+            },
+            {
+              "color": "Black",
+              "size": "2XL",
+              "archiveVariantId": "41349604245568",
+              "keeperVariantId": "41349602869312"
+            },
+            {
+              "color": "Black",
+              "size": "3XL",
+              "archiveVariantId": "41349604278336",
+              "keeperVariantId": "41349602902080"
+            },
+            {
+              "color": "Red",
+              "size": "XS",
+              "archiveVariantId": "41349604311104",
+              "keeperVariantId": "41349602934848"
+            },
+            {
+              "color": "Red",
+              "size": "S",
+              "archiveVariantId": "41349604343872",
+              "keeperVariantId": "41349602967616"
+            },
+            {
+              "color": "Red",
+              "size": "M",
+              "archiveVariantId": "41349604376640",
+              "keeperVariantId": "41349603000384"
+            },
+            {
+              "color": "Red",
+              "size": "L",
+              "archiveVariantId": "41349604409408",
+              "keeperVariantId": "41349603033152"
+            },
+            {
+              "color": "Red",
+              "size": "XL",
+              "archiveVariantId": "41349604442176",
+              "keeperVariantId": "41349603065920"
+            },
+            {
+              "color": "Red",
+              "size": "2XL",
+              "archiveVariantId": "41349604474944",
+              "keeperVariantId": "41349603098688"
+            },
+            {
+              "color": "Red",
+              "size": "3XL",
+              "archiveVariantId": "41349604507712",
+              "keeperVariantId": "41349603131456"
+            },
+            {
+              "color": "True Royal",
+              "size": "S",
+              "archiveVariantId": "41349604540480",
+              "keeperVariantId": "41349603164224"
+            },
+            {
+              "color": "True Royal",
+              "size": "M",
+              "archiveVariantId": "41349604573248",
+              "keeperVariantId": "41349603196992"
+            },
+            {
+              "color": "True Royal",
+              "size": "L",
+              "archiveVariantId": "41349604606016",
+              "keeperVariantId": "41349603229760"
+            },
+            {
+              "color": "True Royal",
+              "size": "XL",
+              "archiveVariantId": "41349604638784",
+              "keeperVariantId": "41349603262528"
+            },
+            {
+              "color": "True Royal",
+              "size": "2XL",
+              "archiveVariantId": "41349604671552",
+              "keeperVariantId": "41349603295296"
+            },
+            {
+              "color": "True Royal",
+              "size": "3XL",
+              "archiveVariantId": "41349604704320",
+              "keeperVariantId": "41349603328064"
+            },
+            {
+              "color": "Athletic Heather",
+              "size": "XS",
+              "archiveVariantId": "41349604737088",
+              "keeperVariantId": "41349603360832"
+            },
+            {
+              "color": "Athletic Heather",
+              "size": "S",
+              "archiveVariantId": "41349604769856",
+              "keeperVariantId": "41349603393600"
+            },
+            {
+              "color": "Athletic Heather",
+              "size": "M",
+              "archiveVariantId": "41349604802624",
+              "keeperVariantId": "41349603426368"
+            },
+            {
+              "color": "Athletic Heather",
+              "size": "L",
+              "archiveVariantId": "41349604835392",
+              "keeperVariantId": "41349603459136"
+            },
+            {
+              "color": "Athletic Heather",
+              "size": "XL",
+              "archiveVariantId": "41349604868160",
+              "keeperVariantId": "41349603491904"
+            },
+            {
+              "color": "Athletic Heather",
+              "size": "2XL",
+              "archiveVariantId": "41349604900928",
+              "keeperVariantId": "41349603524672"
+            },
+            {
+              "color": "Athletic Heather",
+              "size": "3XL",
+              "archiveVariantId": "41349604933696",
+              "keeperVariantId": "41349603557440"
+            },
+            {
+              "color": "White",
+              "size": "XS",
+              "archiveVariantId": "41349604966464",
+              "keeperVariantId": "41349603590208"
+            },
+            {
+              "color": "White",
+              "size": "S",
+              "archiveVariantId": "41349604999232",
+              "keeperVariantId": "41349603622976"
+            },
+            {
+              "color": "White",
+              "size": "M",
+              "archiveVariantId": "41349605032000",
+              "keeperVariantId": "41349603655744"
+            },
+            {
+              "color": "White",
+              "size": "L",
+              "archiveVariantId": "41349605064768",
+              "keeperVariantId": "41349603688512"
+            },
+            {
+              "color": "White",
+              "size": "XL",
+              "archiveVariantId": "41349605097536",
+              "keeperVariantId": "41349603721280"
+            },
+            {
+              "color": "White",
+              "size": "2XL",
+              "archiveVariantId": "41349605130304",
+              "keeperVariantId": "41349603754048"
+            },
+            {
+              "color": "White",
+              "size": "3XL",
+              "archiveVariantId": "41349605163072",
+              "keeperVariantId": "41349603786816"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "keeper": {
+        "id": "6589113368640",
+        "handle": "do-wop-that-thing-onesie",
+        "title": "Do Wop That Thing onesie"
+      },
+      "archives": [
+        {
+          "id": "6591673598016",
+          "handle": "do-wop-that-thing-onesie-1",
+          "title": "Do Wop That Thing onesie",
+          "variantMappings": [
+            {
+              "color": "Heather Columbia Blue",
+              "size": "3-6m",
+              "archiveVariantId": "39392295977024",
+              "keeperVariantId": "39385322881088"
+            },
+            {
+              "color": "Athletic Heather",
+              "size": "3-6m",
+              "archiveVariantId": "39392296009792",
+              "keeperVariantId": "39385322913856"
+            },
+            {
+              "color": "Pink",
+              "size": "3-6m",
+              "archiveVariantId": "39392296042560",
+              "keeperVariantId": "39385322946624"
+            },
+            {
+              "color": "White",
+              "size": "3-6m",
+              "archiveVariantId": "39392296075328",
+              "keeperVariantId": "39385322979392"
+            },
+            {
+              "color": "Heather Columbia Blue",
+              "size": "6-12m",
+              "archiveVariantId": "39392296108096",
+              "keeperVariantId": "39385323012160"
+            },
+            {
+              "color": "Athletic Heather",
+              "size": "6-12m",
+              "archiveVariantId": "39392296140864",
+              "keeperVariantId": "39385323044928"
+            },
+            {
+              "color": "Pink",
+              "size": "6-12m",
+              "archiveVariantId": "39392296173632",
+              "keeperVariantId": "39385323077696"
+            },
+            {
+              "color": "White",
+              "size": "6-12m",
+              "archiveVariantId": "39392296206400",
+              "keeperVariantId": "39385323110464"
+            },
+            {
+              "color": "Heather Columbia Blue",
+              "size": "12-18m",
+              "archiveVariantId": "39392296239168",
+              "keeperVariantId": "39385323143232"
+            },
+            {
+              "color": "Athletic Heather",
+              "size": "12-18m",
+              "archiveVariantId": "39392296271936",
+              "keeperVariantId": "39385323176000"
+            },
+            {
+              "color": "Pink",
+              "size": "12-18m",
+              "archiveVariantId": "39392296304704",
+              "keeperVariantId": "39385323208768"
+            },
+            {
+              "color": "White",
+              "size": "12-18m",
+              "archiveVariantId": "39392296337472",
+              "keeperVariantId": "39385323241536"
+            },
+            {
+              "color": "Heather Columbia Blue",
+              "size": "18-24m",
+              "archiveVariantId": "39392296370240",
+              "keeperVariantId": "39385323274304"
+            },
+            {
+              "color": "Athletic Heather",
+              "size": "18-24m",
+              "archiveVariantId": "39392296403008",
+              "keeperVariantId": "39385323307072"
+            },
+            {
+              "color": "Pink",
+              "size": "18-24m",
+              "archiveVariantId": "39392296435776",
+              "keeperVariantId": "39385323339840"
+            },
+            {
+              "color": "White",
+              "size": "18-24m",
+              "archiveVariantId": "39392296468544",
+              "keeperVariantId": "39385323372608"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "keeper": {
+        "id": "6588634595392",
+        "handle": "poetic-justice-onesie",
+        "title": "Poetic Justice onesie"
+      },
+      "archives": [
+        {
+          "id": "6589967269952",
+          "handle": "poetic-justice-onesie-1",
+          "title": "Poetic Justice onesie",
+          "variantMappings": [
+            {
+              "color": "Heather Columbia Blue",
+              "size": "3-6m",
+              "archiveVariantId": "39387458175040",
+              "keeperVariantId": "39383675502656"
+            },
+            {
+              "color": "Athletic Heather",
+              "size": "3-6m",
+              "archiveVariantId": "39387458207808",
+              "keeperVariantId": "39383675633728"
+            },
+            {
+              "color": "Pink",
+              "size": "3-6m",
+              "archiveVariantId": "39387458240576",
+              "keeperVariantId": "39383675764800"
+            },
+            {
+              "color": "White",
+              "size": "3-6m",
+              "archiveVariantId": "39387458273344",
+              "keeperVariantId": "39383675895872"
+            },
+            {
+              "color": "Heather Columbia Blue",
+              "size": "6-12m",
+              "archiveVariantId": "39387458306112",
+              "keeperVariantId": "39383675535424"
+            },
+            {
+              "color": "Athletic Heather",
+              "size": "6-12m",
+              "archiveVariantId": "39387458338880",
+              "keeperVariantId": "39383675666496"
+            },
+            {
+              "color": "Pink",
+              "size": "6-12m",
+              "archiveVariantId": "39387458371648",
+              "keeperVariantId": "39383675797568"
+            },
+            {
+              "color": "White",
+              "size": "6-12m",
+              "archiveVariantId": "39387458404416",
+              "keeperVariantId": "39383675928640"
+            },
+            {
+              "color": "Heather Columbia Blue",
+              "size": "12-18m",
+              "archiveVariantId": "39387458437184",
+              "keeperVariantId": "39383675568192"
+            },
+            {
+              "color": "Athletic Heather",
+              "size": "12-18m",
+              "archiveVariantId": "39387458469952",
+              "keeperVariantId": "39383675699264"
+            },
+            {
+              "color": "Pink",
+              "size": "12-18m",
+              "archiveVariantId": "39387458502720",
+              "keeperVariantId": "39383675830336"
+            },
+            {
+              "color": "White",
+              "size": "12-18m",
+              "archiveVariantId": "39387458535488",
+              "keeperVariantId": "39383675961408"
+            },
+            {
+              "color": "Heather Columbia Blue",
+              "size": "18-24m",
+              "archiveVariantId": "39387458568256",
+              "keeperVariantId": "39383675600960"
+            },
+            {
+              "color": "Athletic Heather",
+              "size": "18-24m",
+              "archiveVariantId": "39387458601024",
+              "keeperVariantId": "39383675732032"
+            },
+            {
+              "color": "Pink",
+              "size": "18-24m",
+              "archiveVariantId": "39387458633792",
+              "keeperVariantId": "39383675863104"
+            },
+            {
+              "color": "White",
+              "size": "18-24m",
+              "archiveVariantId": "39387458666560",
+              "keeperVariantId": "39383675994176"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "keeper": {
+        "id": "6597531861056",
+        "handle": "poetic-justice-shirt",
+        "title": "Poetic Justice shirt"
+      },
+      "archives": [
+        {
+          "id": "6601235234880",
+          "handle": "poetic-justice-shirt-1",
+          "title": "Poetic Justice shirt",
+          "variantMappings": [
+            {
+              "color": "Red",
+              "size": "S",
+              "archiveVariantId": "39421314138176",
+              "keeperVariantId": "39409236639808"
+            },
+            {
+              "color": "Kelly",
+              "size": "S",
+              "archiveVariantId": "39421314170944",
+              "keeperVariantId": "39409236672576"
+            },
+            {
+              "color": "White",
+              "size": "S",
+              "archiveVariantId": "39421314203712",
+              "keeperVariantId": "39409236705344"
+            },
+            {
+              "color": "Yellow",
+              "size": "S",
+              "archiveVariantId": "39421314236480",
+              "keeperVariantId": "39409236738112"
+            },
+            {
+              "color": "Light Blue",
+              "size": "S",
+              "archiveVariantId": "39421314269248",
+              "keeperVariantId": "39409236770880"
+            },
+            {
+              "color": "Pink",
+              "size": "S",
+              "archiveVariantId": "39421314302016",
+              "keeperVariantId": "39409236803648"
+            },
+            {
+              "color": "Athletic Heather",
+              "size": "S",
+              "archiveVariantId": "39421314334784",
+              "keeperVariantId": "39409236836416"
+            },
+            {
+              "color": "True Royal",
+              "size": "S",
+              "archiveVariantId": "39421314367552",
+              "keeperVariantId": "39409236869184"
+            },
+            {
+              "color": "Light Blue",
+              "size": "M",
+              "archiveVariantId": "39421314400320",
+              "keeperVariantId": "39409236901952"
+            },
+            {
+              "color": "Red",
+              "size": "M",
+              "archiveVariantId": "39421314433088",
+              "keeperVariantId": "39409236934720"
+            },
+            {
+              "color": "Yellow",
+              "size": "M",
+              "archiveVariantId": "39421314465856",
+              "keeperVariantId": "39409236967488"
+            },
+            {
+              "color": "True Royal",
+              "size": "M",
+              "archiveVariantId": "39421314498624",
+              "keeperVariantId": "39409237000256"
+            },
+            {
+              "color": "Kelly",
+              "size": "M",
+              "archiveVariantId": "39421314531392",
+              "keeperVariantId": "39409237033024"
+            },
+            {
+              "color": "White",
+              "size": "M",
+              "archiveVariantId": "39421314564160",
+              "keeperVariantId": "39409237065792"
+            },
+            {
+              "color": "Pink",
+              "size": "M",
+              "archiveVariantId": "39421314596928",
+              "keeperVariantId": "39409237098560"
+            },
+            {
+              "color": "Athletic Heather",
+              "size": "M",
+              "archiveVariantId": "39421314629696",
+              "keeperVariantId": "39409237131328"
+            },
+            {
+              "color": "Yellow",
+              "size": "L",
+              "archiveVariantId": "39421314662464",
+              "keeperVariantId": "39409237164096"
+            },
+            {
+              "color": "Athletic Heather",
+              "size": "L",
+              "archiveVariantId": "39421314695232",
+              "keeperVariantId": "39409237196864"
+            },
+            {
+              "color": "True Royal",
+              "size": "L",
+              "archiveVariantId": "39421314728000",
+              "keeperVariantId": "39409237229632"
+            },
+            {
+              "color": "Red",
+              "size": "L",
+              "archiveVariantId": "39421314760768",
+              "keeperVariantId": "39409237262400"
+            },
+            {
+              "color": "Light Blue",
+              "size": "L",
+              "archiveVariantId": "39421314793536",
+              "keeperVariantId": "39409237295168"
+            },
+            {
+              "color": "White",
+              "size": "L",
+              "archiveVariantId": "39421314826304",
+              "keeperVariantId": "39409237327936"
+            },
+            {
+              "color": "Kelly",
+              "size": "L",
+              "archiveVariantId": "39421314859072",
+              "keeperVariantId": "39409237360704"
+            },
+            {
+              "color": "Pink",
+              "size": "L",
+              "archiveVariantId": "39421314891840",
+              "keeperVariantId": "39409237393472"
+            },
+            {
+              "color": "Yellow",
+              "size": "XL",
+              "archiveVariantId": "39421314924608",
+              "keeperVariantId": "39409237426240"
+            },
+            {
+              "color": "White",
+              "size": "XL",
+              "archiveVariantId": "39421314957376",
+              "keeperVariantId": "39409237459008"
+            },
+            {
+              "color": "Red",
+              "size": "XL",
+              "archiveVariantId": "39421314990144",
+              "keeperVariantId": "39409237491776"
+            },
+            {
+              "color": "Athletic Heather",
+              "size": "XL",
+              "archiveVariantId": "39421315022912",
+              "keeperVariantId": "39409237524544"
+            },
+            {
+              "color": "Light Blue",
+              "size": "XL",
+              "archiveVariantId": "39421315055680",
+              "keeperVariantId": "39409237557312"
+            },
+            {
+              "color": "True Royal",
+              "size": "XL",
+              "archiveVariantId": "39421315088448",
+              "keeperVariantId": "39409237590080"
+            },
+            {
+              "color": "Pink",
+              "size": "XL",
+              "archiveVariantId": "39421315121216",
+              "keeperVariantId": "39409237622848"
+            },
+            {
+              "color": "Kelly",
+              "size": "XL",
+              "archiveVariantId": "39421315153984",
+              "keeperVariantId": "39409237655616"
+            },
+            {
+              "color": "Light Blue",
+              "size": "2XL",
+              "archiveVariantId": "39421315186752",
+              "keeperVariantId": "39409237688384"
+            },
+            {
+              "color": "Red",
+              "size": "2XL",
+              "archiveVariantId": "39421315219520",
+              "keeperVariantId": "39409237721152"
+            },
+            {
+              "color": "Athletic Heather",
+              "size": "2XL",
+              "archiveVariantId": "39421315252288",
+              "keeperVariantId": "39409237753920"
+            },
+            {
+              "color": "Pink",
+              "size": "2XL",
+              "archiveVariantId": "39421315285056",
+              "keeperVariantId": "39409237786688"
+            },
+            {
+              "color": "Yellow",
+              "size": "2XL",
+              "archiveVariantId": "39421315317824",
+              "keeperVariantId": "39409237819456"
+            },
+            {
+              "color": "Kelly",
+              "size": "2XL",
+              "archiveVariantId": "39421315350592",
+              "keeperVariantId": "39409237852224"
+            },
+            {
+              "color": "True Royal",
+              "size": "2XL",
+              "archiveVariantId": "39421315383360",
+              "keeperVariantId": "39409237884992"
+            },
+            {
+              "color": "White",
+              "size": "2XL",
+              "archiveVariantId": "39421315416128",
+              "keeperVariantId": "39409237917760"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "keeper": {
+        "id": "6599458783296",
+        "handle": "the-big-payback-shirt",
+        "title": "The Big Payback shirt"
+      },
+      "archives": [
+        {
+          "id": "6599458914368",
+          "handle": "the-big-payback-shirt-1",
+          "title": "The Big Payback shirt",
+          "variantMappings": [
+            {
+              "color": "Red",
+              "size": "S",
+              "archiveVariantId": "39415062855744",
+              "keeperVariantId": "39415061446720"
+            },
+            {
+              "color": "Kelly",
+              "size": "S",
+              "archiveVariantId": "39415062888512",
+              "keeperVariantId": "39415061479488"
+            },
+            {
+              "color": "White",
+              "size": "S",
+              "archiveVariantId": "39415062921280",
+              "keeperVariantId": "39415061512256"
+            },
+            {
+              "color": "Yellow",
+              "size": "S",
+              "archiveVariantId": "39415062954048",
+              "keeperVariantId": "39415061545024"
+            },
+            {
+              "color": "Light Blue",
+              "size": "S",
+              "archiveVariantId": "39415062986816",
+              "keeperVariantId": "39415061577792"
+            },
+            {
+              "color": "Pink",
+              "size": "S",
+              "archiveVariantId": "39415063019584",
+              "keeperVariantId": "39415061610560"
+            },
+            {
+              "color": "Athletic Heather",
+              "size": "S",
+              "archiveVariantId": "39415063052352",
+              "keeperVariantId": "39415061643328"
+            },
+            {
+              "color": "True Royal",
+              "size": "S",
+              "archiveVariantId": "39415063085120",
+              "keeperVariantId": "39415061676096"
+            },
+            {
+              "color": "Light Blue",
+              "size": "M",
+              "archiveVariantId": "39415063117888",
+              "keeperVariantId": "39415061708864"
+            },
+            {
+              "color": "Red",
+              "size": "M",
+              "archiveVariantId": "39415063150656",
+              "keeperVariantId": "39415061741632"
+            },
+            {
+              "color": "Yellow",
+              "size": "M",
+              "archiveVariantId": "39415063183424",
+              "keeperVariantId": "39415061774400"
+            },
+            {
+              "color": "True Royal",
+              "size": "M",
+              "archiveVariantId": "39415063216192",
+              "keeperVariantId": "39415061807168"
+            },
+            {
+              "color": "Kelly",
+              "size": "M",
+              "archiveVariantId": "39415063248960",
+              "keeperVariantId": "39415061839936"
+            },
+            {
+              "color": "White",
+              "size": "M",
+              "archiveVariantId": "39415063281728",
+              "keeperVariantId": "39415061872704"
+            },
+            {
+              "color": "Pink",
+              "size": "M",
+              "archiveVariantId": "39415063314496",
+              "keeperVariantId": "39415061905472"
+            },
+            {
+              "color": "Athletic Heather",
+              "size": "M",
+              "archiveVariantId": "39415063347264",
+              "keeperVariantId": "39415061938240"
+            },
+            {
+              "color": "Yellow",
+              "size": "L",
+              "archiveVariantId": "39415063380032",
+              "keeperVariantId": "39415061971008"
+            },
+            {
+              "color": "Athletic Heather",
+              "size": "L",
+              "archiveVariantId": "39415063412800",
+              "keeperVariantId": "39415062003776"
+            },
+            {
+              "color": "True Royal",
+              "size": "L",
+              "archiveVariantId": "39415063445568",
+              "keeperVariantId": "39415062036544"
+            },
+            {
+              "color": "Red",
+              "size": "L",
+              "archiveVariantId": "39415063478336",
+              "keeperVariantId": "39415062069312"
+            },
+            {
+              "color": "Light Blue",
+              "size": "L",
+              "archiveVariantId": "39415063511104",
+              "keeperVariantId": "39415062102080"
+            },
+            {
+              "color": "White",
+              "size": "L",
+              "archiveVariantId": "39415063543872",
+              "keeperVariantId": "39415062134848"
+            },
+            {
+              "color": "Kelly",
+              "size": "L",
+              "archiveVariantId": "39415063576640",
+              "keeperVariantId": "39415062167616"
+            },
+            {
+              "color": "Pink",
+              "size": "L",
+              "archiveVariantId": "39415063609408",
+              "keeperVariantId": "39415062200384"
+            },
+            {
+              "color": "Yellow",
+              "size": "XL",
+              "archiveVariantId": "39415063642176",
+              "keeperVariantId": "39415062233152"
+            },
+            {
+              "color": "White",
+              "size": "XL",
+              "archiveVariantId": "39415063674944",
+              "keeperVariantId": "39415062265920"
+            },
+            {
+              "color": "Red",
+              "size": "XL",
+              "archiveVariantId": "39415063707712",
+              "keeperVariantId": "39415062298688"
+            },
+            {
+              "color": "Athletic Heather",
+              "size": "XL",
+              "archiveVariantId": "39415063740480",
+              "keeperVariantId": "39415062331456"
+            },
+            {
+              "color": "Light Blue",
+              "size": "XL",
+              "archiveVariantId": "39415063773248",
+              "keeperVariantId": "39415062364224"
+            },
+            {
+              "color": "True Royal",
+              "size": "XL",
+              "archiveVariantId": "39415063806016",
+              "keeperVariantId": "39415062396992"
+            },
+            {
+              "color": "Pink",
+              "size": "XL",
+              "archiveVariantId": "39415063838784",
+              "keeperVariantId": "39415062429760"
+            },
+            {
+              "color": "Kelly",
+              "size": "XL",
+              "archiveVariantId": "39415063871552",
+              "keeperVariantId": "39415062462528"
+            },
+            {
+              "color": "Light Blue",
+              "size": "2XL",
+              "archiveVariantId": "39415063904320",
+              "keeperVariantId": "39415062495296"
+            },
+            {
+              "color": "Red",
+              "size": "2XL",
+              "archiveVariantId": "39415063937088",
+              "keeperVariantId": "39415062528064"
+            },
+            {
+              "color": "Athletic Heather",
+              "size": "2XL",
+              "archiveVariantId": "39415063969856",
+              "keeperVariantId": "39415062560832"
+            },
+            {
+              "color": "Pink",
+              "size": "2XL",
+              "archiveVariantId": "39415064002624",
+              "keeperVariantId": "39415062593600"
+            },
+            {
+              "color": "Yellow",
+              "size": "2XL",
+              "archiveVariantId": "39415064035392",
+              "keeperVariantId": "39415062626368"
+            },
+            {
+              "color": "Kelly",
+              "size": "2XL",
+              "archiveVariantId": "39415064068160",
+              "keeperVariantId": "39415062659136"
+            },
+            {
+              "color": "True Royal",
+              "size": "2XL",
+              "archiveVariantId": "39415064100928",
+              "keeperVariantId": "39415062691904"
+            },
+            {
+              "color": "White",
+              "size": "2XL",
+              "archiveVariantId": "39415064133696",
+              "keeperVariantId": "39415062724672"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "keeper": {
+        "id": "6599121436736",
+        "handle": "toddler-short-sleeve-tee",
+        "title": "Toddler Short Sleeve Tee"
+      },
+      "archives": [
+        {
+          "id": "6599552434240",
+          "handle": "toddler-short-sleeve-tee-1",
+          "title": "Toddler Short Sleeve Tee",
+          "variantMappings": [
+            {
+              "color": "Heather Columbia Blue",
+              "size": "2T",
+              "archiveVariantId": "39415312252992",
+              "keeperVariantId": "39414057566272"
+            },
+            {
+              "color": "Pink",
+              "size": "2T",
+              "archiveVariantId": "39415312285760",
+              "keeperVariantId": "39414057599040"
+            },
+            {
+              "color": "White",
+              "size": "2T",
+              "archiveVariantId": "39415312318528",
+              "keeperVariantId": "39414057631808"
+            },
+            {
+              "color": "Heather Columbia Blue",
+              "size": "3T",
+              "archiveVariantId": "39415312351296",
+              "keeperVariantId": "39414057664576"
+            },
+            {
+              "color": "Pink",
+              "size": "3T",
+              "archiveVariantId": "39415312384064",
+              "keeperVariantId": "39414057697344"
+            },
+            {
+              "color": "White",
+              "size": "3T",
+              "archiveVariantId": "39415312416832",
+              "keeperVariantId": "39414057730112"
+            },
+            {
+              "color": "Heather Columbia Blue",
+              "size": "4T",
+              "archiveVariantId": "39415312449600",
+              "keeperVariantId": "39414057762880"
+            },
+            {
+              "color": "Pink",
+              "size": "4T",
+              "archiveVariantId": "39415312482368",
+              "keeperVariantId": "39414057795648"
+            },
+            {
+              "color": "White",
+              "size": "4T",
+              "archiveVariantId": "39415312515136",
+              "keeperVariantId": "39414057828416"
+            },
+            {
+              "color": "Heather Columbia Blue",
+              "size": "5T",
+              "archiveVariantId": "39415312547904",
+              "keeperVariantId": "39414057861184"
+            },
+            {
+              "color": "Pink",
+              "size": "5T",
+              "archiveVariantId": "39415312580672",
+              "keeperVariantId": "39414057893952"
+            },
+            {
+              "color": "White",
+              "size": "5T",
+              "archiveVariantId": "39415312613440",
+              "keeperVariantId": "39414057926720"
+            }
+          ]
+        },
+        {
+          "id": "6601500426304",
+          "handle": "toddler-short-sleeve-tee-3",
+          "title": "Toddler Short Sleeve Tee",
+          "variantMappings": [
+            {
+              "color": "Heather Columbia Blue",
+              "size": "2T",
+              "archiveVariantId": "39422306353216",
+              "keeperVariantId": "39414057566272"
+            },
+            {
+              "color": "Pink",
+              "size": "2T",
+              "archiveVariantId": "39422306385984",
+              "keeperVariantId": "39414057599040"
+            },
+            {
+              "color": "White",
+              "size": "2T",
+              "archiveVariantId": "39422306418752",
+              "keeperVariantId": "39414057631808"
+            },
+            {
+              "color": "Heather Columbia Blue",
+              "size": "3T",
+              "archiveVariantId": "39422306451520",
+              "keeperVariantId": "39414057664576"
+            },
+            {
+              "color": "Pink",
+              "size": "3T",
+              "archiveVariantId": "39422306484288",
+              "keeperVariantId": "39414057697344"
+            },
+            {
+              "color": "White",
+              "size": "3T",
+              "archiveVariantId": "39422306517056",
+              "keeperVariantId": "39414057730112"
+            },
+            {
+              "color": "Heather Columbia Blue",
+              "size": "4T",
+              "archiveVariantId": "39422306549824",
+              "keeperVariantId": "39414057762880"
+            },
+            {
+              "color": "Pink",
+              "size": "4T",
+              "archiveVariantId": "39422306582592",
+              "keeperVariantId": "39414057795648"
+            },
+            {
+              "color": "White",
+              "size": "4T",
+              "archiveVariantId": "39422306615360",
+              "keeperVariantId": "39414057828416"
+            },
+            {
+              "color": "Heather Columbia Blue",
+              "size": "5T",
+              "archiveVariantId": "39422306648128",
+              "keeperVariantId": "39414057861184"
+            },
+            {
+              "color": "Pink",
+              "size": "5T",
+              "archiveVariantId": "39422306680896",
+              "keeperVariantId": "39414057893952"
+            },
+            {
+              "color": "White",
+              "size": "5T",
+              "archiveVariantId": "39422306713664",
+              "keeperVariantId": "39414057926720"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "keeper": {
+        "id": "6702728642624",
+        "handle": "wu-kitty-mug",
+        "title": "Wu Kitty Mug"
+      },
+      "archives": [
+        {
+          "id": "6703313682496",
+          "handle": "wu-kitty-mug-1",
+          "title": "Wu Kitty mug",
+          "variantMappings": [
+            {
+              "color": "11oz",
+              "size": "",
+              "archiveVariantId": "39735222272064",
+              "keeperVariantId": "39734176120896"
+            },
+            {
+              "color": "15oz",
+              "size": "",
+              "archiveVariantId": "39735222304832",
+              "keeperVariantId": "39734176153664"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "keeper": {
+        "id": "6599776993344",
+        "handle": "still-ghetto-shirt",
+        "title": "Still Ghetto shirt"
+      },
+      "archives": [
+        {
+          "id": "6599788101696",
+          "handle": "still-ghetto-toddler-shirt-1",
+          "title": "Still Ghetto toddler shirt",
+          "variantMappings": [
+            {
+              "color": "Red",
+              "size": "S",
+              "archiveVariantId": "39415960371264",
+              "keeperVariantId": "39415939006528"
+            },
+            {
+              "color": "Kelly",
+              "size": "S",
+              "archiveVariantId": "39415960404032",
+              "keeperVariantId": "39415939039296"
+            },
+            {
+              "color": "White",
+              "size": "S",
+              "archiveVariantId": "39415960436800",
+              "keeperVariantId": "39415939072064"
+            },
+            {
+              "color": "Yellow",
+              "size": "S",
+              "archiveVariantId": "39415960469568",
+              "keeperVariantId": "39415939104832"
+            },
+            {
+              "color": "Light Blue",
+              "size": "S",
+              "archiveVariantId": "39415960502336",
+              "keeperVariantId": "39415939137600"
+            },
+            {
+              "color": "Pink",
+              "size": "S",
+              "archiveVariantId": "39415960535104",
+              "keeperVariantId": "39415939170368"
+            },
+            {
+              "color": "Athletic Heather",
+              "size": "S",
+              "archiveVariantId": "39415960567872",
+              "keeperVariantId": "39415939203136"
+            },
+            {
+              "color": "True Royal",
+              "size": "S",
+              "archiveVariantId": "39415960600640",
+              "keeperVariantId": "39415939235904"
+            },
+            {
+              "color": "Light Blue",
+              "size": "M",
+              "archiveVariantId": "39415960633408",
+              "keeperVariantId": "39415939268672"
+            },
+            {
+              "color": "Red",
+              "size": "M",
+              "archiveVariantId": "39415960666176",
+              "keeperVariantId": "39415939301440"
+            },
+            {
+              "color": "Yellow",
+              "size": "M",
+              "archiveVariantId": "39415960698944",
+              "keeperVariantId": "39415939334208"
+            },
+            {
+              "color": "True Royal",
+              "size": "M",
+              "archiveVariantId": "39415960731712",
+              "keeperVariantId": "39415939366976"
+            },
+            {
+              "color": "Kelly",
+              "size": "M",
+              "archiveVariantId": "39415960764480",
+              "keeperVariantId": "39415939399744"
+            },
+            {
+              "color": "White",
+              "size": "M",
+              "archiveVariantId": "39415960797248",
+              "keeperVariantId": "39415939432512"
+            },
+            {
+              "color": "Pink",
+              "size": "M",
+              "archiveVariantId": "39415960830016",
+              "keeperVariantId": "39415939465280"
+            },
+            {
+              "color": "Athletic Heather",
+              "size": "M",
+              "archiveVariantId": "39415960862784",
+              "keeperVariantId": "39415939498048"
+            },
+            {
+              "color": "Yellow",
+              "size": "L",
+              "archiveVariantId": "39415960895552",
+              "keeperVariantId": "39415939530816"
+            },
+            {
+              "color": "Athletic Heather",
+              "size": "L",
+              "archiveVariantId": "39415960928320",
+              "keeperVariantId": "39415939563584"
+            },
+            {
+              "color": "True Royal",
+              "size": "L",
+              "archiveVariantId": "39415960961088",
+              "keeperVariantId": "39415939596352"
+            },
+            {
+              "color": "Red",
+              "size": "L",
+              "archiveVariantId": "39415960993856",
+              "keeperVariantId": "39415939629120"
+            },
+            {
+              "color": "Light Blue",
+              "size": "L",
+              "archiveVariantId": "39415961026624",
+              "keeperVariantId": "39415939661888"
+            },
+            {
+              "color": "White",
+              "size": "L",
+              "archiveVariantId": "39415961059392",
+              "keeperVariantId": "39415939694656"
+            },
+            {
+              "color": "Kelly",
+              "size": "L",
+              "archiveVariantId": "39415961092160",
+              "keeperVariantId": "39415939727424"
+            },
+            {
+              "color": "Pink",
+              "size": "L",
+              "archiveVariantId": "39415961124928",
+              "keeperVariantId": "39415939760192"
+            },
+            {
+              "color": "Yellow",
+              "size": "XL",
+              "archiveVariantId": "39415961157696",
+              "keeperVariantId": "39415939792960"
+            },
+            {
+              "color": "White",
+              "size": "XL",
+              "archiveVariantId": "39415961190464",
+              "keeperVariantId": "39415939825728"
+            },
+            {
+              "color": "Red",
+              "size": "XL",
+              "archiveVariantId": "39415961223232",
+              "keeperVariantId": "39415939858496"
+            },
+            {
+              "color": "Athletic Heather",
+              "size": "XL",
+              "archiveVariantId": "39415961288768",
+              "keeperVariantId": "39415939891264"
+            },
+            {
+              "color": "Light Blue",
+              "size": "XL",
+              "archiveVariantId": "39415961321536",
+              "keeperVariantId": "39415939924032"
+            },
+            {
+              "color": "True Royal",
+              "size": "XL",
+              "archiveVariantId": "39415961387072",
+              "keeperVariantId": "39415939956800"
+            },
+            {
+              "color": "Pink",
+              "size": "XL",
+              "archiveVariantId": "39415961419840",
+              "keeperVariantId": "39415939989568"
+            },
+            {
+              "color": "Kelly",
+              "size": "XL",
+              "archiveVariantId": "39415961452608",
+              "keeperVariantId": "39415940022336"
+            },
+            {
+              "color": "Light Blue",
+              "size": "2XL",
+              "archiveVariantId": "39415961485376",
+              "keeperVariantId": "39415940055104"
+            },
+            {
+              "color": "Red",
+              "size": "2XL",
+              "archiveVariantId": "39415961518144",
+              "keeperVariantId": "39415940087872"
+            },
+            {
+              "color": "Athletic Heather",
+              "size": "2XL",
+              "archiveVariantId": "39415961550912",
+              "keeperVariantId": "39415940120640"
+            },
+            {
+              "color": "Pink",
+              "size": "2XL",
+              "archiveVariantId": "39415961616448",
+              "keeperVariantId": "39415940153408"
+            },
+            {
+              "color": "Yellow",
+              "size": "2XL",
+              "archiveVariantId": "39415961649216",
+              "keeperVariantId": "39415940186176"
+            },
+            {
+              "color": "Kelly",
+              "size": "2XL",
+              "archiveVariantId": "39415961681984",
+              "keeperVariantId": "39415940218944"
+            },
+            {
+              "color": "True Royal",
+              "size": "2XL",
+              "archiveVariantId": "39415961714752",
+              "keeperVariantId": "39415940251712"
+            },
+            {
+              "color": "White",
+              "size": "2XL",
+              "archiveVariantId": "39415961747520",
+              "keeperVariantId": "39415940284480"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "keeper": {
+        "id": "6603936989248",
+        "handle": "i-cant-live-w-o-my-radio-toddler-shirt",
+        "title": "I Cant Live w/o My Radio toddler shirt"
+      },
+      "archives": [
+        {
+          "id": "6603890262080",
+          "handle": "i-cant-live-w-o-my-radio-youth-hoodie-1",
+          "title": "I Cant Live w/o My Radio youth hoodie",
+          "variantMappings": [
+            {
+              "color": "Heather Columbia Blue",
+              "size": "2T",
+              "archiveVariantId": "39431347732544",
+              "keeperVariantId": "39431511932992"
+            },
+            {
+              "color": "Pink",
+              "size": "2T",
+              "archiveVariantId": "39431347765312",
+              "keeperVariantId": "39431511965760"
+            },
+            {
+              "color": "White",
+              "size": "2T",
+              "archiveVariantId": "39431347798080",
+              "keeperVariantId": "39431511998528"
+            },
+            {
+              "color": "Heather Columbia Blue",
+              "size": "3T",
+              "archiveVariantId": "39431347830848",
+              "keeperVariantId": "39431512031296"
+            },
+            {
+              "color": "Pink",
+              "size": "3T",
+              "archiveVariantId": "39431347863616",
+              "keeperVariantId": "39431512064064"
+            },
+            {
+              "color": "White",
+              "size": "3T",
+              "archiveVariantId": "39431347896384",
+              "keeperVariantId": "39431512096832"
+            },
+            {
+              "color": "Heather Columbia Blue",
+              "size": "4T",
+              "archiveVariantId": "39431347929152",
+              "keeperVariantId": "39431512129600"
+            },
+            {
+              "color": "Pink",
+              "size": "4T",
+              "archiveVariantId": "39431347961920",
+              "keeperVariantId": "39431512162368"
+            },
+            {
+              "color": "White",
+              "size": "4T",
+              "archiveVariantId": "39431347994688",
+              "keeperVariantId": "39431512195136"
+            },
+            {
+              "color": "Heather Columbia Blue",
+              "size": "5T",
+              "archiveVariantId": "39431348027456",
+              "keeperVariantId": "39431512227904"
+            },
+            {
+              "color": "Pink",
+              "size": "5T",
+              "archiveVariantId": "39431348060224",
+              "keeperVariantId": "39431512260672"
+            },
+            {
+              "color": "White",
+              "size": "5T",
+              "archiveVariantId": "39431348092992",
+              "keeperVariantId": "39431512293440"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "keeper": {
+        "id": "6696927395904",
+        "handle": "souls-of-mischief-hoodie",
+        "title": "Souls of Mischief hoodie"
+      },
+      "archives": [
+        {
+          "id": "6696928313408",
+          "handle": "souls-of-mischief-youth-hoodie",
+          "title": "Souls of Mischief youth hoodie",
+          "variantMappings": [
+            {
+              "color": "Black",
+              "size": "S",
+              "archiveVariantId": "39717187321920",
+              "keeperVariantId": "39717179097152"
+            },
+            {
+              "color": "Black",
+              "size": "M",
+              "archiveVariantId": "39717187354688",
+              "keeperVariantId": "39717179162688"
+            },
+            {
+              "color": "Black",
+              "size": "L",
+              "archiveVariantId": "39717187387456",
+              "keeperVariantId": "39717179195456"
+            },
+            {
+              "color": "Black",
+              "size": "XL",
+              "archiveVariantId": "39717187420224",
+              "keeperVariantId": "39717179228224"
+            },
+            {
+              "color": "Black",
+              "size": "2XL",
+              "archiveVariantId": "39717187452992",
+              "keeperVariantId": "39717179260992"
+            },
+            {
+              "color": "Navy",
+              "size": "S",
+              "archiveVariantId": "39717187485760",
+              "keeperVariantId": "39717179293760"
+            },
+            {
+              "color": "Navy",
+              "size": "M",
+              "archiveVariantId": "39717187518528",
+              "keeperVariantId": "39717179326528"
+            },
+            {
+              "color": "Navy",
+              "size": "L",
+              "archiveVariantId": "39717187551296",
+              "keeperVariantId": "39717179359296"
+            },
+            {
+              "color": "Navy",
+              "size": "XL",
+              "archiveVariantId": "39717187584064",
+              "keeperVariantId": "39717179392064"
+            },
+            {
+              "color": "Navy",
+              "size": "2XL",
+              "archiveVariantId": "39717187616832",
+              "keeperVariantId": "39717179424832"
+            },
+            {
+              "color": "Red",
+              "size": "S",
+              "archiveVariantId": "39717187649600",
+              "keeperVariantId": "39717179457600"
+            },
+            {
+              "color": "Red",
+              "size": "M",
+              "archiveVariantId": "39717187682368",
+              "keeperVariantId": "39717179490368"
+            },
+            {
+              "color": "Red",
+              "size": "L",
+              "archiveVariantId": "39717187715136",
+              "keeperVariantId": "39717179523136"
+            },
+            {
+              "color": "Red",
+              "size": "XL",
+              "archiveVariantId": "39717187747904",
+              "keeperVariantId": "39717179555904"
+            },
+            {
+              "color": "Red",
+              "size": "2XL",
+              "archiveVariantId": "39717187780672",
+              "keeperVariantId": "39717179588672"
+            },
+            {
+              "color": "Irish Green",
+              "size": "S",
+              "archiveVariantId": "39717187813440",
+              "keeperVariantId": "39717179621440"
+            },
+            {
+              "color": "Irish Green",
+              "size": "M",
+              "archiveVariantId": "39717187846208",
+              "keeperVariantId": "39717179654208"
+            },
+            {
+              "color": "Irish Green",
+              "size": "L",
+              "archiveVariantId": "39717187878976",
+              "keeperVariantId": "39717179686976"
+            },
+            {
+              "color": "Irish Green",
+              "size": "XL",
+              "archiveVariantId": "39717187911744",
+              "keeperVariantId": "39717179719744"
+            },
+            {
+              "color": "Irish Green",
+              "size": "2XL",
+              "archiveVariantId": "39717187944512",
+              "keeperVariantId": "39717179752512"
+            },
+            {
+              "color": "Sport Grey",
+              "size": "S",
+              "archiveVariantId": "39717187977280",
+              "keeperVariantId": "39717179818048"
+            },
+            {
+              "color": "Sport Grey",
+              "size": "M",
+              "archiveVariantId": "39717188010048",
+              "keeperVariantId": "39717179883584"
+            },
+            {
+              "color": "Sport Grey",
+              "size": "L",
+              "archiveVariantId": "39717188042816",
+              "keeperVariantId": "39717179916352"
+            },
+            {
+              "color": "Sport Grey",
+              "size": "XL",
+              "archiveVariantId": "39717188075584",
+              "keeperVariantId": "39717179949120"
+            },
+            {
+              "color": "Sport Grey",
+              "size": "2XL",
+              "archiveVariantId": "39717188108352",
+              "keeperVariantId": "39717179981888"
+            },
+            {
+              "color": "Light Blue",
+              "size": "S",
+              "archiveVariantId": "39717188141120",
+              "keeperVariantId": "39717180014656"
+            },
+            {
+              "color": "Light Blue",
+              "size": "M",
+              "archiveVariantId": "39717188173888",
+              "keeperVariantId": "39717180047424"
+            },
+            {
+              "color": "Light Blue",
+              "size": "L",
+              "archiveVariantId": "39717188206656",
+              "keeperVariantId": "39717180080192"
+            },
+            {
+              "color": "Light Blue",
+              "size": "XL",
+              "archiveVariantId": "39717188239424",
+              "keeperVariantId": "39717180112960"
+            },
+            {
+              "color": "Light Blue",
+              "size": "2XL",
+              "archiveVariantId": "39717188272192",
+              "keeperVariantId": "39717180145728"
+            },
+            {
+              "color": "Light Pink",
+              "size": "S",
+              "archiveVariantId": "39717188304960",
+              "keeperVariantId": "39717180178496"
+            },
+            {
+              "color": "Light Pink",
+              "size": "M",
+              "archiveVariantId": "39717188337728",
+              "keeperVariantId": "39717180211264"
+            },
+            {
+              "color": "Light Pink",
+              "size": "L",
+              "archiveVariantId": "39717188370496",
+              "keeperVariantId": "39717180244032"
+            },
+            {
+              "color": "Light Pink",
+              "size": "XL",
+              "archiveVariantId": "39717188403264",
+              "keeperVariantId": "39717180276800"
+            },
+            {
+              "color": "Light Pink",
+              "size": "2XL",
+              "archiveVariantId": "39717188436032",
+              "keeperVariantId": "39717180309568"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

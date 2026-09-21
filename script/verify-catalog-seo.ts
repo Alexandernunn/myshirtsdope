@@ -298,6 +298,26 @@ async function verifyPublishedCatalog(): Promise<void> {
   const redirectLines = redirects.trim().split(/\r?\n/);
   const redirectsBySource = new Map<string, string>();
   for (const [index, line] of redirectLines.entries()) {
+    const queryRedirect = line.match(
+      /^\/(product|products)\/([a-z0-9]+(?:-[a-z0-9]+)*)\s+(color=:color size=:size|variant=\d+)\s+\/product\/([a-z0-9]+(?:-[a-z0-9]+)*)\?(.+)\s+301!$/,
+    );
+    if (queryRedirect) {
+      const [, , sourceHandle, condition, targetHandle, targetQuery] = queryRedirect;
+      assert.notEqual(sourceHandle, targetHandle, `redirect loop at line ${index + 1}`);
+      if (condition === "color=:color size=:size") {
+        assert.equal(targetQuery.trim(), "color=:color&size=:size", `color/size intent mismatch at line ${index + 1}`);
+      } else {
+        assert(/^variant=\d+$/.test(targetQuery.trim()), `variant intent mismatch at line ${index + 1}`);
+      }
+      continue;
+    }
+    const legacyHandleRedirect = line.match(
+      /^\/products\/([a-z0-9]+(?:-[a-z0-9]+)*)\s+\/product\/([a-z0-9]+(?:-[a-z0-9]+)*)\s+301!$/,
+    );
+    if (legacyHandleRedirect) {
+      assert.notEqual(legacyHandleRedirect[1], legacyHandleRedirect[2], `redirect loop at line ${index + 1}`);
+      continue;
+    }
     const match = line.match(/^\/product\/([a-z0-9]+(?:-[a-z0-9]+)*)\s+\/product\/([a-z0-9]+(?:-[a-z0-9]+)*)\s+301!$/);
     assert(match, `invalid product redirect syntax at line ${index + 1}`);
     const [, productIdentifier, productHandle] = match;
@@ -870,10 +890,9 @@ async function verifyProductRouteHttpContract(): Promise<void> {
   const sample = products.find((product) => product.handle === "they-want-efx-hoodie") ?? products[0];
   assert(sample, "product route HTTP test requires a catalog product");
   const productRedirects = new Map(
-    redirectsText.trim().split(/\r?\n/).map((line) => {
+    redirectsText.trim().split(/\r?\n/).flatMap((line) => {
       const match = line.match(/^(\/product\/[a-z0-9-]+)\s+(\/product\/[a-z0-9-]+)\s+301!$/);
-      assert(match, `invalid generated redirect ${line}`);
-      return [match[1], match[2]];
+      return match ? [[match[1], match[2]] as [string, string]] : [];
     }),
   );
 

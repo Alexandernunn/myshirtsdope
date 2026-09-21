@@ -1,0 +1,32 @@
+Branch feature/catalog-cleanup. Update audit/catalog-fixes.csv only; no live writes.
+
+1. Fill new_title for these 22 handles (prices unchanged):
+all-for-the-money-hoodie-1 → All For The Money youth shirt
+dont-believe-the-hype-hoodie-1 → Dont Believe The Hype youth shirt
+epmd-strictly-business-hoodie-1 → EPMD Strictly Business youth shirt
+u-bout-it-bout-it-fool-hoodie-1 → U Bout it Bout it Fool youth shirt
+the-love-movement-youth-hoodie-1 → The Love Movement youth shirt
+bone-thugs-toddler-shirt-1 → Bone Thugs youth shirt
+thug-life-2pac-toddler-shirt-1 → Thug Life 2pac youth shirt
+still-ghetto-toddler-shirt-1 → Still Ghetto shirt
+the-most-beautifullest-94-hoodie-1 → The Most Beautifullest 94 shirt
+i-cant-live-w-o-my-radio-youth-hoodie-1 → I Cant Live w/o My Radio toddler shirt
+stay-woke-toddler-shirt-1 → Stay Woke youth hoodie
+mic-checka-youth-shirt-1 → Mic Checka youth hoodie
+on-my-block-youth-shirt-1 → On My Block youth hoodie
+shinin-star-youth-shirt-1 → Shinin Star youth hoodie
+underground-kingz-youth-shirt-1 → Underground Kingz youth hoodie
+my-crew-cant-go-4-that-youth-shirt → My Crew Can't Go 4 That youth hoodie
+soul-survivor-youth-shirt-1 → Soul Survivor hoodie
+the-next-movement-youth-shirt → The Next Movement hoodie
+little-mike-shirt-1 → Little Mike hoodie
+lyrics-2-go-shirt-1 → Lyrics 2 Go hoodie
+souls-of-mischief-youth-hoodie → Souls of Mischief hoodie
+baby-baby-baby-youth-hoodie → Baby Baby Baby hoodie
+Set new_product_type to match the garment where the current product type disagrees.
+
+2. Price decisions (I'll confirm each in a reply before you fill them): mahogany-soul-youth-hoodie, hard-knock-life-youth-hoodie, u-n-i-t-y-youth-hoodie, my-hitta-my-hitta-onesie, southern-hospitality-onesie, weve-only-just-begun-onesie. Leave these rows blank for now.
+
+3. Collision check: for every new title, search all 2,744 products for an existing product with the same normalized title. Report each collision with both handles, variant sets, and images side by side. These are true duplicate candidates, and those rows should be held out of the fix file until I decide.
+
+4. Re-run the dry run and show me the full diff.

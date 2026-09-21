@@ -1,0 +1,39 @@
+Branch feature/catalog-cleanup. Prepare launch; no live writes, no deploy.
+
+1. Price decisions for audit/catalog-fixes.csv:
+   - mahogany-soul-youth-hoodie → new_title "Mahogany Soul hoodie", new_price 60, type Hoodie
+   - hard-knock-life-youth-hoodie → new_price 54
+   - u-n-i-t-y-youth-hoodie → [54 if hoodie / retitle "U.N.I.T.Y. youth shirt", type Youth Shirt, price 30 if tee]
+   - my-hitta-my-hitta-onesie, southern-hospitality-onesie, weve-only-just-begun-onesie → new_price 30
+   Run the collision check on any new titles again.
+
+2. Final approved merges (keeper ← archive), 10 groups:
+   battle-of-the-tigers-shirt-tsu-jsu ← battle-of-the-tigers-shirt-tsu-jsu-1
+   do-wop-that-thing-onesie ← do-wop-that-thing-onesie-1
+   poetic-justice-onesie ← poetic-justice-onesie-1
+   poetic-justice-shirt ← poetic-justice-shirt-1
+   the-big-payback-shirt ← the-big-payback-shirt-1
+   toddler-short-sleeve-tee ← toddler-short-sleeve-tee-1, toddler-short-sleeve-tee-3
+   wu-kitty-mug ← wu-kitty-mug-1
+   still-ghetto-shirt ← still-ghetto-toddler-shirt-1
+   i-cant-live-w-o-my-radio-toddler-shirt ← i-cant-live-w-o-my-radio-youth-hoodie-1
+   souls-of-mischief-hoodie ← souls-of-mischief-youth-hoodie
+   Keep keeper prices. Variant sets are identical, so map variant-to-variant by color/size.
+
+3. Redirects: store the merges in data/product-merges.json, read by the catalog builder so the forced 301! rules regenerate on every build. For each archived handle, generate direct single-hop redirects for both /product/<old> and /products/<old>, preserving color/size/variant intent. Place them above the /product/* 404 rule. Remove archived handles from the sitemap, prerendered pages, and embedded catalog data.
+
+4. Saved carts: if a cart item references an archived product, remap it to the keeper's matching variant, or remove it with a notice. It must never cause a checkout error.
+
+5. scripts/archive-duplicates.ts: set the 11 archive handles to ARCHIVED (never delete) and unpublish them from all sales channels. --dry-run plus typed confirmation, same safety pattern as apply-catalog-fixes.ts.
+
+6. scripts/check-redirects.ts: every archived handle, both /product and /products, with and without ?color=&size= and ?variant= → one 301 hop → 200 on the keeper with the right variant selected. Pass/fail report.
+
+7. LAUNCH-CHECKLIST.md, in order:
+   a. Deploy the build with redirects (archived pages now redirect even though the products are still active; confirm that's safe).
+   b. Run apply-catalog-fixes.ts --apply
+   c. Run archive-duplicates.ts --apply
+   d. Trigger a rebuild so the sitemap and pages reflect the changes
+   e. Run check-redirects.ts against production
+   f. Spot-check 5 retitled products live
+   g. Rollback steps for each stage
+   Show me the dry runs for steps b and c.
