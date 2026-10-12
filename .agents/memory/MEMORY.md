@@ -7,3 +7,4 @@
 - [Catalog build entrypoint](catalog-build-entrypoint.md) — use the isolated catalog builder; the legacy cache script can be restored as duplicated content by the merged baseline.
 - [Variant URL identity](variant-url-identity.md) — schema and shared variant URLs use readable slugs only when supported options uniquely identify each Shopify variant.
 - [Portable npm lockfiles](portable-npm-lockfiles.md) — omit registry-specific resolved URLs so Netlify never depends on Replit's private package mirror.
+- [Shopping entry path](shopping-entry-path.md) — visitors typically land on product pages from Facebook ads; prioritize discovery there.
