@@ -15,6 +15,12 @@ Rotate search ideas every three seconds.
 
 **How to apply:** Keep the full rotation, including the typewriter transition, within that cadence rather than adding transition time after a three-second hold.
 
+Reduced-motion preferences must remove the typewriter transition, not freeze the discovery prompts completely.
+
+**Why:** The three-second requirement concerns changing discovery ideas; disabling the entire timer made the search appear broken. Whole-phrase changes preserve discovery without animated typing or deletion.
+
+**How to apply:** Keep the rotation clock independent of decorative motion, and verify several consecutive timed changes under both motion preferences, including pause/resume. A static screenshot cannot verify rotation.
+
 Use prompts that return results when searched exactly as shown, and vary the first idea rather than always opening with the same city.
 
 **Why:** Discovery prompts should help visitors find real catalog options. Familiar alternative spellings and multi-concept phrases can return no results under the existing literal shop search.
