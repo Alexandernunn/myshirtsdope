@@ -244,7 +244,9 @@ export default function ProductDetail() {
       if (!res.ok) throw new Error(`${res.status}: ${res.statusText}`);
       return res.json();
     },
-    enabled: secondaryContentEnabled,
+    // Recommendations are small, product-specific data and must not wait for
+    // the optional image-enrichment idle timer or any customer interaction.
+    enabled: !!product?.handle,
   });
   const allProducts = collectionRecommendations?.fitProducts ?? [];
 

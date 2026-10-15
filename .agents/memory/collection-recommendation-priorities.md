@@ -14,3 +14,9 @@ Product recommendations must work with the existing catalog, categories, and adu
 **Why:** These are explicit user constraints for product-page discovery.
 
 **How to apply:** Preserve these constraints when changing recommendations or their data source, including fallback recommendations.
+
+Load recommendations as soon as the product is known, without waiting for browser idle time or customer interaction.
+
+**Why:** The user reported that suggestions sometimes appeared only after clicking a size and asked for them to appear faster.
+
+**How to apply:** Keep the recommendation request independent from deferred optional image enrichment. Do not reintroduce an idle or interaction gate for the row.

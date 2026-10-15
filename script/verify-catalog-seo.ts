@@ -754,7 +754,13 @@ async function verifyPageSpeedContracts(): Promise<void> {
     "preloaded product pages must retain Wouter's matching route context",
   );
   assert(productDetail.includes("requestIdleCallback"));
-  assert(productDetail.includes("enabled: secondaryContentEnabled"));
+  assert(productDetail.includes("enabled: !!activeProductId && secondaryContentEnabled"));
+  const recommendationQuery = productDetail.slice(
+    productDetail.indexOf("const { data: collectionRecommendations }"),
+    productDetail.indexOf("const allProducts = collectionRecommendations"),
+  );
+  assert(recommendationQuery.includes("enabled: !!product?.handle"), "recommendations must start as soon as the product is known");
+  assert(!recommendationQuery.includes("enabled: secondaryContentEnabled"), "recommendations must not wait for the idle timer or interaction");
   const collectionCards = await readFile(path.resolve("client/src/components/collection-recommendations.tsx"), "utf8");
   assert(productDetail.includes("<CollectionRecommendationRow"));
   assert(collectionCards.includes('loading="lazy"'));
