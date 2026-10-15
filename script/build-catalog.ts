@@ -1,4 +1,4 @@
-import { fetchAllStorefrontProducts, mapStorefrontProduct } from "../server/shopify-storefront";
+import { fetchAllStorefrontProducts, mapStorefrontProduct, fetchCollectionBestSellers } from "../server/shopify-storefront";
 import type { Product, ProductSummary } from "../shared/schema";
 import { getColorImageVariants } from "../shared/image-variants";
 import { mkdir, writeFile } from "fs/promises";
@@ -8,6 +8,7 @@ import { generateSitemap } from "./generate-sitemap";
 import { FEATURED_SHOP_PRODUCT_IDS } from "../client/src/lib/product-grouping";
 import { hasValidMerchantPrice } from "./storefront-schema";
 import { consolidateCatalog } from "../shared/catalog-consolidation";
+import { buildCollectionRecommendations } from "../shared/collection-recommendations";
 
 if (!process.env.SHOPIFY_ACCESS_TOKEN || !process.env.SHOPIFY_STORE_DOMAIN) {
   console.error("[Catalog] Build failed: missing Shopify catalog configuration");
@@ -120,6 +121,16 @@ async function buildCatalog() {
       `${JSON.stringify({ generatedAt: new Date().toISOString(), groups }, null, 2)}\n`,
     ),
   ]);
+  const bestSellers = await fetchCollectionBestSellers();
+  const recommendationDir = path.join(outDir, "recommendations");
+  await mkdir(recommendationDir, { recursive: true });
+  for (const product of products) {
+    await writeFile(
+      path.join(recommendationDir, `${product.handle}.json`),
+      JSON.stringify(buildCollectionRecommendations(product, products, bestSellers)),
+    );
+  }
+  console.log(`[Catalog] Wrote bounded recommendation files for ${products.length} products`);
   await prerenderCatalog(products, slimInitial, deckProducts, aliases);
   await generateSitemap(products);
 

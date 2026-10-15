@@ -1,4 +1,5 @@
 import type { ShopifyVariantMapping } from "../shared/schema";
+import { CATEGORY_COLLECTIONS, type BestSellerOrder } from "../shared/collection-recommendations";
 
 function getAdminConfig() {
   const domain = process.env.SHOPIFY_STORE_DOMAIN;
@@ -263,6 +264,40 @@ export function mapStorefrontProduct(product: AdminProduct) {
     shopifyVariants,
     isNewDrop: false,
   };
+}
+
+let bestSellerCache: { value: BestSellerOrder; expires: number } | undefined;
+let bestSellerRequest: Promise<BestSellerOrder> | undefined;
+
+/** Read-only collection rankings; shared by the static build and dev API. */
+export async function fetchCollectionBestSellers(): Promise<BestSellerOrder> {
+  if (bestSellerCache && bestSellerCache.expires > Date.now()) return bestSellerCache.value;
+  if (bestSellerRequest) return bestSellerRequest;
+  bestSellerRequest = (async () => {
+    const entries = [];
+    for (const [category, handle] of Object.entries(CATEGORY_COLLECTIONS)) {
+      const data = await storefrontQuery(`
+        query CollectionBestSellers($handle: String!) {
+          collection(handle: $handle) {
+            products(first: 30, sortKey: BEST_SELLING) {
+              nodes { id title }
+            }
+          }
+        }`, { handle });
+      if (!data.collection) throw new Error(`Missing recommendation collection: ${handle}`);
+      entries.push([category, data.collection.products.nodes.map((product: { id: string; title: string }) => ({
+        id: Number(product.id.split("/").pop()), name: product.title,
+      }))]);
+    }
+    const value = Object.fromEntries(entries) as BestSellerOrder;
+    bestSellerCache = { value, expires: Date.now() + 5 * 60_000 };
+    return value;
+  })();
+  try {
+    return await bestSellerRequest;
+  } finally {
+    bestSellerRequest = undefined;
+  }
 }
 
 const CART_CREATE_MUTATION = `

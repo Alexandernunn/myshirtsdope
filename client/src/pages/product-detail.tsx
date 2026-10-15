@@ -5,16 +5,17 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, ShoppingCart, Check } from "lucide-react";
 import { AnimatedSearch } from "@/components/animated-search";
+import { CollectionRecommendationRow } from "@/components/collection-recommendations";
 import { useCart } from "@/lib/cart-context";
 import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { usePageTitle } from "@/hooks/use-page-title";
-import { findGroupForProduct, groupProducts, getProductForFit, getFitLabel, type FitType } from "@/lib/product-grouping";
+import { findGroupForProduct, getProductForFit, getFitLabel, type FitType } from "@/lib/product-grouping";
 import { IMAGE_PRESETS, shopifyImageProps, shopifyImageUrl } from "@shared/shopify-image";
 import { getShopifyVariantTrackingData, trackEvent } from "@/lib/meta-capi";
-import type { Product, ProductSummary } from "@shared/schema";
+import type { Product } from "@shared/schema";
+import type { CollectionRecommendations } from "@shared/collection-recommendations";
 import { productPath } from "@shared/product-url";
-import { getColorImageVariants, pickVariantIndex } from "@shared/image-variants";
 import {
   findRequestedVariant,
   getDefaultVariant,
@@ -85,43 +86,6 @@ function getColorHex(colorName: string): string | null {
 
 const PDP_HERO_PRELOAD_ATTRIBUTE = "data-pdp-hero-preload";
 const PRERENDERED_PRODUCT_DATA_SELECTOR = 'script[data-prerendered-product="true"]';
-
-function RelatedProductCard({ product, index }: { product: Product | ProductSummary; index: number }) {
-  const summaryVariants = "colorImageVariants" in product ? product.colorImageVariants : undefined;
-  const colorVariants = summaryVariants?.length
-    ? summaryVariants
-    : getColorImageVariants("colorImages" in product ? product.colorImages : null);
-  const pickedIndex = colorVariants.length
-    ? ((pickVariantIndex(product.id, index, colorVariants.length) % colorVariants.length) + colorVariants.length) % colorVariants.length
-    : -1;
-  const [imageSrc, setImageSrc] = useState(
-    pickedIndex >= 0 ? colorVariants[pickedIndex] : product.imageUrl,
-  );
-
-  return (
-    <Link href={productPath(product)} data-testid={`link-related-${product.id}`}>
-      <div className="bg-card border border-card-border rounded-md overflow-hidden hover-elevate cursor-pointer flex-shrink-0" style={{ width: "180px" }}>
-        <div className="overflow-hidden" style={{ height: "180px" }}>
-          <img
-            {...shopifyImageProps(imageSrc, IMAGE_PRESETS.relatedCard)}
-            alt={product.name}
-            width={180}
-            height={180}
-            className="w-full h-full object-cover"
-            loading="lazy"
-            onError={() => {
-              if (imageSrc !== product.imageUrl) setImageSrc(product.imageUrl);
-            }}
-          />
-        </div>
-        <div className="p-2">
-          <p className="font-display text-xs text-card-foreground line-clamp-1">{product.name}</p>
-          <p className="font-pixel text-[8px] text-neon-yellow mt-0.5">${product.price.toFixed(2)}</p>
-        </div>
-      </div>
-    </Link>
-  );
-}
 
 function readPrerenderedProduct(root: ParentNode, expectedHandle: string | undefined): Product | undefined {
   const serializedProduct = root.querySelector(PRERENDERED_PRODUCT_DATA_SELECTOR)?.textContent;
@@ -264,28 +228,25 @@ export default function ProductDetail() {
 
   const secondaryContentEnabled = secondaryProductId === product?.id;
 
-  const { data: allProducts = [] } = useQuery<Product[]>({
-    queryKey: ["/api/products"],
+  const { data: collectionRecommendations } = useQuery<CollectionRecommendations>({
+    queryKey: ["/api/products", product?.handle, "recommendations"],
     queryFn: async () => {
       if (!import.meta.env.DEV) {
-        try {
-          const staticRes = await fetch("/data/products.json");
-          if (staticRes.ok) {
-            const data = await staticRes.json();
-            if (Array.isArray(data) && data.length > 0) return data;
-          }
-        } catch {}
+        const staticRes = await fetch(`/data/recommendations/${encodeURIComponent(product!.handle)}.json`);
+        if (!staticRes.ok) throw new Error("Could not load collection recommendations");
+        return staticRes.json();
       }
       const headers: Record<string, string> = {
         "X-Requested-With": "XMLHttpRequest",
         "X-App-Token": import.meta.env.VITE_APP_TOKEN || "msd-storefront-v1",
       };
-      const res = await fetch("/api/products", { headers });
+      const res = await fetch(`/api/products/${encodeURIComponent(product!.handle)}/recommendations`, { headers });
       if (!res.ok) throw new Error(`${res.status}: ${res.statusText}`);
       return res.json();
     },
     enabled: secondaryContentEnabled,
   });
+  const allProducts = collectionRecommendations?.fitProducts ?? [];
 
   const activeProductId = product?.id;
 
@@ -470,17 +431,6 @@ export default function ProductDetail() {
       }, 150);
     }
   };
-
-  const allGroups = groupProducts(allProducts);
-  const related = allGroups
-    .filter(
-      (g) =>
-        g.adult.id !== product?.id &&
-        g.youth?.id !== product?.id &&
-        g.toddler?.id !== product?.id &&
-        g.category === product?.category
-    )
-    .slice(0, 4);
 
   const handleFitChange = (newFit: FitType) => {
     if (newFit === effectiveFit) return;
@@ -744,18 +694,7 @@ export default function ProductDetail() {
           </div>
         </div>
 
-        {related.length > 0 && (
-          <div className="mt-14">
-            <h2 className="font-pixel text-[10px] text-neon-green neon-text-green mb-6">
-              MORE FROM THE COLLECTION
-            </h2>
-            <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-thin">
-              {related.map((g, index) => (
-                <RelatedProductCard key={g.adult.id} product={g.adult} index={index} />
-              ))}
-            </div>
-          </div>
-        )}
+        <CollectionRecommendationRow data={collectionRecommendations} />
       </div>
     </div>
   );

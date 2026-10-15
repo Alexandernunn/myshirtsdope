@@ -1,0 +1,58 @@
+Fix the "MORE FROM THE COLLECTION" row on the product page template of my React + TypeScript site (myshirtsdope.com, Shopify Storefront API). Apply to ALL product pages. Work with the site's existing data and logic — do not require me to create collections, tags, or metafields in Shopify.
+
+## Current problem
+The row currently shows the first 4 products of the category alphabetically (e.g. on "Its All About The Benjamins hoodie" it shows "1 in a Million", "1 Love", "1 Won't Do...", "1999"). Replace that with the logic below.
+
+## Do NOT touch
+- Meta Pixel / CAPI code (ViewContent, AddToCart, InitiateCheckout, Purchase). No renaming, moving, removing, or double-firing events.
+- Cart, checkout, Shopify variant ID handling.
+- Any other part of the product page, the shop page, or the homepage. Only the "More from the collection" row and its links change.
+
+## Use the site's existing structure
+- CATEGORY: use the category the site already assigns to each product (the HOODIES / SHIRTS / ONESIES / ACCESSORIES label shown above the product title). Find where that mapping lives in the code and reuse it. Mugs are ACCESSORIES.
+- ADULT + YOUTH GROUPING: the shop page already groups adult and youth versions of a design into one card ("ADULT + YOUTH", "ADULT + YOUTH + TODDLER"). Reuse that same grouping logic so the row never shows two versions of the same design in the same category, and never shows a version of the current product's own design in the same category.
+- BEST-SELLING ORDER: get best-selling order from Shopify (Storefront API collection products with sortKey: BEST_SELLING) using the existing Shopify collections that match each site category: Hoodies → "adult-hoodies", Shirts → "adult-t-shirts", Onesies → "baby-onesies", Accessories → "mugs-1". If the site already has a better source for this mapping, use it and tell me.
+
+## Skip these products everywhere in the row
+- No image, no available variant, or no tags.
+- Duplicate/leftover handles: any handle ending in "-1", "-2", etc. when a version without the suffix exists; and generic blank-product handles like "short-sleeve-unisex-t-shirt", "toddler-short-sleeve-tee", "youth-heavy-blend-hoodie".
+- Anything the shop page already hides.
+
+## Design-name matching (loose)
+Design name = title with the item suffix removed. Suffixes (case-insensitive, match the longest first): "youth toddler shirt", "youth t-shirt", "youth hoodie", "youth shirt", "toddler shirt", "baby onesie", "t-shirt", "hoodie", "shirt", "onesie", "oneise", "mug".
+Normalize before comparing: lowercase, remove punctuation and apostrophes, treat "4"/"for", "2"/"to", "u"/"you", "n"/"and" as equal, collapse spaces.
+Two products are the "same design" if the normalized names are equal OR one fully starts with the other (e.g. "woo hah" matches "woo hah got you all in check").
+
+## Row logic — 4 cards
+Never show the current product's design twice, never show duplicates.
+1. Slots 1–2: the top 2 best-selling products in the current product's site category.
+2. Slot 3: the same design in a different category — prefer the Accessories (mug) version, then Shirts, then Hoodies. If none exists, the best-selling Accessories product.
+3. Slot 4: from the same site category, the product sharing the most tags with the current product — IGNORING generic tags: hip hop, music, rap, culture, black, shirt, hoodie, mug, onesie, youth, toddler, baby, old school.
+4. Fill any empty slot with the next best-selling product in the same site category.
+Kids rule: on a youth, toddler, or onesie product, all 4 cards must be kids items (youth/toddler/onesie). Never show adult products on a kids page.
+
+## Card image — each card shows a DIFFERENT color
+Process the 4 cards in order. For each card, pick the first color from this list that (a) the product has as a variant with its own variant.image and (b) no earlier card already used:
+Black, Red, Navy, Irish Green, Dark Heather, Indigo Blue, Sport Grey, then any remaining color.
+- Show that variant's image on the card.
+- Link the card to the product with that color preselected, using the exact ?color= format the site already uses (e.g. ?color=red — check how multi-word colors like Irish Green are written and match it).
+- Products with no real color option (mugs show "Default") use their featured image and do NOT use up a color.
+- Match color names case-insensitively.
+
+## Links to the shop page
+- Make the "MORE FROM THE COLLECTION" heading a link, and add a button under the row: "Shop all {Hoodies | Shirts | Onesies | Accessories} →" linking to /shop?category={same value the site's category links already use}.
+- Check and report: (a) does /shop?category=X actually filter on a fresh page load, desktop and mobile? (b) does Accessories show the mugs? (c) how many total products/cards does /shop list? If a link lands on an empty or unfiltered page, fix the link (not the shop page) and tell me.
+
+## Performance
+- Fetch only what's needed: the top ~30 best-selling products of the current category, a title search for the current design name, and the top of "mugs-1" if needed. Never load the whole catalog (thousands of products) client-side.
+- Lazy-load card images with explicit width/height so the layout doesn't shift. Keep the existing card styling.
+
+## When done
+1. Run a production build and fix any TypeScript errors.
+2. Test on: Stakes is High hoodie, Its All About The Benjamins hoodie, Stakes is High mug, a youth shirt, and a onesie. Confirm:
+   - 4 cards, no duplicates, no "-1" leftovers, current design not repeated
+   - every card is a different color, and clicking it opens that color
+   - kids pages only show kids items
+   - the heading and "Shop all" button land on a filtered, non-empty shop page
+3. With Meta Pixel Helper, confirm AddToCart and ViewContent still fire exactly ONCE.
+4. Send me a short summary: files changed, what the row shows on each test page, and what you found on the shop page.

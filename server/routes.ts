@@ -2,7 +2,8 @@ import type { Express, Request, Response, NextFunction } from "express";
 import type { Server } from "http";
 import { contactMessageSchema } from "../shared/schema";
 import { loadProducts, getProduct, forceRefreshProducts } from "./storage";
-import { createShopifyCheckout } from "./shopify-storefront";
+import { createShopifyCheckout, fetchCollectionBestSellers } from "./shopify-storefront";
+import { buildCollectionRecommendations } from "../shared/collection-recommendations";
 
 function getAllowedOrigins(): string[] {
   const origins: string[] = [];
@@ -94,6 +95,20 @@ export function registerRoutes(httpServer: Server, app: Express): void {
   app.use("/api", corsMiddleware, verifyAppToken);
   const productLimiter = rateLimit(60, 60_000);
   const contactLimiter = rateLimit(5, 60_000);
+
+  app.get("/api/products/:handle/recommendations", productLimiter, async (req, res) => {
+    try {
+      const products = await loadProducts();
+      const product = products.find((entry) => entry.handle === req.params.handle || String(entry.id) === req.params.handle);
+      if (!product) return res.status(404).json({ error: "Product not found" });
+      const bestSellers = await fetchCollectionBestSellers();
+      res.set("Cache-Control", "public, s-maxage=300, stale-while-revalidate=60")
+        .json(buildCollectionRecommendations(product, products, bestSellers));
+    } catch (error) {
+      console.error("Failed to load collection recommendations:", error);
+      res.status(502).json({ error: "Could not load collection recommendations" });
+    }
+  });
 
   app.get("/api/products", productLimiter, async (req, res) => {
     try {
