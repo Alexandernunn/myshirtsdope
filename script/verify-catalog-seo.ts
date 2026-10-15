@@ -755,7 +755,12 @@ async function verifyPageSpeedContracts(): Promise<void> {
   );
   assert(productDetail.includes("requestIdleCallback"));
   assert(productDetail.includes("enabled: secondaryContentEnabled"));
-  assert(productDetail.includes('loading="lazy"'));
+  const collectionCards = await readFile(path.resolve("client/src/components/collection-recommendations.tsx"), "utf8");
+  assert(productDetail.includes("<CollectionRecommendationRow"));
+  assert(collectionCards.includes('loading="lazy"'));
+  assert(collectionCards.includes("width={180}") && collectionCards.includes("height={180}"));
+  assert(!productDetail.includes('fetch("/data/products.json")'), "secondary PDP content must use bounded recommendation data");
+  assert(productDetail.includes("/data/recommendations/"));
   assert(productDetail.includes("min-h-[44px]"));
   const primaryProductQuery = productDetail.slice(
     productDetail.indexOf('queryKey: ["/api/products", handle]'),

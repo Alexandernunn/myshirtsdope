@@ -2,6 +2,7 @@ import type { Product } from "./schema";
 import { productPath } from "./product-url";
 import { variantValueSlug } from "./product-variant";
 import { groupProducts } from "../client/src/lib/product-grouping";
+import { chooseDistinctColorProducts } from "./recommendation-colors";
 
 export const CATEGORY_COLLECTIONS = {
   Hoodies: "adult-hoodies",
@@ -34,7 +35,6 @@ export interface CollectionRecommendations {
 const ITEM_SUFFIX = /\s+(?:youth toddler shirt|youth t-shirt|youth hoodie|youth shirt|toddler shirt|baby onesie|t-shirt|hoodie|shirt|onesie|oneise|mug)$/i;
 const GENERIC_TAGS = new Set("hip hop,music,rap,culture,black,shirt,hoodie,mug,onesie,youth,toddler,baby,old school".split(","));
 const BLANK_HANDLES = /^(?:short-sleeve-unisex-t-shirt|toddler-short-sleeve-tee|youth-heavy-blend-hoodie)(?:-\d+)?$/i;
-const COLOR_ORDER = ["black", "red", "navy", "irish green", "dark heather", "indigo blue", "sport grey"];
 
 export function designName(title: string): string {
   return title.trim().replace(ITEM_SUFFIX, "").normalize("NFKD").toLowerCase()
@@ -132,12 +132,14 @@ export function buildCollectionRecommendations(
     add(product);
   }
   const otherCategories = (["Accessories", "Shirts", "Hoodies", "Onesies"] as const).filter((entry) => entry !== category);
-  const matchingDesign = otherCategories.map((other) => ranked.find((product) =>
+  const matchingDesigns = otherCategories.flatMap((other) => ranked.filter((product) =>
     recommendationCategory(product) === other && sameDesign(product.name, current.name),
-  )).find(Boolean);
-  add(matchingDesign ?? ranked.find((product) =>
+  ));
+  const accessoryFallbacks = ranked.filter((product) =>
     recommendationCategory(product) === "Accessories" &&
-    !sameDesign(product.name, current.name) &&
+    !sameDesign(product.name, current.name),
+  );
+  add(matchingDesigns[0] ?? accessoryFallbacks.find((product) =>
     !chosen.some((entry) => sameDesign(entry.name, product.name)),
   ));
 
@@ -154,19 +156,14 @@ export function buildCollectionRecommendations(
     add(product);
   }
 
-  const usedColors = new Set<string>();
-  const cards = chosen.slice(0, 4).map((product): CollectionCard => {
-    const variants = (product.shopifyVariants ?? []).filter((variant) =>
-      variant.availableForSale && variant.imageUrl && !/^(default|default title)$/i.test(variant.color),
-    );
-    const ordered = [...variants].sort((a, b) => {
-      const aRank = COLOR_ORDER.indexOf(a.color.toLowerCase());
-      const bRank = COLOR_ORDER.indexOf(b.color.toLowerCase());
-      return (aRank < 0 ? COLOR_ORDER.length : aRank) - (bRank < 0 ? COLOR_ORDER.length : bRank);
-    });
-    const variant = ordered.find((entry) => !usedColors.has(entry.color.toLowerCase()));
+  const distinct = chooseDistinctColorProducts(chosen.slice(0, 4), [
+    sameCategory, sameCategory,
+    [...matchingDesigns, ...accessoryFallbacks, ...sameCategory],
+    [...tagMatches, ...sameCategory],
+  ], sameDesign);
+  const cards = distinct.products.map((product, index): CollectionCard => {
+    const variant = distinct.variants[index];
     const color = variant?.color ?? null;
-    if (color) usedColors.add(color.toLowerCase());
     const query = color ? `?${new URLSearchParams({ color: variantValueSlug(color) })}` : "";
     return {
       id: product.id, handle: product.handle, name: product.name, price: product.price,

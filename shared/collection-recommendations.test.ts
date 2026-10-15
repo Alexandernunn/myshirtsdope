@@ -109,3 +109,28 @@ test("missing cross-category match falls back to the best-selling mug, and fit s
   assert.equal(row.cards[2].id, mug.id);
   assert.deepEqual(row.fitProducts.map((entry) => entry.id), [current.id, youth.id]);
 });
+
+test("reassigns an earlier color before replacing a red-only same-design recommendation", () => {
+  const current = product("Current hoodie");
+  const first = product("First hoodie");
+  const second = product("Second hoodie");
+  const fourth = product("Fourth hoodie");
+  const shirt = product("Current shirt", "Shirts");
+  shirt.shopifyVariants = shirt.shopifyVariants!.filter((variant) => variant.color === "Red");
+  const row = buildCollectionRecommendations(current, [current, first, second, fourth, shirt], order([first, second, fourth], [shirt]));
+  assert.deepEqual(row.cards.map((card) => card.id), [first.id, second.id, shirt.id, fourth.id]);
+  assert.deepEqual(row.cards.map((card) => card.color), ["Black", "Navy", "Red", "Irish Green"]);
+});
+
+test("substitutes a recommendation only when the original products cannot have distinct colors", () => {
+  const current = product("Current hoodie");
+  const first = product("First hoodie");
+  const second = product("Second hoodie");
+  for (const entry of [first, second]) entry.shopifyVariants = entry.shopifyVariants!.filter((variant) => variant.color === "Black");
+  const remaining = ["Third", "Fourth", "Fifth"].map((name) => product(`${name} hoodie`));
+  const row = buildCollectionRecommendations(current, [current, first, second, ...remaining], order([first, second, ...remaining]));
+  assert.equal(row.cards.length, 4);
+  assert.equal(row.cards[0].id, first.id);
+  assert(!row.cards.some((card) => card.id === second.id));
+  assert.equal(new Set(row.cards.map((card) => card.color)).size, 4);
+});
