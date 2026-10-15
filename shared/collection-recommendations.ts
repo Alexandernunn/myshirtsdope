@@ -127,10 +127,7 @@ export function buildCollectionRecommendations(
   const add = (product: Product | undefined) => {
     if (product && !chosen.some((entry) => entry.id === product.id || sameDesign(entry.name, product.name))) chosen.push(product);
   };
-  for (const product of sameCategory) {
-    if (chosen.length === 2) break;
-    add(product);
-  }
+  add(sameCategory[0]);
   const otherCategories = (["Accessories", "Shirts", "Hoodies", "Onesies"] as const).filter((entry) => entry !== category);
   const matchingDesigns = otherCategories.flatMap((other) => ranked.filter((product) =>
     recommendationCategory(product) === other && sameDesign(product.name, current.name),
@@ -142,6 +139,10 @@ export function buildCollectionRecommendations(
   add(matchingDesigns[0] ?? accessoryFallbacks.find((product) =>
     !chosen.some((entry) => sameDesign(entry.name, product.name)),
   ));
+  for (const product of sameCategory) {
+    if (chosen.length >= 3) break;
+    add(product);
+  }
 
   const meaningfulTags = (product: Product) => new Set((product.tags ?? [])
     .map((tag) => tag.toLowerCase().replace(/[-_]/g, " ").replace(/\s+/g, " ").trim())
@@ -157,8 +158,9 @@ export function buildCollectionRecommendations(
   }
 
   const distinct = chooseDistinctColorProducts(chosen.slice(0, 4), [
-    sameCategory, sameCategory,
+    sameCategory,
     [...matchingDesigns, ...accessoryFallbacks, ...sameCategory],
+    sameCategory,
     [...tagMatches, ...sameCategory],
   ], sameDesign);
   const cards = distinct.products.map((product, index): CollectionCard => {

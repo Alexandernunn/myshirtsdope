@@ -39,6 +39,7 @@ async function verify() {
       assert(!(/-\d+$/.test(card.handle) && handles.has(card.handle.replace(/-\d+$/, ""))));
       assert(!/^(?:short-sleeve-unisex-t-shirt|toddler-short-sleeve-tee|youth-heavy-blend-hoodie)(?:-\d+)?$/.test(card.handle));
       assert(!row.cards.slice(0, index).some((other) => sameDesign(other.name, card.name)), `${current.handle}: duplicate design`);
+      if (sameDesign(current.name, card.name)) assert.equal(index, 1, `${current.handle}: matching design must be in slot two`);
       if (card.category === row.category) assert(!sameDesign(current.name, card.name), `${current.handle}: current design in same category`);
       if (isKidsProduct(current)) assert(isKidsProduct(product), `${current.handle}: adult on kids page`);
       const colorParam = new URL(card.href, "https://example.test").searchParams.get("color");

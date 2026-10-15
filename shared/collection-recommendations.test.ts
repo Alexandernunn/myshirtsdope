@@ -32,7 +32,7 @@ test("loose design matching removes longest suffix, normalizes terms, and matche
   assert(!sameDesign("Love hoodie", "Lovely shirt"));
 });
 
-test("slots use best-selling order, same-design mug, then meaningful-tag similarity", () => {
+test("slots use best seller, same-design mug in slot two, next best seller, then meaningful-tag similarity", () => {
   const current = product("Current hoodie");
   const first = product("Zed hoodie", "Hoodies", { tags: ["hip hop"] });
   const second = product("Bee hoodie", "Hoodies", { tags: ["rap"] });
@@ -41,7 +41,7 @@ test("slots use best-selling order, same-design mug, then meaningful-tag similar
   const mug = product("Current mug", "Accessories");
   const products = [alphabetic, second, current, mug, tagMatch, first];
   const row = buildCollectionRecommendations(current, products, order([first, second, alphabetic, tagMatch], [], [mug]));
-  assert.deepEqual(row.cards.map((card) => card.id), [first.id, second.id, mug.id, tagMatch.id]);
+  assert.deepEqual(row.cards.map((card) => card.id), [first.id, mug.id, second.id, tagMatch.id]);
   assert.deepEqual(row.cards.map((card) => card.color), ["Black", "Red", "Navy", "Irish Green"]);
   for (const card of row.cards) {
     const target = products.find((entry) => entry.id === card.id)!;
@@ -93,10 +93,10 @@ test("default mugs use featured image without consuming a color; cross-category 
   });
   const shirt = product("Current shirt", "Shirts");
   const row = buildCollectionRecommendations(current, [current, first, second, fourth, shirt, mug], order([first, second, fourth], [shirt], [mug]));
-  assert.equal(row.cards[2].id, mug.id);
-  assert.equal(row.cards[2].color, null);
-  assert.equal(row.cards[2].imageUrl, mug.imageUrl);
-  assert(!row.cards[2].href.includes("?"));
+  assert.equal(row.cards[1].id, mug.id);
+  assert.equal(row.cards[1].color, null);
+  assert.equal(row.cards[1].imageUrl, mug.imageUrl);
+  assert(!row.cards[1].href.includes("?"));
   assert.equal(row.cards[3].color, "Navy");
 });
 
@@ -106,7 +106,7 @@ test("missing cross-category match falls back to the best-selling mug, and fit s
   const others = ["Alpha", "Beta", "Gamma"].map((name) => product(`${name} hoodie`));
   const mug = product("Popular mug", "Accessories");
   const row = buildCollectionRecommendations(current, [current, youth, ...others, mug], order(others, [], [mug]));
-  assert.equal(row.cards[2].id, mug.id);
+  assert.equal(row.cards[1].id, mug.id);
   assert.deepEqual(row.fitProducts.map((entry) => entry.id), [current.id, youth.id]);
 });
 
@@ -118,8 +118,8 @@ test("reassigns an earlier color before replacing a red-only same-design recomme
   const shirt = product("Current shirt", "Shirts");
   shirt.shopifyVariants = shirt.shopifyVariants!.filter((variant) => variant.color === "Red");
   const row = buildCollectionRecommendations(current, [current, first, second, fourth, shirt], order([first, second, fourth], [shirt]));
-  assert.deepEqual(row.cards.map((card) => card.id), [first.id, second.id, shirt.id, fourth.id]);
-  assert.deepEqual(row.cards.map((card) => card.color), ["Black", "Navy", "Red", "Irish Green"]);
+  assert.deepEqual(row.cards.map((card) => card.id), [first.id, shirt.id, second.id, fourth.id]);
+  assert.deepEqual(row.cards.map((card) => card.color), ["Black", "Red", "Navy", "Irish Green"]);
 });
 
 test("substitutes a recommendation only when the original products cannot have distinct colors", () => {

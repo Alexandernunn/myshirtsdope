@@ -9,6 +9,12 @@ Keep every clothing recommendation card a different color. Preserve the chosen p
 
 **How to apply:** Use genuine variant images and links that select the displayed color. Do not invent images or treat a colored garment as colorless to hide a conflict. Default mugs use their featured images without consuming a clothing color.
 
+Put the same-design recommendation in slot two, ahead of the second same-category best seller.
+
+**Why:** The user explicitly asked for the matching design to take slot two.
+
+**How to apply:** Keep the matching item top-right in the mobile two-by-two grid, retaining cross-category preferences, kids-only restrictions, and distinct clothing colors.
+
 Product recommendations must work with the existing catalog, categories, and adult/youth grouping; do not require new Shopify collections, tags, or metafields. Kids product pages recommend only kids items.
 
 **Why:** These are explicit user constraints for product-page discovery.
