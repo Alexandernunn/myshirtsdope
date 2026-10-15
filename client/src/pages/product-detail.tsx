@@ -1,9 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-import { useParams, Link } from "wouter";
+import { useParams, Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, ShoppingCart, Check } from "lucide-react";
+import { AnimatedSearch } from "@/components/animated-search";
 import { useCart } from "@/lib/cart-context";
 import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -11,8 +12,9 @@ import { usePageTitle } from "@/hooks/use-page-title";
 import { findGroupForProduct, groupProducts, getProductForFit, getFitLabel, type FitType } from "@/lib/product-grouping";
 import { IMAGE_PRESETS, shopifyImageProps, shopifyImageUrl } from "@shared/shopify-image";
 import { getShopifyVariantTrackingData, trackEvent } from "@/lib/meta-capi";
-import type { Product } from "@shared/schema";
+import type { Product, ProductSummary } from "@shared/schema";
 import { productPath } from "@shared/product-url";
+import { getColorImageVariants, pickVariantIndex } from "@shared/image-variants";
 import {
   findRequestedVariant,
   getDefaultVariant,
@@ -84,6 +86,43 @@ function getColorHex(colorName: string): string | null {
 const PDP_HERO_PRELOAD_ATTRIBUTE = "data-pdp-hero-preload";
 const PRERENDERED_PRODUCT_DATA_SELECTOR = 'script[data-prerendered-product="true"]';
 
+function RelatedProductCard({ product, index }: { product: Product | ProductSummary; index: number }) {
+  const summaryVariants = "colorImageVariants" in product ? product.colorImageVariants : undefined;
+  const colorVariants = summaryVariants?.length
+    ? summaryVariants
+    : getColorImageVariants("colorImages" in product ? product.colorImages : null);
+  const pickedIndex = colorVariants.length
+    ? ((pickVariantIndex(product.id, index, colorVariants.length) % colorVariants.length) + colorVariants.length) % colorVariants.length
+    : -1;
+  const [imageSrc, setImageSrc] = useState(
+    pickedIndex >= 0 ? colorVariants[pickedIndex] : product.imageUrl,
+  );
+
+  return (
+    <Link href={productPath(product)} data-testid={`link-related-${product.id}`}>
+      <div className="bg-card border border-card-border rounded-md overflow-hidden hover-elevate cursor-pointer flex-shrink-0" style={{ width: "180px" }}>
+        <div className="overflow-hidden" style={{ height: "180px" }}>
+          <img
+            {...shopifyImageProps(imageSrc, IMAGE_PRESETS.relatedCard)}
+            alt={product.name}
+            width={180}
+            height={180}
+            className="w-full h-full object-cover"
+            loading="lazy"
+            onError={() => {
+              if (imageSrc !== product.imageUrl) setImageSrc(product.imageUrl);
+            }}
+          />
+        </div>
+        <div className="p-2">
+          <p className="font-display text-xs text-card-foreground line-clamp-1">{product.name}</p>
+          <p className="font-pixel text-[8px] text-neon-yellow mt-0.5">${product.price.toFixed(2)}</p>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
 function readPrerenderedProduct(root: ParentNode, expectedHandle: string | undefined): Product | undefined {
   const serializedProduct = root.querySelector(PRERENDERED_PRODUCT_DATA_SELECTOR)?.textContent;
   if (!serializedProduct) return undefined;
@@ -144,6 +183,7 @@ function usePdpHeroPreload(imageUrl: string | undefined): void {
 
 export default function ProductDetail() {
   const { handle } = useParams<{ handle: string }>();
+  const [, setLocation] = useLocation();
   const { addToCart, isAdding } = useCart();
   const { toast } = useToast();
   const prerenderedProduct = typeof document === "undefined"
@@ -172,6 +212,7 @@ export default function ProductDetail() {
   const [fitProductId, setFitProductId] = useState<number | null>(null);
   const [transitioning, setTransitioning] = useState(false);
   const [secondaryProductId, setSecondaryProductId] = useState<number | null>(null);
+  const [productSearch, setProductSearch] = useState("");
 
   const { data: product, isLoading } = useQuery<Product>({
     queryKey: ["/api/products", handle],
@@ -526,12 +567,22 @@ export default function ProductDetail() {
     <div className="min-h-screen">
       <div className="retro-divider" />
       <div className="max-w-[1400px] mx-auto px-6 sm:px-8 py-10">
-        <Link href="/shop" data-testid="link-back-shop">
-          <Button variant="ghost" size="sm" className="mb-6 font-display text-sm gap-2">
-            <ArrowLeft className="w-4 h-4" />
-            Back to Shop
-          </Button>
-        </Link>
+        <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <Link href="/shop" data-testid="link-back-shop">
+            <Button variant="ghost" size="sm" className="font-display text-sm gap-2">
+              <ArrowLeft className="w-4 h-4" />
+              Back to Shop
+            </Button>
+          </Link>
+          <AnimatedSearch
+            value={productSearch}
+            onChange={setProductSearch}
+            onSubmit={(query) => setLocation(`/shop?q=${encodeURIComponent(query)}`)}
+            className="w-full sm:max-w-xs"
+            inputClassName="h-10"
+            testId="input-product-search"
+          />
+        </div>
 
         <div className="flex flex-col md:flex-row items-start gap-6 md:gap-10">
           <div className="w-full md:max-w-[320px] flex-shrink-0">
@@ -693,25 +744,8 @@ export default function ProductDetail() {
               MORE FROM THE COLLECTION
             </h2>
             <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-thin">
-              {related.map((g) => (
-                <Link key={g.adult.id} href={productPath(g.adult)} data-testid={`link-related-${g.adult.id}`}>
-                  <div className="bg-card border border-card-border rounded-md overflow-hidden hover-elevate cursor-pointer flex-shrink-0" style={{ width: "180px" }}>
-                    <div className="overflow-hidden" style={{ height: "180px" }}>
-                      <img
-                        {...shopifyImageProps(g.adult.imageUrl, IMAGE_PRESETS.relatedCard)}
-                        alt={g.adult.name}
-                        width={180}
-                        height={180}
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                      />
-                    </div>
-                    <div className="p-2">
-                      <p className="font-display text-xs text-card-foreground line-clamp-1">{g.adult.name}</p>
-                      <p className="font-pixel text-[8px] text-neon-yellow mt-0.5">${g.adult.price.toFixed(2)}</p>
-                    </div>
-                  </div>
-                </Link>
+              {related.map((g, index) => (
+                <RelatedProductCard key={g.adult.id} product={g.adult} index={index} />
               ))}
             </div>
           </div>

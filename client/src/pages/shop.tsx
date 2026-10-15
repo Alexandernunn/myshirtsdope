@@ -1,12 +1,12 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link, useSearch } from "wouter";
+import { Link, useLocation, useSearch } from "wouter";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Input } from "@/components/ui/input";
+import { AnimatedSearch } from "@/components/animated-search";
 import { usePageTitle } from "@/hooks/use-page-title";
-import { Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   groupProducts,
   interleaveGroups,
@@ -24,82 +24,6 @@ import {
 } from "@/lib/prerendered-data";
 
 const PRODUCTS_PER_PAGE = 15;
-
-const PLACEHOLDER_WORDS = [
-  "Compton",
-  "Outkast",
-  "East Coast",
-  "Detroit",
-  "Wu-Tang",
-  "Atlanta",
-  "Neo Soul",
-  "Biggie",
-  "West Coast",
-  "Aaliyah",
-  "New York",
-  "Hoodies",
-  "Houston",
-  "Hip Hop",
-  "Miami",
-  "R&B",
-];
-
-function useTypingPlaceholder() {
-  const [placeholder, setPlaceholder] = useState("Search...");
-  const wordIndex = useRef(0);
-  const charIndex = useRef(0);
-  const isDeleting = useRef(false);
-  const isPaused = useRef(false);
-  const isFocused = useRef(false);
-  const hasInput = useRef(false);
-
-  const tick = useCallback(() => {
-    if (isFocused.current || hasInput.current) return;
-
-    const currentWord = PLACEHOLDER_WORDS[wordIndex.current];
-
-    if (isPaused.current) return;
-
-    if (!isDeleting.current) {
-      charIndex.current++;
-      setPlaceholder("Search " + currentWord.substring(0, charIndex.current) + "...");
-
-      if (charIndex.current === currentWord.length) {
-        isPaused.current = true;
-        setTimeout(() => {
-          isPaused.current = false;
-          isDeleting.current = true;
-        }, 1800);
-      }
-    } else {
-      charIndex.current--;
-      setPlaceholder("Search " + currentWord.substring(0, charIndex.current) + "...");
-
-      if (charIndex.current === 0) {
-        isDeleting.current = false;
-        wordIndex.current = (wordIndex.current + 1) % PLACEHOLDER_WORDS.length;
-      }
-    }
-  }, []);
-
-  const setFocused = useCallback((focused: boolean) => {
-    isFocused.current = focused;
-    if (focused) {
-      setPlaceholder("Search...");
-    }
-  }, []);
-
-  const setHasInput = useCallback((has: boolean) => {
-    hasInput.current = has;
-  }, []);
-
-  useEffect(() => {
-    const id = setInterval(tick, 80);
-    return () => clearInterval(id);
-  }, [tick]);
-
-  return { placeholder, setFocused, setHasInput };
-}
 
 const categories = ["All", "Shirts", "Hoodies", "Onesies", "Accessories"];
 
@@ -217,11 +141,12 @@ function ProductSkeleton() {
 export default function Shop() {
   usePageTitle("Shop");
   const searchString = useSearch();
+  const [, setLocation] = useLocation();
   const params = new URLSearchParams(searchString);
   const activeCategory = params.get("category") || "All";
-  const [searchQuery, setSearchQuery] = useState("");
+  const urlQuery = params.get("q") || "";
+  const [searchQuery, setSearchQuery] = useState(urlQuery);
   const [currentPage, setCurrentPage] = useState(1);
-  const { placeholder: typingPlaceholder, setFocused, setHasInput } = useTypingPlaceholder();
 
   const [initialSource, setInitialSource] = useState<"chunk" | "full">("chunk");
   const [shouldLoadRest, setShouldLoadRest] = useState(false);
@@ -261,6 +186,11 @@ export default function Shop() {
   const loadRestCatalog = useCallback(() => {
     setShouldLoadRest(true);
   }, []);
+
+  useEffect(() => {
+    setSearchQuery(urlQuery);
+    if (urlQuery.trim()) loadRestCatalog();
+  }, [urlQuery, loadRestCatalog]);
 
   useEffect(() => {
     if (initialSource !== "chunk" || initialProducts.length === 0) return;
@@ -391,29 +321,17 @@ export default function Shop() {
           </p>
         </div>
 
-        <div className="relative max-w-sm mx-auto mb-6">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            type="text"
-            placeholder={searchQuery ? "" : typingPlaceholder}
-            value={searchQuery}
-            onChange={(e) => {
-                loadRestCatalog();
-              setSearchQuery(e.target.value);
-              setHasInput(e.target.value.length > 0);
-            }}
-             onFocus={() => {
-               setFocused(true);
-               loadRestCatalog();
-             }}
-            onBlur={() => {
-              setFocused(false);
-              setHasInput(searchQuery.length > 0);
-            }}
-            className="pl-10 bg-card border-card-border font-display text-sm"
-            data-testid="input-search"
-          />
-        </div>
+        <AnimatedSearch
+          value={searchQuery}
+          onChange={(value) => {
+            loadRestCatalog();
+            setSearchQuery(value);
+          }}
+          onSubmit={(value) => setLocation(`/shop?q=${encodeURIComponent(value)}`)}
+          onFocus={loadRestCatalog}
+          className="max-w-sm mx-auto mb-6"
+          testId="input-search"
+        />
 
         <div className="flex flex-wrap items-center justify-center gap-2 mb-8">
           {categories.map((cat) => (
