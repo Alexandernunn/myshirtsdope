@@ -590,6 +590,8 @@ export default function ProductDetail() {
               <img
                 {...shopifyImageProps(displayImage || resolvedImage || activeProduct.imageUrl, IMAGE_PRESETS.productDetail)}
                 alt={activeProduct.name}
+                width={640}
+                height={640}
                 className={`w-full h-full object-contain transition-opacity duration-150 ${imageFading ? "opacity-0" : "opacity-100"}`}
                 loading="eager"
                 {...({ fetchpriority: "high" } as Record<string, string>)}
@@ -663,6 +665,8 @@ export default function ProductDetail() {
                         else setSelectedSize(size);
                       }}
                       data-testid={`button-size-${size}`}
+                      aria-pressed={resolvedSize === size}
+                      aria-label={`Size ${size}`}
                       className={`font-display text-xs px-3 py-1.5 min-h-[44px] rounded-md border transition-all ${
                           resolvedSize === size
                           ? "bg-neon-blue/20 border-neon-blue text-neon-blue"
@@ -686,6 +690,8 @@ export default function ProductDetail() {
                         key={color}
                         onClick={() => handleColorSelect(color)}
                         data-testid={`button-color-${color}`}
+                        aria-pressed={resolvedColor === color}
+                        aria-label={`Color ${color}`}
                         className={`font-display text-xs px-3 py-1.5 min-h-[44px] rounded-md border transition-all flex items-center gap-1.5 ${
                           resolvedColor === color
                             ? "bg-neon-yellow/20 border-neon-yellow text-neon-yellow shadow-[0_0_8px_hsl(52_100%_50%/0.3)]"
