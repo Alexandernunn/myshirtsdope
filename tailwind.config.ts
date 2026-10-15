@@ -8,6 +8,7 @@ export default {
     "./client/src/main.tsx",
     "./client/src/components/culture-deck.tsx",
     "./client/src/components/animated-search.tsx",
+    "./client/src/components/collection-recommendations.tsx",
     "./client/src/components/footer.tsx",
     "./client/src/components/navbar.tsx",
     "./client/src/components/starfield.tsx",

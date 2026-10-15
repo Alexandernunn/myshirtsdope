@@ -19,16 +19,16 @@ export function CollectionRecommendationRow({
           MORE FROM THE COLLECTION
         </Link>
       </h2>
-      <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-thin">
+      <div className="grid grid-cols-2 gap-3 pb-4 sm:flex sm:gap-3 sm:overflow-x-auto sm:scrollbar-thin">
         {data.cards.map((card) => (
           <Link
             key={card.id}
             href={card.href}
             data-testid={`link-related-${card.id}`}
-            className="flex-shrink-0"
+            className="min-w-0 sm:flex-shrink-0"
           >
-            <div className="bg-card border border-card-border rounded-md overflow-hidden hover-elevate cursor-pointer flex-shrink-0" style={{ width: "180px" }}>
-              <div className="overflow-hidden" style={{ height: "180px" }}>
+            <div className="w-full min-w-0 bg-card border border-card-border rounded-md overflow-hidden hover-elevate cursor-pointer sm:w-[180px] sm:flex-shrink-0">
+              <div className="aspect-square overflow-hidden sm:h-[180px] sm:aspect-auto">
                 <img
                   {...shopifyImageProps(card.imageUrl, IMAGE_PRESETS.relatedCard)}
                   alt={card.color ? `${card.name} — ${card.color}` : card.name}

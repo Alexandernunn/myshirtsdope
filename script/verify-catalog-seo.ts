@@ -765,6 +765,13 @@ async function verifyPageSpeedContracts(): Promise<void> {
   assert(productDetail.includes("<CollectionRecommendationRow"));
   assert(collectionCards.includes('loading="lazy"'));
   assert(collectionCards.includes("width={180}") && collectionCards.includes("height={180}"));
+  assert(collectionCards.includes("grid-cols-2") && collectionCards.includes("sm:flex"), "recommendations must use a two-column mobile grid and retain the desktop row");
+  assert(collectionCards.includes("aspect-square") && collectionCards.includes("sm:w-[180px]"), "recommendation images must stay square on mobile and retain desktop card sizing");
+  const cssFiles = (await readdir(path.join(OUTPUT_DIR, "assets"))).filter((file) => file.endsWith(".css"));
+  const builtCss = (await Promise.all(cssFiles.map((file) => readFile(path.join(OUTPUT_DIR, "assets", file), "utf8")))).join("\n");
+  for (const selector of [".sm\\:flex{", ".sm\\:w-\\[180px\\]", ".sm\\:h-\\[180px\\]", ".sm\\:overflow-x-auto{"]) {
+    assert(builtCss.includes(selector), `the built stylesheet is missing recommendation responsive styling: ${selector}`);
+  }
   assert(!productDetail.includes('fetch("/data/products.json")'), "secondary PDP content must use bounded recommendation data");
   assert(productDetail.includes("/data/recommendations/"));
   assert(productDetail.includes("min-h-[44px]"));

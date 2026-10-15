@@ -20,3 +20,15 @@ Load recommendations as soon as the product is known, without waiting for browse
 **Why:** The user reported that suggestions sometimes appeared only after clicking a size and asked for them to appear faster.
 
 **How to apply:** Keep the recommendation request independent from deferred optional image enrichment. Do not reintroduce an idle or interaction gate for the row.
+
+Mobile recommendations should be a clean, symmetrical two-by-two grid with equal spacing and natural vertical browsing rather than a sideways carousel.
+
+**Why:** The user explicitly asked for a two-by-two mobile layout where they can scroll down and everything is spaced properly.
+
+**How to apply:** Preserve equal-width cards and square image areas on phones without changing the desktop row or recommendation choices.
+
+Verify responsive styling in the generated CSS and at both phone and desktop sizes, not merely by checking class names in source.
+
+**Why:** A component omitted from Tailwind's curated source scan can pass builds and source-level tests while silently losing its responsive overrides.
+
+**How to apply:** Include newly extracted components in the style scan and confirm emitted breakpoint rules before accepting responsive-layout work.
