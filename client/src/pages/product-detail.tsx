@@ -588,9 +588,14 @@ export default function ProductDetail() {
             </div>
 
             <div className="hidden md:block">
-              <p className="text-sm text-muted-foreground leading-relaxed" data-testid="text-product-description">
-                {activeProduct.description}
-              </p>
+              <details className="border border-card-border rounded-md overflow-hidden" data-testid="details-product-description-desktop">
+                <summary className="font-pixel text-[9px] text-neon-blue px-4 py-3 cursor-pointer select-none">
+                  DETAILS
+                </summary>
+                <p className="text-sm text-muted-foreground leading-relaxed px-4 pb-4" data-testid="text-product-description">
+                  {activeProduct.description}
+                </p>
+              </details>
             </div>
 
             {hasMutipleFits && group && (
