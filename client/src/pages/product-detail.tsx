@@ -567,7 +567,7 @@ export default function ProductDetail() {
               <h1 className="font-display text-2xl sm:text-3xl text-foreground mb-1.5" data-testid="text-product-name">
                 {activeProduct.name}
               </h1>
-              <div className="min-h-[44px] flex items-center flex-nowrap gap-2" data-testid="product-price-container">
+              <div className="min-h-[44px] flex items-center flex-nowrap gap-5" data-testid="product-price-container">
                 <p className="font-pixel text-sm text-neon-yellow neon-text-yellow" data-testid="text-product-price">
                   ${(Number.isFinite(selectedPrice) ? selectedPrice : activeProduct.price)!.toFixed(2)}
                 </p>
@@ -575,7 +575,7 @@ export default function ProductDetail() {
                   onClick={handleAddToCart}
                   disabled={isAdding || justAdded || !resolvedVariant?.availableForSale}
                   data-testid="button-add-to-cart-mobile"
-                  className={`md:hidden shrink-0 whitespace-nowrap font-pixel text-[8px] px-2 min-h-[44px] gap-1 no-default-hover-elevate no-default-active-elevate transition-all active:scale-[0.97] ${
+                  className={`md:hidden shrink-0 whitespace-nowrap font-pixel text-[9px] px-3 min-h-[44px] gap-2 no-default-hover-elevate no-default-active-elevate transition-all active:scale-[0.97] ${
                     justAdded
                       ? "bg-neon-green border-neon-green text-black"
                       : "bg-neon-blue border-neon-blue text-white hover:shadow-[0_0_20px_hsl(200_100%_55%/0.6)]"
