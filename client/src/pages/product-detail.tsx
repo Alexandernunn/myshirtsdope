@@ -587,17 +587,6 @@ export default function ProductDetail() {
               </div>
             </div>
 
-            <div className="hidden md:block">
-              <details className="border border-card-border rounded-md overflow-hidden" data-testid="details-product-description-desktop">
-                <summary className="font-pixel text-[9px] text-neon-blue px-4 py-3 cursor-pointer select-none">
-                  DETAILS
-                </summary>
-                <p className="text-sm text-muted-foreground leading-relaxed px-4 pb-4" data-testid="text-product-description">
-                  {activeProduct.description}
-                </p>
-              </details>
-            </div>
-
             {hasMutipleFits && group && (
               <div>
                 <label className="font-pixel text-[8px] text-muted-foreground block mb-2">SELECT FIT</label>
@@ -687,15 +676,6 @@ export default function ProductDetail() {
               </div>
             </div>
 
-            <details className="md:hidden border border-card-border rounded-md overflow-hidden" data-testid="details-product-description">
-              <summary className="font-pixel text-[9px] text-neon-blue px-4 py-3 cursor-pointer select-none">
-                DETAILS
-              </summary>
-              <p className="text-sm text-muted-foreground leading-relaxed px-4 pb-4" data-testid="text-product-description-mobile">
-                {activeProduct.description}
-              </p>
-            </details>
-
             <div className="retro-divider my-1" />
 
             <Button
@@ -711,6 +691,26 @@ export default function ProductDetail() {
               {justAdded ? <Check className="w-4 h-4" /> : <ShoppingCart className="w-4 h-4" />}
               {justAdded ? "ADDED!" : resolvedVariant?.availableForSale ? "ADD TO CART" : "SOLD OUT"}
             </Button>
+
+            <div className="hidden md:block">
+              <details className="border border-card-border rounded-md overflow-hidden" data-testid="details-product-description-desktop">
+                <summary className="font-pixel text-[9px] text-neon-blue px-4 py-3 cursor-pointer select-none">
+                  DETAILS
+                </summary>
+                <p className="text-sm text-muted-foreground leading-relaxed px-4 pb-4" data-testid="text-product-description">
+                  {activeProduct.description}
+                </p>
+              </details>
+            </div>
+
+            <details className="md:hidden border border-card-border rounded-md overflow-hidden" data-testid="details-product-description">
+              <summary className="font-pixel text-[9px] text-neon-blue px-4 py-3 cursor-pointer select-none">
+                DETAILS
+              </summary>
+              <p className="text-sm text-muted-foreground leading-relaxed px-4 pb-4" data-testid="text-product-description-mobile">
+                {activeProduct.description}
+              </p>
+            </details>
           </div>
         </div>
 
