@@ -643,11 +643,18 @@ async function verifyPageSpeedContracts(): Promise<void> {
   ]);
 
   assert(template.includes('<link rel="preconnect" href="https://cdn.shopify.com" crossorigin />'));
+  const publishedHeaders = await readFile(path.join(OUTPUT_DIR, "_headers"), "utf8");
+  const headerRules = publishedHeaders.split(/\r?\n/).map((line) => line.trim())
+    .filter((line) => line && !line.startsWith("#"));
+  assert.deepEqual(headerRules, [
+    "/assets/*",
+    "Cache-Control: public, max-age=31536000, immutable",
+  ], "The published _headers file must cache only hashed assets, not HTML");
   const fontRules = [...template.matchAll(/@font-face\s*\{([^}]*)\}/g)].map((match) => match[1]);
   for (const font of ["Inter", "Press Start 2P", "Permanent Marker"]) {
     const fontRule = fontRules.find((rule) => rule.includes(`font-family: "${font}";`));
     assert(fontRule, `${font} @font-face rule is missing`);
-    assert(fontRule.includes("font-display: optional;"), `${font} must use font-display: optional`);
+    assert(fontRule.includes("font-display: swap;"), `${font} must use font-display: swap`);
   }
   assert(template.includes('font-family: "Inter Fallback"'));
   assert(template.includes('font-family: "Press Start 2P Fallback"'));
