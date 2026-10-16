@@ -572,7 +572,7 @@ export default function ProductDetail() {
                 data-testid="text-etsy-social-proof"
               >
                 <span aria-hidden="true" className="text-neon-yellow">★★★★★</span>
-                <span className="text-foreground">4.9 · 2,500+ sold on Etsy</span>
+                <span className="text-foreground">· 2,500+ sold on Etsy</span>
               </p>
               <div className="min-h-[44px] flex items-center flex-nowrap gap-5" data-testid="product-price-container">
                 <p className="font-pixel text-sm text-neon-yellow neon-text-yellow" data-testid="text-product-price">
