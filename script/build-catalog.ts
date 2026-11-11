@@ -5,7 +5,7 @@ import { mkdir, writeFile } from "fs/promises";
 import path from "path";
 import { prerenderCatalog } from "./prerender-catalog";
 import { generateSitemap } from "./generate-sitemap";
-import { FEATURED_SHOP_PRODUCT_IDS } from "../client/src/lib/product-grouping";
+import { FEATURED_SHOP_PRODUCT_IDS, selectBestSellerProducts } from "../client/src/lib/product-grouping";
 import { hasValidMerchantPrice } from "./storefront-schema";
 import { consolidateCatalog } from "../shared/catalog-consolidation";
 import { buildCollectionRecommendations } from "../shared/collection-recommendations";
@@ -85,10 +85,12 @@ async function buildCatalog() {
     };
   });
 
-  const primaryHeroName = "A Milli youth shirt";
-  const featuredProducts = FEATURED_SHOP_PRODUCT_IDS
+  const pinnedProducts = FEATURED_SHOP_PRODUCT_IDS
     .map((id) => slim.find((product) => product.id === id))
     .filter((product): product is ProductSummary => Boolean(product));
+  const featuredProducts = Array.from(new Map(
+    [...selectBestSellerProducts(slim), ...pinnedProducts].map((product) => [product.id, product]),
+  ).values());
   const featuredIds = new Set(featuredProducts.map((product) => product.id));
   const remainingProducts = slim.filter((product) => !featuredIds.has(product.id));
   const slimInitial = [
@@ -97,16 +99,7 @@ async function buildCatalog() {
   ];
   const initialIds = new Set(slimInitial.map((product) => product.id));
   const slimRest = slim.filter((product) => !initialIds.has(product.id));
-  const primaryDeckProduct = slim.find((product) => product.name === primaryHeroName);
-  const deckCandidates = slim.filter((product) => product.name !== primaryHeroName);
-  const deckSlots = Math.max(0, 8 - (primaryDeckProduct ? 1 : 0));
-  const deckProducts = [
-    ...(primaryDeckProduct ? [primaryDeckProduct] : []),
-    ...Array.from({ length: Math.min(deckSlots, deckCandidates.length) }, (_, index) => {
-      const candidateIndex = Math.floor((index * deckCandidates.length) / deckSlots);
-      return deckCandidates[candidateIndex];
-    }),
-  ];
+  const deckProducts = selectBestSellerProducts(slim, 8);
 
   const outDir = path.resolve("dist/public/data");
   await mkdir(outDir, { recursive: true });

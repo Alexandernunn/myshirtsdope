@@ -10,6 +10,7 @@ import {
   verifyShopifyWebhookSignature,
 } from "../server/shopify-catalog-webhook";
 import type { Product, ProductSummary } from "../shared/schema";
+import { BEST_SELLER_PRODUCT_HANDLES } from "../client/src/lib/product-grouping";
 import { POLICY_PAGES, PUBLIC_TRUST_PATHS, STORE_SUPPORT_EMAIL } from "../shared/store-pages";
 import {
   findRequestedVariant,
@@ -749,7 +750,11 @@ async function verifyPageSpeedContracts(): Promise<void> {
   assert(!shop.includes("requestIdleCallback(loadAfterFirstPaint"));
   const deckProducts = JSON.parse(deckData);
   assert(Array.isArray(deckProducts) && deckProducts.length === 8, "culture deck payload must contain eight products");
-  assert(deckProducts.some((product: ProductSummary) => product.name === "A Milli youth shirt"), "culture deck payload must include the primary hero product");
+  assert.deepEqual(
+    deckProducts.map((product: ProductSummary) => product.handle),
+    BEST_SELLER_PRODUCT_HANDLES.slice(0, 8),
+    "culture deck must show only the selected best sellers in the same order as the shop",
+  );
   assert(productDetail.includes('data-testid="product-hero-image-container"'));
   assert(productDetail.includes("aspect-square"));
   assert(productDetail.includes('loading="eager"'));

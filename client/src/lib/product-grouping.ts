@@ -18,6 +18,42 @@ export interface ProductGroup {
 
 export const FEATURED_SHOP_PRODUCT_IDS = [7281451270208] as const;
 
+// Merchant-selected best sellers: four lead designs, then mixed product types.
+export const BEST_SELLER_PRODUCT_HANDLES = [
+  "dilla-detroit-la-hoodie",
+  "stakes-is-high-hoodie",
+  "phife-check-hoodie",
+  "i-miss-the-old-kanye-mug",
+  "dilla-detroit-la-baby-onesie",
+  "stakes-is-high-mug",
+  "phife-check-onesie",
+  "dilla-mug-d-la-mug",
+  "stakes-is-high-baby-onesie",
+  "phife-check-shirt",
+  "dilla-detroit-la-shirt",
+  "stakes-is-high-shirt",
+] as const;
+
+export function selectBestSellerProducts<T extends { handle?: string }>(
+  products: readonly T[],
+  limit: number = BEST_SELLER_PRODUCT_HANDLES.length,
+): T[] {
+  const byHandle = new Map(products.map((product) => [product.handle, product]));
+  return BEST_SELLER_PRODUCT_HANDLES.flatMap((handle) => {
+    const product = byHandle.get(handle);
+    return product ? [product] : [];
+  }).slice(0, limit);
+}
+
+export function orderShopAllGroups(groups: ProductGroup[]): ProductGroup[] {
+  const ordered = prioritizeFeaturedGroups(interleaveGroups(groups));
+  const rank = new Map<string, number>(BEST_SELLER_PRODUCT_HANDLES.map((handle, index) => [handle, index]));
+  return ordered.sort((a, b) =>
+    (rank.get(a.adult.handle ?? "") ?? Number.MAX_SAFE_INTEGER) -
+    (rank.get(b.adult.handle ?? "") ?? Number.MAX_SAFE_INTEGER),
+  );
+}
+
 function getBaseName(name: string): string {
   return name
     .replace(YOUTH_KEYWORDS, "")

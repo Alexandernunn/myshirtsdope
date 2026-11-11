@@ -4,8 +4,7 @@ import type { Product, ProductSummary } from "../shared/schema";
 import {
   getFitBadgeLabel,
   groupProducts,
-  interleaveGroups,
-  prioritizeFeaturedGroups,
+  orderShopAllGroups,
   type ProductGroup,
 } from "../client/src/lib/product-grouping";
 import { pickVariantIndex } from "../shared/image-variants";
@@ -95,7 +94,7 @@ export function computeShopLcpImageUrl(slimInitial: ProductSummary[]): string | 
 }
 
 function computeShopLcpImage(slimInitial: ProductSummary[]): ShopLcpImage | null {
-  const groups = prioritizeFeaturedGroups(interleaveGroups(groupProducts(slimInitial)));
+  const groups = orderShopAllGroups(groupProducts(slimInitial));
   const first = groups[0];
   if (!first) return null;
   const product = first.adult;
@@ -416,7 +415,7 @@ function renderStaticProductCard(group: ProductGroup, index: number): string {
 }
 
 function renderShopContent(slimInitial: ProductSummary[]): string {
-  const groups = prioritizeFeaturedGroups(interleaveGroups(groupProducts(slimInitial)));
+  const groups = orderShopAllGroups(groupProducts(slimInitial));
   const visibleGroups = groups.slice(0, 15);
   const cards = visibleGroups.map((group, index) => renderStaticProductCard(group, index)).join("");
   const categoryLinks = ["All", "Shirts", "Hoodies", "Onesies", "Accessories"].map((category) => `
@@ -478,9 +477,7 @@ function renderShopPage(
   lcpImage: ShopLcpImage,
 ): string {
   const canonicalUrl = `${SITE_URL}/shop`;
-  const visibleSchemaProducts = prioritizeFeaturedGroups(
-    interleaveGroups(groupProducts(products)),
-  )
+  const visibleSchemaProducts = orderShopAllGroups(groupProducts(products))
     .slice(0, 15)
     .map((group) => group.adult);
   const html = applyPageMetadata(template, {
@@ -534,6 +531,9 @@ function renderHomePage(template: string, deckProducts: ProductSummary[]): strin
     ogType: "website",
     imageUrl: `${SITE_URL}/favicon.png`,
     jsonLd: homePageSchema(SITE_URL),
+    preloadImage: deckProducts[0]
+      ? { url: deckProducts[0].imageUrl, preset: IMAGE_PRESETS.cultureCard, attributes: 'data-home-hero-preload="true"' }
+      : undefined,
   });
   const withDeckData = injectPrerenderedData(html, 'data-prerendered-deck="true"', deckProducts);
   return injectPrerenderedRoot(

@@ -9,7 +9,7 @@ import { usePageTitle } from "@/hooks/use-page-title";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   groupProducts,
-  interleaveGroups,
+  orderShopAllGroups,
   prioritizeFeaturedGroups,
   getFitBadgeLabel,
   type ProductGroup,
@@ -229,7 +229,10 @@ export default function Shop() {
       });
       if (!res.ok) return [];
       const allData = await res.json();
-      if (Array.isArray(allData)) return allData.slice(initialProducts.length);
+      if (Array.isArray(allData)) {
+        const initialIds = new Set(initialProducts.map((product) => product.id));
+        return allData.filter((product: ProductSummary) => !initialIds.has(product.id));
+      }
       return [];
     },
   });
@@ -268,8 +271,9 @@ export default function Shop() {
     });
   }
 
-  const orderedGroups = activeCategory === "All" ? interleaveGroups(sortedGroups) : sortedGroups;
-  const displayGroups = prioritizeFeaturedGroups(orderedGroups);
+  const displayGroups = activeCategory === "All"
+    ? orderShopAllGroups(sortedGroups)
+    : prioritizeFeaturedGroups(sortedGroups);
 
   const totalPages = Math.max(1, Math.ceil(displayGroups.length / PRODUCTS_PER_PAGE));
   const paginatedGroups = displayGroups.slice(

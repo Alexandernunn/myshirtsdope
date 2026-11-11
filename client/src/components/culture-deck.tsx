@@ -4,8 +4,8 @@ import { useLocation } from "wouter";
 import { IMAGE_PRESETS, shopifyImageProps } from "@shared/shopify-image";
 import type { Product, ProductSummary } from "@shared/schema";
 import { productPath } from "@shared/product-url";
+import { selectBestSellerProducts } from "@/lib/product-grouping";
 import {
-  isPrerenderedDocument,
   PRERENDERED_DECK_DATA_SELECTOR,
   readPrerenderedJson,
 } from "@/lib/prerendered-data";
@@ -21,7 +21,6 @@ const CARD_H = 190;
 const TAP_MAX_DIST = 8;
 const TAP_MAX_TIME = 300;
 const DRAG_DEAD_ZONE = 5;
-const PRIMARY_HERO_PRODUCT_NAME = "A Milli youth shirt";
 
 export default function CultureDeck() {
   const prerenderedDeck = readPrerenderedJson<(Product | ProductSummary)[]>(
@@ -73,20 +72,7 @@ export default function CultureDeck() {
   const isTapRef = useRef(true);
 
   const shuffledProducts = useMemo(() => {
-    if (products.length === 0) return [];
-    const copy = [...products];
-    if (isPrerenderedDocument()) return copy.slice(0, CARD_COUNT);
-
-    const primaryIndex = copy.findIndex((product) => product.name === PRIMARY_HERO_PRODUCT_NAME);
-    const primaryProduct = primaryIndex >= 0 ? copy[primaryIndex] : null;
-    if (primaryIndex >= 0) copy.splice(primaryIndex, 1);
-
-    for (let i = copy.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [copy[i], copy[j]] = [copy[j], copy[i]];
-    }
-
-    return (primaryProduct ? [primaryProduct, ...copy] : copy).slice(0, CARD_COUNT);
+    return selectBestSellerProducts(products, CARD_COUNT);
   }, [products]);
 
   const cardCount = shuffledProducts.length;
