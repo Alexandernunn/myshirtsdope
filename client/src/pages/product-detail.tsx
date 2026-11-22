@@ -3,7 +3,7 @@ import { useParams, Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ShoppingCart, Check } from "lucide-react";
+import { ArrowDown, ShoppingCart, Check } from "lucide-react";
 import { AnimatedSearch } from "@/components/animated-search";
 import { CollectionRecommendationRow } from "@/components/collection-recommendations";
 import { useCart } from "@/lib/cart-context";
@@ -572,12 +572,11 @@ export default function ProductDetail() {
       <div className="max-w-[1400px] mx-auto px-6 sm:px-8 py-10">
         <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative w-full sm:w-auto">
-            <span aria-hidden="true" className="pointer-events-none absolute -top-5 left-1 whitespace-nowrap font-display text-xs text-foreground">
-              Click here
+            <span aria-hidden="true" className="pointer-events-none absolute -top-5 left-1 inline-flex items-center gap-1 whitespace-nowrap font-display text-xs text-foreground">
+              Click here <ArrowDown className="h-3 w-3" />
             </span>
           <Link href="/shop" data-testid="link-back-shop" className="w-full sm:w-auto">
             <Button className="w-full sm:w-auto whitespace-normal font-pixel text-[8px] sm:text-[10px] leading-relaxed px-3 py-3 min-h-[44px] gap-2 rounded-md border border-[#1877F2] bg-[#1877F2] text-white no-default-hover-elevate no-default-active-elevate hover:shadow-[0_0_20px_#1877F299] active:scale-[0.97] transition-all focus-visible:ring-2 focus-visible:ring-[#1877F2] focus-visible:ring-offset-2 focus-visible:ring-offset-background">
-              <ShoppingCart aria-hidden="true" className="w-4 h-4 shrink-0" />
               SEARCH MORE OF YOUR FAVORITES
             </Button>
           </Link>
