@@ -41,7 +41,7 @@ export function AnimatedSearch({
 
   return (
     <form onSubmit={handleSubmit} role="search" className={`relative flex items-center ${className}`}>
-      {!onSubmit && <Search aria-hidden="true" className="absolute left-3 z-10 h-4 w-4 text-muted-foreground" />}
+      {!onSubmit && !helperLabel && <Search aria-hidden="true" className="absolute left-3 z-10 h-4 w-4 text-muted-foreground" />}
       <Input
         type="search"
         value={value}
@@ -53,13 +53,13 @@ export function AnimatedSearch({
           onFocus?.();
         }}
         onBlur={() => setFocused(false)}
-        className={`${onSubmit ? "pl-3" : "pl-10"} bg-card border-card-border font-display text-sm ${helperLabel ? "pr-[5.5rem]" : onSubmit ? "pr-12" : ""} ${inputClassName}`}
+        className={`${helperLabel ? "pl-20" : onSubmit ? "pl-3" : "pl-10"} bg-card border-card-border font-display text-sm ${onSubmit ? "pr-12" : ""} ${inputClassName}`}
         data-testid={testId}
       />
       {helperLabel && (
         <span
           aria-hidden="true"
-          className="pointer-events-none absolute right-10 z-10 whitespace-nowrap rounded-sm border border-sky-400/40 bg-sky-950/80 px-1 py-0.5 font-sans text-[9px] font-semibold leading-none text-sky-300"
+          className="pointer-events-none absolute left-3 z-10 whitespace-nowrap rounded-sm border border-sky-400/40 bg-sky-950/80 px-1 py-0.5 font-sans text-[9px] font-semibold leading-none text-sky-300"
         >
           {helperLabel}
         </span>
