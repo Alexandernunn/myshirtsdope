@@ -3,7 +3,7 @@ import { useParams, Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, ShoppingCart, Check } from "lucide-react";
+import { ArrowRight, ShoppingCart, Check } from "lucide-react";
 import { AnimatedSearch } from "@/components/animated-search";
 import { CollectionRecommendationRow } from "@/components/collection-recommendations";
 import { useCart } from "@/lib/cart-context";
@@ -521,9 +521,9 @@ export default function ProductDetail() {
       <div className="max-w-[1400px] mx-auto px-6 sm:px-8 py-10">
         <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <Link href="/shop" data-testid="link-back-shop">
-            <Button variant="ghost" size="sm" className="font-display text-sm gap-2">
-              <ArrowLeft className="w-4 h-4" />
-              Back to Shop
+            <Button variant="ghost" size="sm" className="font-display text-sm gap-2 px-2 text-red-500 hover:text-red-400">
+              Search More of Your Favorites
+              <ArrowRight className="w-4 h-4" />
             </Button>
           </Link>
           <AnimatedSearch

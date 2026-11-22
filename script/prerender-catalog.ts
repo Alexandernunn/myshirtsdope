@@ -453,7 +453,7 @@ function renderProductContent(product: Product): string {
           <div class="min-h-screen" data-prerendered-page="product">
             <div class="retro-divider"></div>
             <div class="max-w-6xl mx-auto px-4 sm:px-6 py-8">
-              <a href="/shop" class="inline-flex items-center gap-2 font-display text-sm text-muted-foreground hover:text-neon-blue mb-6">&#8592; Back to Shop</a>
+              <a href="/shop" class="inline-flex items-center gap-2 font-display text-sm text-red-500 hover:text-red-400 mb-6">Search More of Your Favorites &#8594;</a>
               <article class="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
                 <div class="relative aspect-square max-w-xl mx-auto w-full rounded-md overflow-hidden bg-card border border-card-border">${image}</div>
                 <div class="max-w-xl">
