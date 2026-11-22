@@ -8,6 +8,7 @@ import { AnimatedSearch } from "@/components/animated-search";
 import { CollectionRecommendationRow } from "@/components/collection-recommendations";
 import { useCart } from "@/lib/cart-context";
 import { useCartCheckout } from "@/hooks/use-cart-checkout";
+import { useMobileProductImageSize } from "@/hooks/use-mobile-product-image-size";
 import { ProductAddedPanel } from "@/pages/product-added-panel";
 import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -347,6 +348,7 @@ export default function ProductDetail() {
   const selectedPrice = resolvedVariant
     ? Number.parseFloat(resolvedVariant.price)
     : activeProduct?.price;
+  const { heroRef, controlsRef, introRef } = useMobileProductImageSize(activeProduct?.id);
   const optionsConfirmed = sizeConfirmed && colorConfirmed;
   const cartButtonDisabled = isAdding || justAdded || transitioning ||
     (optionsConfirmed && !selectedVariant?.availableForSale);
@@ -570,7 +572,7 @@ export default function ProductDetail() {
     <div className="min-h-screen">
       <div className="retro-divider" />
       <div className="max-w-[1400px] mx-auto px-6 sm:px-8 py-10">
-        <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div ref={controlsRef} className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative w-full sm:w-auto">
             <span aria-hidden="true" className="pointer-events-none absolute -top-5 left-1 inline-flex items-center gap-1 whitespace-nowrap font-display text-xs text-foreground">
               Click here <ArrowDown className="h-3 w-3" />
@@ -593,7 +595,7 @@ export default function ProductDetail() {
         </div>
 
         <div className="flex flex-col md:flex-row items-start gap-6 md:gap-10">
-          <div className="w-full md:max-w-[320px] flex-shrink-0">
+          <div ref={heroRef} className="w-[min(90%,var(--mobile-product-image-size,90%))] mx-auto md:mx-0 md:w-full md:max-w-[320px] flex-shrink-0">
             <div className="relative aspect-square bg-card border border-card-border rounded-md overflow-hidden" data-testid="product-hero-image-container">
               <img
                 {...shopifyImageProps(displayImage || resolvedImage || activeProduct.imageUrl, IMAGE_PRESETS.productDetail)}
@@ -616,7 +618,7 @@ export default function ProductDetail() {
           </div>
 
           <div className="flex-1 flex flex-col gap-5">
-            <div>
+            <div ref={introRef}>
               {activeProduct.badge && (
                 <span className="font-display text-xs text-neon-orange mb-1.5 block">{activeProduct.badge}</span>
               )}

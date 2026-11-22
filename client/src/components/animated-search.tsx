@@ -40,12 +40,12 @@ export function AnimatedSearch({
   };
 
   return (
-    <form onSubmit={handleSubmit} role="search" className={`relative flex items-center ${className}`}>
+    <form onSubmit={handleSubmit} role="search" className={`relative grid min-w-0 items-center ${className}`}>
       {!onSubmit && !helperLabel && <Search aria-hidden="true" className="absolute left-3 z-10 h-4 w-4 text-muted-foreground" />}
       <Input
         type="search"
         value={value}
-        placeholder={value ? "" : placeholder}
+        placeholder=""
         aria-label={ariaLabel}
         onChange={(event) => onChange(event.target.value)}
         onFocus={() => {
@@ -53,9 +53,19 @@ export function AnimatedSearch({
           onFocus?.();
         }}
         onBlur={() => setFocused(false)}
-        className={`${helperLabel ? "pl-20" : onSubmit ? "pl-3" : "pl-10"} bg-card border-card-border font-display text-sm ${onSubmit ? "pr-12" : ""} ${inputClassName}`}
+        className={`col-start-1 row-start-1 min-w-0 min-h-10 ${helperLabel ? "pl-20" : onSubmit ? "pl-3" : "pl-10"} bg-card border-card-border font-display text-sm ${onSubmit ? "pr-12" : ""} ${inputClassName}`}
+        style={{ height: "100%" }}
         data-testid={testId}
       />
+      {!value && (
+        <span
+          aria-hidden="true"
+          className={`pointer-events-none z-10 col-start-1 row-start-1 min-w-0 whitespace-normal break-words py-2 font-display text-sm leading-5 text-muted-foreground ${helperLabel ? "pl-20" : onSubmit ? "pl-3" : "pl-10"} ${onSubmit ? "pr-12" : "pr-3"}`}
+          data-testid={`${testId}-suggestion`}
+        >
+          {placeholder}
+        </span>
+      )}
       {helperLabel && (
         <span
           aria-hidden="true"

@@ -170,6 +170,7 @@ function Router() {
 const BACKGROUND_MUSIC_SRC = "/bg-music.m4a";
 
 function BackgroundMusic() {
+  const [location] = useLocation();
   const audioRef = useRef<HTMLAudioElement>(null);
   const [muted, setMuted] = useState(true);
 
@@ -209,7 +210,7 @@ function BackgroundMusic() {
         data-testid="button-music-toggle"
         aria-label={muted ? "Play background music" : "Mute background music"}
         title={muted ? "Play background music" : "Mute background music"}
-        className="fixed bottom-5 right-5 z-50 w-10 h-10 rounded-full bg-background/80 border border-neon-blue/40 backdrop-blur-sm flex items-center justify-center text-neon-blue hover:bg-neon-blue/10 transition-colors shadow-lg"
+        className={`fixed ${location.startsWith("/product/") ? "bottom-24 md:bottom-5" : "bottom-5"} right-5 z-50 w-10 h-10 rounded-full bg-background/80 border border-neon-blue/40 backdrop-blur-sm flex items-center justify-center text-neon-blue hover:bg-neon-blue/10 transition-colors shadow-lg`}
       >
         {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
       </button>
