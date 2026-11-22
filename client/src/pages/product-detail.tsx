@@ -521,7 +521,7 @@ export default function ProductDetail() {
       <div className="max-w-[1400px] mx-auto px-6 sm:px-8 py-10">
         <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <Link href="/shop" data-testid="link-back-shop">
-            <Button variant="ghost" size="sm" className="font-display text-sm gap-2 px-2 text-red-500 hover:text-red-400">
+            <Button variant="ghost" size="sm" className="font-display text-[12px] sm:text-sm gap-2 min-h-11 rounded-md border border-red-500/70 bg-red-950/45 px-3 py-2 text-red-300 hover:border-red-400 hover:bg-red-900/60 hover:text-red-200 focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-background">
               Search More of Your Favorites
               <ArrowRight className="w-4 h-4" />
             </Button>
