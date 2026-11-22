@@ -521,8 +521,11 @@ export default function ProductDetail() {
       <div className="max-w-[1400px] mx-auto px-6 sm:px-8 py-10">
         <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <Link href="/shop" data-testid="link-back-shop">
-            <Button variant="ghost" size="sm" className="font-display text-[12px] sm:text-sm gap-2 min-h-11 rounded-md border border-red-500/70 bg-red-950/45 px-3 py-2 text-red-300 hover:border-red-400 hover:bg-red-900/60 hover:text-red-200 focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-background">
+            <Button variant="ghost" size="sm" className="font-display text-[11px] sm:text-sm gap-1.5 sm:gap-2 min-h-11 rounded-md border border-red-500/70 bg-red-950/45 px-2.5 sm:px-3 py-2 text-red-300 hover:border-red-400 hover:bg-red-900/60 hover:text-red-200 focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-background">
               Search More of Your Favorites
+              <span aria-hidden="true" className="whitespace-nowrap rounded-sm border border-red-400/40 bg-red-500/10 px-1 py-0.5 font-sans text-[9px] font-semibold leading-none text-red-200">
+                Click here
+              </span>
               <ArrowRight className="w-4 h-4" />
             </Button>
           </Link>
@@ -533,6 +536,7 @@ export default function ProductDetail() {
             className="w-full sm:max-w-xs"
             inputClassName="h-10"
             testId="input-product-search"
+            helperLabel="Type here"
           />
         </div>
 

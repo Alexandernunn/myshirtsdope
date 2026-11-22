@@ -13,6 +13,7 @@ interface AnimatedSearchProps {
   testId?: string;
   ariaLabel?: string;
   submitLabel?: string;
+  helperLabel?: string;
 }
 
 export function AnimatedSearch({
@@ -25,6 +26,7 @@ export function AnimatedSearch({
   testId = "input-search",
   ariaLabel = "Search products",
   submitLabel = "Search",
+  helperLabel,
 }: AnimatedSearchProps) {
   const { placeholder, setFocused, setHasInput } = useTypingPlaceholder();
 
@@ -51,9 +53,17 @@ export function AnimatedSearch({
           onFocus?.();
         }}
         onBlur={() => setFocused(false)}
-        className={`pl-10 bg-card border-card-border font-display text-sm ${onSubmit ? "pr-12" : ""} ${inputClassName}`}
+        className={`pl-10 bg-card border-card-border font-display text-sm ${helperLabel ? "pr-[5.5rem]" : onSubmit ? "pr-12" : ""} ${inputClassName}`}
         data-testid={testId}
       />
+      {helperLabel && (
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute right-10 z-10 whitespace-nowrap rounded-sm border border-sky-400/40 bg-sky-950/80 px-1 py-0.5 font-sans text-[9px] font-semibold leading-none text-sky-300"
+        >
+          {helperLabel}
+        </span>
+      )}
       {onSubmit && (
         <button
           type="submit"
