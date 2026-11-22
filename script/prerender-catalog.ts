@@ -438,22 +438,20 @@ function renderShopContent(slimInitial: ProductSummary[]): string {
 function renderProductContent(product: Product): string {
   const defaultVariant = getDefaultVariant(product);
   const defaultImage = getVariantImage(product, defaultVariant);
-  const defaultSize = defaultVariant?.size ?? product.sizes[0];
-  const defaultColor = defaultVariant?.color ?? product.colors[0];
   const defaultPrice = Number.parseFloat(defaultVariant?.price ?? "") || product.price;
   const image = defaultImage
     ? `<img ${responsiveImageAttributes(defaultImage, IMAGE_PRESETS.productDetail)} alt="${escapeHtml(product.name)}" loading="eager" fetchpriority="high" width="640" height="640" class="w-full h-full object-contain" />`
     : "";
   const sizeOptions = product.sizes.map((size) => `
-                <button type="button" class="min-w-10 h-10 px-3 rounded-md border font-display text-sm ${size === defaultSize ? "border-neon-blue bg-neon-blue/10 text-neon-blue" : "border-card-border text-muted-foreground"}">${escapeHtml(size)}</button>`).join("");
+                <button type="button" aria-pressed="false" aria-label="Size ${escapeHtml(size)}" class="min-w-10 h-10 px-3 rounded-md border font-display text-sm border-card-border text-muted-foreground">${escapeHtml(size)}</button>`).join("");
   const colorOptions = product.colors.map((color) => `
-                <button type="button" class="h-10 px-3 rounded-md border font-display text-xs ${color === defaultColor ? "border-neon-blue bg-neon-blue/10 text-neon-blue" : "border-card-border text-muted-foreground"}">${escapeHtml(color)}</button>`).join("");
+                <button type="button" aria-pressed="false" aria-label="Color ${escapeHtml(color)}" class="h-10 px-3 rounded-md border font-display text-xs border-card-border text-muted-foreground">${escapeHtml(color)}</button>`).join("");
 
   return `
           <div class="min-h-screen" data-prerendered-page="product">
             <div class="retro-divider"></div>
             <div class="max-w-6xl mx-auto px-4 sm:px-6 py-8">
-              <a href="/shop" class="inline-flex min-h-11 items-center gap-1.5 sm:gap-2 rounded-md border border-red-500/70 bg-red-950/45 px-2.5 sm:px-3 py-2 font-display text-[11px] text-red-300 hover:border-red-400 hover:bg-red-900/60 hover:text-red-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:text-sm mb-6">Search More of Your Favorites <span aria-hidden="true" class="whitespace-nowrap rounded-sm border border-red-400/40 bg-red-500/10 px-1 py-0.5 font-sans text-[9px] font-semibold leading-none text-red-200">Click here</span> &#8594;</a>
+              <div class="relative w-full sm:w-fit mb-6"><span aria-hidden="true" class="pointer-events-none absolute -top-5 left-1 whitespace-nowrap font-display text-xs text-foreground">Click here</span><a href="/shop" class="inline-flex w-full sm:w-auto min-h-[44px] items-center justify-center gap-2 rounded-md border border-[#1877F2] bg-[#1877F2] px-3 py-3 font-pixel text-[8px] sm:text-[10px] leading-relaxed text-white hover:shadow-[0_0_20px_#1877F299] active:scale-[0.97] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1877F2] focus-visible:ring-offset-2 focus-visible:ring-offset-background"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 2-1.57l1.65-7.43H5.12"/></svg> SEARCH MORE OF YOUR FAVORITES</a></div>
               <article class="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
                 <div class="relative aspect-square max-w-xl mx-auto w-full rounded-md overflow-hidden bg-card border border-card-border">${image}</div>
                 <div class="max-w-xl">

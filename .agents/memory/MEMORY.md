@@ -12,3 +12,4 @@
 - [Search discovery prompts](search-discovery-prompts.md) — rotate catalog-backed people, places, and references only; no colors or product-type prompts.
 - [Etsy proof provenance](etsy-proof-source.md) — user-supplied marketing figures are not per-product review data; never treat the sold count as a review count.
 - [Shop merchandising](shop-merchandising.md) — All starts with the merchant's four lead designs; the carousel contains only those designs across product types.
+- [Explicit product choices](product-choice-confirmation.md) — both product-page cart buttons require deliberate size and color choices; preview defaults do not count.

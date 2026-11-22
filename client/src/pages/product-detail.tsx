@@ -3,10 +3,12 @@ import { useParams, Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowRight, ShoppingCart, Check } from "lucide-react";
+import { ShoppingCart, Check } from "lucide-react";
 import { AnimatedSearch } from "@/components/animated-search";
 import { CollectionRecommendationRow } from "@/components/collection-recommendations";
 import { useCart } from "@/lib/cart-context";
+import { useCartCheckout } from "@/hooks/use-cart-checkout";
+import { ProductAddedPanel } from "@/pages/product-added-panel";
 import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { usePageTitle } from "@/hooks/use-page-title";
@@ -148,7 +150,8 @@ function usePdpHeroPreload(imageUrl: string | undefined): void {
 export default function ProductDetail() {
   const { handle } = useParams<{ handle: string }>();
   const [, setLocation] = useLocation();
-  const { addToCart, isAdding } = useCart();
+  const { addToCart, isAdding, totalItems } = useCart();
+  const { handleCheckout, isCheckingOut } = useCartCheckout();
   const { toast } = useToast();
   const prerenderedProduct = typeof document === "undefined"
     ? undefined
@@ -167,6 +170,15 @@ export default function ProductDetail() {
     : "";
   const [selectedSize, setSelectedSize] = useState<string>(initialVariant?.size ?? "");
   const [selectedColor, setSelectedColor] = useState<string>(initialVariant?.color ?? "");
+  const [sizeConfirmed, setSizeConfirmed] = useState(false);
+  const [colorConfirmed, setColorConfirmed] = useState(false);
+  const [showOptionErrors, setShowOptionErrors] = useState(false);
+  const sizeOptionsRef = useRef<HTMLDivElement>(null);
+  const colorOptionsRef = useRef<HTMLDivElement>(null);
+  const [addedPanelOpen, setAddedPanelOpen] = useState(false);
+  const [addedItem, setAddedItem] = useState<{
+    name: string; imageUrl: string; size: string; color: string; price: number;
+  } | null>(null);
   const [displayImage, setDisplayImage] = useState<string>(
     initialImage && initialImage !== prerenderedProduct?.imageUrl ? initialImage : "",
   );
@@ -177,6 +189,15 @@ export default function ProductDetail() {
   const [transitioning, setTransitioning] = useState(false);
   const [secondaryProductId, setSecondaryProductId] = useState<number | null>(null);
   const [productSearch, setProductSearch] = useState("");
+
+  useEffect(() => {
+    const desktop = window.matchMedia("(min-width: 768px)");
+    const closeOnMobile = () => {
+      if (!desktop.matches) setAddedPanelOpen(false);
+    };
+    desktop.addEventListener("change", closeOnMobile);
+    return () => desktop.removeEventListener("change", closeOnMobile);
+  }, []);
 
   const { data: product, isLoading } = useQuery<Product>({
     queryKey: ["/api/products", handle],
@@ -326,11 +347,20 @@ export default function ProductDetail() {
   const selectedPrice = resolvedVariant
     ? Number.parseFloat(resolvedVariant.price)
     : activeProduct?.price;
+  const optionsConfirmed = sizeConfirmed && colorConfirmed;
+  const cartButtonDisabled = isAdding || justAdded || transitioning ||
+    (optionsConfirmed && !selectedVariant?.availableForSale);
+  const cartButtonLabel = justAdded ? "ADDED!" :
+    optionsConfirmed && !selectedVariant?.availableForSale ? "SOLD OUT" : "ADD TO CART";
 
   usePdpHeroPreload(displayImage || resolvedImage || activeProduct?.imageUrl);
 
   useEffect(() => {
     if (!activeProduct) return;
+    setSizeConfirmed(false);
+    setColorConfirmed(false);
+    setShowOptionErrors(false);
+    setAddedPanelOpen(false);
     const params = new URLSearchParams(window.location.search);
     const legacyVariantId = params.get("v") ?? params.get("variant");
     const requestedAxes = (["color", "size"] as const).filter((axis) => params.has(axis));
@@ -398,8 +428,15 @@ export default function ProductDetail() {
     setFitProductId(null);
   }, [handle]);
 
-  const selectVariant = (variant: NonNullable<Product["shopifyVariants"]>[number]) => {
+  const selectVariant = (variant: NonNullable<Product["shopifyVariants"]>[number], axis: "size" | "color") => {
     if (!activeProduct) return;
+    if (axis === "size") {
+      setSizeConfirmed(true);
+      if (variant.color !== selectedColor) setColorConfirmed(false);
+    } else {
+      setColorConfirmed(true);
+      if (variant.size !== selectedSize) setSizeConfirmed(false);
+    }
     setSelectedSize(variant.size);
     setSelectedColor(variant.color);
     const image = getVariantImage(activeProduct, variant);
@@ -419,11 +456,12 @@ export default function ProductDetail() {
     ) ?? activeProduct?.shopifyVariants?.find((variant) => variant.color === color);
     if (matchingVariant) {
       setImageFading(true);
+      selectVariant(matchingVariant, "color");
       setTimeout(() => {
-        selectVariant(matchingVariant);
         setImageFading(false);
       }, 150);
     } else {
+      setColorConfirmed(true);
       setSelectedColor(color);
       const colorImg = colorImages[color];
       setImageFading(true);
@@ -445,16 +483,18 @@ export default function ProductDetail() {
   };
 
   const handleAddToCart = () => {
-    if (!activeProduct) return;
-    if (!selectedSize || !selectedColor) {
-      toast({
-        title: "SELECT OPTIONS",
-        description: "Please select a size and color before adding to cart.",
-        variant: "destructive",
+    if (!activeProduct || isAdding || justAdded || transitioning) return;
+    if (!optionsConfirmed || !selectedSize || !selectedColor) {
+      setShowOptionErrors(true);
+      const target = !sizeConfirmed ? sizeOptionsRef.current : colorOptionsRef.current;
+      target?.scrollIntoView({
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth",
+        block: "center",
       });
+      target?.querySelector<HTMLButtonElement>("button")?.focus({ preventScroll: true });
       return;
     }
-    if (!resolvedVariant?.availableForSale) {
+    if (!selectedVariant?.availableForSale) {
       toast({
         title: "SOLD OUT",
         description: "This option is currently unavailable.",
@@ -464,14 +504,25 @@ export default function ProductDetail() {
     }
     addToCart(activeProduct, selectedSize, selectedColor);
     setJustAdded(true);
-    toast({
-      title: "ITEM ADDED",
-      description: `${activeProduct.name} has been added to your cart.`,
+    setAddedItem({
+      name: activeProduct.name,
+      imageUrl: getVariantImage(activeProduct, selectedVariant) || activeProduct.imageUrl,
+      size: selectedSize,
+      color: selectedColor,
+      price: Number.parseFloat(selectedVariant.price),
     });
+    if (window.matchMedia("(min-width: 768px)").matches) {
+      setAddedPanelOpen(true);
+    } else {
+      toast({
+        title: "ITEM ADDED",
+        description: `${activeProduct.name} has been added to your cart.`,
+      });
+    }
     setTimeout(() => setJustAdded(false), 2000);
     const trackingData = getShopifyVariantTrackingData(
-      resolvedVariant.variantId,
-      resolvedVariant.price,
+      selectedVariant.variantId,
+      selectedVariant.price,
     );
     if (trackingData) {
       trackEvent("AddToCart", {
@@ -520,15 +571,17 @@ export default function ProductDetail() {
       <div className="retro-divider" />
       <div className="max-w-[1400px] mx-auto px-6 sm:px-8 py-10">
         <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <Link href="/shop" data-testid="link-back-shop">
-            <Button variant="ghost" size="sm" className="font-display text-[11px] sm:text-sm gap-1.5 sm:gap-2 min-h-11 rounded-md border border-red-500/70 bg-red-950/45 px-2.5 sm:px-3 py-2 text-red-300 hover:border-red-400 hover:bg-red-900/60 hover:text-red-200 focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-background">
-              Search More of Your Favorites
-              <span aria-hidden="true" className="whitespace-nowrap rounded-sm border border-red-400/40 bg-red-500/10 px-1 py-0.5 font-sans text-[9px] font-semibold leading-none text-red-200">
-                Click here
-              </span>
-              <ArrowRight className="w-4 h-4" />
+          <div className="relative w-full sm:w-auto">
+            <span aria-hidden="true" className="pointer-events-none absolute -top-5 left-1 whitespace-nowrap font-display text-xs text-foreground">
+              Click here
+            </span>
+          <Link href="/shop" data-testid="link-back-shop" className="w-full sm:w-auto">
+            <Button className="w-full sm:w-auto whitespace-normal font-pixel text-[8px] sm:text-[10px] leading-relaxed px-3 py-3 min-h-[44px] gap-2 rounded-md border border-[#1877F2] bg-[#1877F2] text-white no-default-hover-elevate no-default-active-elevate hover:shadow-[0_0_20px_#1877F299] active:scale-[0.97] transition-all focus-visible:ring-2 focus-visible:ring-[#1877F2] focus-visible:ring-offset-2 focus-visible:ring-offset-background">
+              <ShoppingCart aria-hidden="true" className="w-4 h-4 shrink-0" />
+              SEARCH MORE OF YOUR FAVORITES
             </Button>
           </Link>
+          </div>
           <AnimatedSearch
             value={productSearch}
             onChange={setProductSearch}
@@ -584,7 +637,7 @@ export default function ProductDetail() {
                 </p>
                 <Button
                   onClick={handleAddToCart}
-                  disabled={isAdding || justAdded || !resolvedVariant?.availableForSale}
+                  disabled={cartButtonDisabled}
                   data-testid="button-add-to-cart-mobile"
                   className={`md:hidden shrink-0 whitespace-nowrap font-pixel text-[9px] px-3 min-h-[44px] gap-2 no-default-hover-elevate no-default-active-elevate transition-all active:scale-[0.97] ${
                     justAdded
@@ -593,7 +646,7 @@ export default function ProductDetail() {
                   }`}
                 >
                   {justAdded ? <Check className="w-4 h-4" /> : <ShoppingCart className="w-4 h-4" />}
-                  {justAdded ? "ADDED!" : resolvedVariant?.availableForSale ? "ADD TO CART" : "SOLD OUT"}
+                  {cartButtonLabel}
                 </Button>
               </div>
             </div>
@@ -621,8 +674,11 @@ export default function ProductDetail() {
             )}
 
             <div className={`transition-opacity duration-150 ${transitioning ? "opacity-0" : "opacity-100"}`}>
-              <div>
+              <div ref={sizeOptionsRef} className="scroll-mt-24" role="group" aria-label="Select size" aria-describedby={showOptionErrors && !sizeConfirmed ? "size-selection-error" : undefined}>
                 <label className="font-pixel text-[8px] text-muted-foreground block mb-2">SELECT SIZE</label>
+                {showOptionErrors && !sizeConfirmed && (
+                  <p id="size-selection-error" role="alert" className="text-sm text-neon-yellow mb-2">Choose your size to continue.</p>
+                )}
                 <div className="min-h-[44px] flex flex-wrap gap-1.5">
                   {activeProduct.sizes.map((size) => (
                     <button
@@ -631,14 +687,17 @@ export default function ProductDetail() {
                         const matchingVariant = activeProduct.shopifyVariants?.find(
                           (variant) => variant.size === size && variant.color === resolvedColor,
                         ) ?? activeProduct.shopifyVariants?.find((variant) => variant.size === size);
-                        if (matchingVariant) selectVariant(matchingVariant);
-                        else setSelectedSize(size);
+                        if (matchingVariant) selectVariant(matchingVariant, "size");
+                        else {
+                          setSelectedSize(size);
+                          setSizeConfirmed(true);
+                        }
                       }}
                       data-testid={`button-size-${size}`}
-                      aria-pressed={resolvedSize === size}
+                      aria-pressed={sizeConfirmed && resolvedSize === size}
                       aria-label={`Size ${size}`}
                       className={`font-display text-xs px-3 py-1.5 min-h-[44px] rounded-md border transition-all ${
-                          resolvedSize === size
+                          sizeConfirmed && resolvedSize === size
                           ? "bg-neon-blue/20 border-neon-blue text-neon-blue"
                           : "border-border text-muted-foreground"
                       }`}
@@ -649,8 +708,11 @@ export default function ProductDetail() {
                 </div>
               </div>
 
-              <div className="mt-4">
+              <div ref={colorOptionsRef} className="mt-4 scroll-mt-24" role="group" aria-label="Select color" aria-describedby={showOptionErrors && !colorConfirmed ? "color-selection-error" : undefined}>
                 <label className="font-pixel text-[8px] text-muted-foreground block mb-2">SELECT COLOR</label>
+                {showOptionErrors && !colorConfirmed && (
+                  <p id="color-selection-error" role="alert" className="text-sm text-neon-yellow mb-2">Choose your color to continue.</p>
+                )}
                 <div className="min-h-[44px] flex flex-wrap gap-1.5">
                   {activeProduct.colors.map((color) => {
                     const hex = getColorHex(color);
@@ -660,10 +722,10 @@ export default function ProductDetail() {
                         key={color}
                         onClick={() => handleColorSelect(color)}
                         data-testid={`button-color-${color}`}
-                        aria-pressed={resolvedColor === color}
+                        aria-pressed={colorConfirmed && resolvedColor === color}
                         aria-label={`Color ${color}`}
                         className={`font-display text-xs px-3 py-1.5 min-h-[44px] rounded-md border transition-all flex items-center gap-1.5 ${
-                          resolvedColor === color
+                          colorConfirmed && resolvedColor === color
                             ? "bg-neon-yellow/20 border-neon-yellow text-neon-yellow shadow-[0_0_8px_hsl(52_100%_50%/0.3)]"
                             : "border-border text-muted-foreground"
                         }`}
@@ -691,7 +753,7 @@ export default function ProductDetail() {
 
             <Button
               onClick={handleAddToCart}
-              disabled={isAdding || justAdded || !resolvedVariant?.availableForSale}
+              disabled={cartButtonDisabled}
               data-testid="button-add-to-cart"
               className={`font-pixel text-[10px] py-5 min-h-[44px] gap-3 no-default-hover-elevate no-default-active-elevate transition-all active:scale-[0.97] ${
                 justAdded
@@ -700,7 +762,7 @@ export default function ProductDetail() {
               }`}
             >
               {justAdded ? <Check className="w-4 h-4" /> : <ShoppingCart className="w-4 h-4" />}
-              {justAdded ? "ADDED!" : resolvedVariant?.availableForSale ? "ADD TO CART" : "SOLD OUT"}
+              {cartButtonLabel}
             </Button>
 
             <div className="hidden md:block">
@@ -727,6 +789,14 @@ export default function ProductDetail() {
 
         <CollectionRecommendationRow data={collectionRecommendations} />
       </div>
+      <ProductAddedPanel
+        open={addedPanelOpen}
+        onOpenChange={setAddedPanelOpen}
+        item={addedItem}
+        totalItems={totalItems}
+        onCheckout={handleCheckout}
+        isCheckingOut={isCheckingOut}
+      />
     </div>
   );
 }
