@@ -1,5 +1,5 @@
 import { useEffect, type FormEvent } from "react";
-import { ArrowRight, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useTypingPlaceholder } from "@/hooks/use-typing-placeholder";
 
@@ -41,7 +41,7 @@ export function AnimatedSearch({
 
   return (
     <form onSubmit={handleSubmit} role="search" className={`relative flex items-center ${className}`}>
-      <Search aria-hidden="true" className="absolute left-3 z-10 h-4 w-4 text-muted-foreground" />
+      {!onSubmit && <Search aria-hidden="true" className="absolute left-3 z-10 h-4 w-4 text-muted-foreground" />}
       <Input
         type="search"
         value={value}
@@ -53,7 +53,7 @@ export function AnimatedSearch({
           onFocus?.();
         }}
         onBlur={() => setFocused(false)}
-        className={`pl-10 bg-card border-card-border font-display text-sm ${helperLabel ? "pr-[5.5rem]" : onSubmit ? "pr-12" : ""} ${inputClassName}`}
+        className={`${onSubmit ? "pl-3" : "pl-10"} bg-card border-card-border font-display text-sm ${helperLabel ? "pr-[5.5rem]" : onSubmit ? "pr-12" : ""} ${inputClassName}`}
         data-testid={testId}
       />
       {helperLabel && (
@@ -71,7 +71,7 @@ export function AnimatedSearch({
           className="absolute right-1.5 inline-flex h-8 w-8 items-center justify-center rounded-md text-neon-blue transition-colors hover:bg-neon-blue/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neon-blue"
           data-testid="button-search-submit"
         >
-          <ArrowRight aria-hidden="true" className="h-4 w-4" />
+          <Search aria-hidden="true" className="h-4 w-4" />
         </button>
       )}
     </form>
